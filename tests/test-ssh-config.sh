@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Focused data-only discovery tests; no SSH server or network is needed.
 set -euo pipefail
-source "$(dirname -- "${BASH_SOURCE[0]}")/../ssh-config.sh"
+source "$(dirname -- "${BASH_SOURCE[0]}")/../src/ssh-config.sh"
 
 fixture=$(mktemp -d /tmp/scrcpy-ssh-config-test.XXXXXX)
 trap 'rm -rf -- "$fixture"' EXIT

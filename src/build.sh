@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Bundle maintained modules into one portable-to-copy Bash executable.
 set -euo pipefail
-project_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+script_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+project_dir=$(cd -- "$script_dir/.." && pwd)
 output=${1:-$project_dir/remote-scrcpy.sh}
 build_tmp=$(mktemp "${output}.build.XXXXXX")
 trap 'rm -f -- "$build_tmp"' EXIT
@@ -44,7 +45,7 @@ cat > "$build_tmp" <<'HEADER'
 #   owned resources, and DISPLAY_*/DISCOVERED_DEVICE_* hold presentation/data.
 #   Internal helpers are _prefixed-kebab-case; `remote-scrcpy` is the sole
 #   public function. The single-file executable is assembled from documented
-#   source modules by `bash build.sh`; edit those modules when available.
+#   source modules by `bash src/build.sh`; edit those modules when available.
 #   No external terminal UI framework or embedded binary payload is required.
 # =============================================================================
 if (( BASH_VERSINFO[0] < 4 || ( BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4 ) )); then
@@ -55,7 +56,7 @@ set -Eeuo pipefail
 HEADER
 for module in core cli ssh-config presentation ui transport prerequisites completion main; do
     printf '\n# ===== %s.sh =====\n' "$module" >> "$build_tmp"
-    cat "$project_dir/$module.sh" >> "$build_tmp"
+    cat "$script_dir/$module.sh" >> "$build_tmp"
 done
 bash -n "$build_tmp"
 chmod 755 "$build_tmp"

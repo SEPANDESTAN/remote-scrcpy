@@ -16,7 +16,7 @@ jobs:
 
       - name: Rebuild and compare against checked-in bundle
         run: |
-          bash build.sh /tmp/rebuilt.sh
+          bash src/build.sh /tmp/rebuilt.sh
           diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 
       - name: Maintenance checks

@@ -2,10 +2,10 @@
 # Focused regressions for command-line continuation and unambiguous menu input.
 set -euo pipefail
 review_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-source "$review_dir/core.sh"
-source "$review_dir/cli.sh"
-source "$review_dir/presentation.sh"
-source "$review_dir/ui.sh"
+source "$review_dir/src/core.sh"
+source "$review_dir/src/cli.sh"
+source "$review_dir/src/presentation.sh"
+source "$review_dir/src/ui.sh"
 passed=0
 failed=0
 

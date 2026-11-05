@@ -35,7 +35,7 @@
 #   owned resources, and DISPLAY_*/DISCOVERED_DEVICE_* hold presentation/data.
 #   Internal helpers are _prefixed-kebab-case; `remote-scrcpy` is the sole
 #   public function. The single-file executable is assembled from documented
-#   source modules by `bash build.sh`; edit those modules when available.
+#   source modules by `bash src/build.sh`; edit those modules when available.
 #   No external terminal UI framework or embedded binary payload is required.
 # =============================================================================
 if (( BASH_VERSINFO[0] < 4 || ( BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4 ) )); then

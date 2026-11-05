@@ -2,12 +2,37 @@
 
 A single Bash executable for viewing and controlling Android phones attached by USB to a different computer. scrcpy runs on the viewer, using SSH forwards to reach the remote computer's existing authorized ADB connection. **No terminal UI executable, downloader, package installer, or self-extracting payload is required.**
 
-## Quick start
+## Install
+
+Only `remote-scrcpy.sh` is needed at runtime — everything under `src/` is for development.
+
+### Option 1 — download the single-file script
 
 ```bash
-install -m 755 remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"
-remote-scrcpy --help
+mkdir -p "$HOME/.local/bin"
+curl -fsSL -o "$HOME/.local/bin/remote-scrcpy" \
+    https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/remote-scrcpy.sh
+chmod +x "$HOME/.local/bin/remote-scrcpy"
+```
+
+### Option 2 — clone and install from a checkout
+
+```bash
+git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
+install -m 755 remote-scrcpy/remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"
+```
+
+Ensure `$HOME/.local/bin` is on your `PATH`, then verify:
+
+```bash
+remote-scrcpy --version
 remote-scrcpy --prerequisites
+```
+
+## Usage
+
+```bash
+remote-scrcpy --help
 remote-scrcpy                         # choose host and device
 remote-scrcpy alienware               # choose device on host
 remote-scrcpy alienware SERIAL        # connect directly
@@ -48,11 +73,11 @@ Internal shell variables are grouped by prefix. These are **internal**, not a pu
 | `INPUT_RESPONSE` | Last answer received from the plain-text picker | `INPUT_RESPONSE` |
 | `APPLICATION_VERSION` | Program version | — |
 
-The long file-level header on the generated executable explains setup, usage, help, and prerequisites. `core.sh` contains the shared-state glossary; `transport.sh` documents which connection resources must be cleaned up. Source changes should be made in the individual modules, followed by `bash build.sh` and the regressions below.
+The long file-level header on the generated executable explains setup, usage, help, and prerequisites. `src/core.sh` contains the shared-state glossary; `src/transport.sh` documents which connection resources must be cleaned up. Source changes should be made in the individual modules, followed by `bash src/build.sh` and the regressions below.
 
 ## Architecture for maintainers
 
-`remote-scrcpy.sh` is built from the source modules in this repository using `bash build.sh`. It is the only file necessary at runtime. Source modules are concatenated in this order: `core.sh`, `cli.sh`, `ssh-config.sh`, `presentation.sh`, `ui.sh`, `transport.sh`, `prerequisites.sh`, `completion.sh`, `main.sh`.
+`remote-scrcpy.sh` is built from the source modules under `src/` using `bash src/build.sh`. The bundled script at the repo root is the only file necessary at runtime. Source modules are concatenated in this order: `core.sh`, `cli.sh`, `ssh-config.sh`, `presentation.sh`, `ui.sh`, `transport.sh`, `prerequisites.sh`, `completion.sh`, `main.sh` (all under `src/`).
 
 - `core.sh`: one-time state initialization, reusable validation/logging, prerequisite executable resolution.
 - `cli.sh`: parsing, help and precedence; no network access.
