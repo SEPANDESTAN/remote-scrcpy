@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 .vscode/
 .idea/
+.claude/
 *.swp
 *~
 .DS_Store
