@@ -1,6 +1,6 @@
 # remote-scrcpy
 
-A single Bash executable for viewing and controlling Android phones attached by USB to a different computer. scrcpy runs on the viewer, using SSH forwards to reach the remote computer's existing authorized ADB connection. **No terminal UI executable, downloader, package installer, or self-extracting payload is required.**
+A single [Bash](https://www.gnu.org/software/bash/) executable for viewing and controlling Android phones attached by USB to a different computer. [scrcpy](https://github.com/Genymobile/scrcpy) runs on the viewer, using [SSH](https://www.openssh.com/) forwards to reach the remote computer's existing authorized [ADB](https://developer.android.com/tools/releases/platform-tools) connection. **No terminal UI executable, downloader, package installer, or self-extracting payload is required.**
 
 ## Install
 
@@ -39,11 +39,11 @@ remote-scrcpy remote-host SERIAL        # connect directly
 remote-scrcpy --list-devices remote-host
 ```
 
-The viewer requires Bash 4.4+, OpenSSH client, an accessible `adb`, and `scrcpy`. `awk`, `mktemp`, `rm`, and `sleep` are standard operating-system utilities used by this script. The remote needs an SSH server with local TCP forwarding enabled, `adb`, and authorized USB debugging. The viewing computer must have a graphical session. If your scrcpy installation ships adb, it must still be accessible as an executable, because the launcher calls it directly. See `--prerequisites` for checks.
+The viewer requires Bash 4.4+, an [OpenSSH](https://www.openssh.com/) client, an accessible `adb`, and `scrcpy`. `awk`, `mktemp`, `rm`, and `sleep` are standard operating-system utilities used by this script. The remote needs an SSH server with local TCP forwarding enabled, `adb`, and authorized USB debugging. The viewing computer must have a graphical session. If your scrcpy installation ships adb, it must still be accessible as an executable, because the launcher calls it directly. See `--prerequisites` for checks.
 
 ## Interactive flow and customization
 
-Host and device selection use numbered prompts, exact serials and an optional manual-host entry. Offline/unauthorized devices are displayed but not selectable. `r` refreshes the remote device list; `q` cancels. Color and decoration are intentionally modest. Use `--ascii`, `--color=never`, or `NO_COLOR=1` to customize presentation.
+Host and device selection use numbered prompts, exact serials and an optional manual-host entry. Offline/unauthorized devices are displayed but not selectable. `r` refreshes the remote device list; `q` cancels. Color and decoration are intentionally modest. Use `--ascii`, `--color=never`, or [`NO_COLOR=1`](https://no-color.org/) to customize presentation.
 
 Supply any part of the selection through `[HOST [SERIAL]]`, `--host`, `--serial`, or the corresponding `REMOTE_SCRCPY_*` variables. The precedence is explicit command-line value, environment variable, then built-in default. `--` forwards additional arguments to scrcpy (except conflicting transport/device flags). Use `--verbose` for connection diagnostics and `--non-interactive` for scripts where both host and device are supplied. Full options and environment variables are documented by `--help`.
 
