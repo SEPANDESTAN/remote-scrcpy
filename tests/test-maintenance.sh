@@ -35,8 +35,8 @@ check status 2 "$script" --host host --serial serial --list-hosts
 check status 2 "$script" --bogus
 
 # Source into isolated subshells; public application entry remains unused.
-check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" alienware PHONE)" 'alienware|PHONE'
-check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" --serial PHONE alienware)" 'alienware|PHONE'
+check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" remote-host PHONE)" 'remote-host|PHONE'
+check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" --serial PHONE remote-host)" 'remote-host|PHONE'
 check equals "$(REMOTE_SCRCPY_HOST=fromenv REMOTE_SCRCPY_SERIAL=one bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" --host cli --serial two)" 'cli|two'
 check equals "$(REMOTE_SCRCPY_HOST=fromenv bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s" "$SETTINGS_SSH_HOST"' -- "$script")" 'fromenv'
 check equals "$(REMOTE_SCRCPY_COLOR=never bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line --color always; printf "%s" "$SETTINGS_COLOR_MODE"' -- "$script")" 'always'

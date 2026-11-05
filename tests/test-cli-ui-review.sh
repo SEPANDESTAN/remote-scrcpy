@@ -75,7 +75,7 @@ choose_device_by_displayed_number() (
     _initialize-configuration
     fixture_ui
     local -a fixture_answers=(1)
-    SETTINGS_SSH_HOST=alienware
+    SETTINGS_SSH_HOST=remote-host
     DISCOVERED_DEVICE_SERIALS=(PHONE_A 1)
     DISCOVERED_DEVICE_STATES=(device device)
     DISCOVERED_DEVICE_MODELS=(First Second)
@@ -96,7 +96,7 @@ choose_exact_numeric_device_serial() (
     _initialize-configuration
     fixture_ui
     local -a fixture_answers=(s 1)
-    SETTINGS_SSH_HOST=alienware
+    SETTINGS_SSH_HOST=remote-host
     DISCOVERED_DEVICE_SERIALS=(PHONE_A 1)
     DISCOVERED_DEVICE_STATES=(device device)
     DISCOVERED_DEVICE_MODELS=(First Second)
@@ -105,25 +105,25 @@ choose_exact_numeric_device_serial() (
 )
 
 expect_output 'No destination arguments preserve both interactive steps' '|' parse_destinations
-expect_output 'Positional host skips only the host picker' 'alienware|' parse_destinations alienware
-expect_output 'Both positionals skip both pickers' 'alienware|PHONE_A' parse_destinations alienware PHONE_A
-expect_output 'Named host plus positional serial' 'alienware|PHONE_A' parse_destinations --host alienware PHONE_A
-expect_output 'Named serial plus positional host' 'alienware|PHONE_A' parse_destinations --serial PHONE_A alienware
+expect_output 'Positional host skips only the host picker' 'remote-host|' parse_destinations remote-host
+expect_output 'Both positionals skip both pickers' 'remote-host|PHONE_A' parse_destinations remote-host PHONE_A
+expect_output 'Named host plus positional serial' 'remote-host|PHONE_A' parse_destinations --host remote-host PHONE_A
+expect_output 'Named serial plus positional host' 'remote-host|PHONE_A' parse_destinations --serial PHONE_A remote-host
 expect_output 'Named serial alone preserves host picker' '|PHONE_A' parse_destinations --serial=PHONE_A
-expect_output 'Duplicate host rejected' '2' exit_status parse_destinations alienware --host other
-expect_output 'Duplicate serial rejected' '2' exit_status parse_destinations alienware PHONE_A --serial other
-expect_output 'Extra positional rejected' '2' exit_status parse_destinations alienware PHONE_A extra
+expect_output 'Duplicate host rejected' '2' exit_status parse_destinations remote-host --host other
+expect_output 'Duplicate serial rejected' '2' exit_status parse_destinations remote-host PHONE_A --serial other
+expect_output 'Extra positional rejected' '2' exit_status parse_destinations remote-host PHONE_A extra
 expect_output 'Quoted scrcpy option values survive parsing' '<--record><phone capture.mkv><--max-size=1280>' \
-    parse_scrcpy_values alienware PHONE_A -- --record 'phone capture.mkv' --max-size=1280
+    parse_scrcpy_values remote-host PHONE_A -- --record 'phone capture.mkv' --max-size=1280
 expect_output 'Manual numeric SSH destination is not a menu number' '1' choose_numeric_manual_host
 expect_output 'A displayed device number always selects that row' 'PHONE_A' choose_device_by_displayed_number
 expect_output 'Huge host menu numbers cannot become unintended destinations' 'alpha' reject_huge_host_menu_number
 expect_output 'Exact serial entry disambiguates a numeric device serial' '1' choose_exact_numeric_device_serial
 expect_output 'Default presentation uses automatic color and symbols' 'auto|0||' parse_presentation
-expect_output 'Color option retains host-only continuation' 'never|0|alienware|' \
-    parse_presentation --color never alienware
-expect_output 'Equals color and ASCII options retain explicit device' 'always|1|alienware|PHONE_A' \
-    parse_presentation alienware PHONE_A --color=always --ascii
+expect_output 'Color option retains host-only continuation' 'never|0|remote-host|' \
+    parse_presentation --color never remote-host
+expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \
+    parse_presentation remote-host PHONE_A --color=always --ascii
 expect_output 'Removed UI option is rejected' '2' exit_status validate_configuration --ui gum
 expect_output 'Unknown interface is rejected' '2' exit_status validate_configuration --ui invalid
 expect_output 'Empty interface is rejected' '2' exit_status parse_destinations --ui=

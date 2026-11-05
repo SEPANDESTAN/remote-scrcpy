@@ -34,9 +34,9 @@ remote-scrcpy --prerequisites
 ```bash
 remote-scrcpy --help
 remote-scrcpy                         # choose host and device
-remote-scrcpy alienware               # choose device on host
-remote-scrcpy alienware SERIAL        # connect directly
-remote-scrcpy --list-devices alienware
+remote-scrcpy remote-host               # choose device on host
+remote-scrcpy remote-host SERIAL        # connect directly
+remote-scrcpy --list-devices remote-host
 ```
 
 The viewer requires Bash 4.4+, OpenSSH client, an accessible `adb`, and `scrcpy`. `awk`, `mktemp`, `rm`, and `sleep` are standard operating-system utilities used by this script. The remote needs an SSH server with local TCP forwarding enabled, `adb`, and authorized USB debugging. The viewing computer must have a graphical session. If your scrcpy installation ships adb, it must still be accessible as an executable, because the launcher calls it directly. See `--prerequisites` for checks.
@@ -53,7 +53,7 @@ Supply any part of the selection through `[HOST [SERIAL]]`, `--host`, `--serial`
 source <(remote-scrcpy --completion bash)
 ```
 
-Add that line to `~/.bashrc` for persistent completion. **Host aliases come from the local SSH configuration, while phone serials are queried live from the selected SSH host by default.** For example, type `remote-scrcpy ali<Tab>` to complete a host or `remote-scrcpy alienware A<Tab>` to look up online Android serials attached to `alienware`. Both `--host` and `--serial` accept completion, including `--host=` and `--serial=` forms. Only devices in `device` state are offered.
+Add that line to `~/.bashrc` for persistent completion. **Host aliases come from the local SSH configuration, while phone serials are queried live from the selected SSH host by default.** For example, type `remote-scrcpy ali<Tab>` to complete a host or `remote-scrcpy remote-host A<Tab>` to look up online Android serials attached to `remote-host`. Both `--host` and `--serial` accept completion, including `--host=` and `--serial=` forms. Only devices in `device` state are offered.
 
 Remote completion invokes a noninteractive `ssh HOST 'adb devices -l'` equivalent. It uses SSH `BatchMode`, connection/keepalive limits, and (where installed) an optional `timeout` wrapper (default 6 seconds). This does **not** use the script’s SSH tunnel or start scrcpy, but ordinary ADB may start its local daemon on the remote machine while listing devices. The first SSH connection should be established normally beforehand if a host-key prompt or password is required; completion itself will not prompt. Set `REMOTE_SCRCPY_COMPLETE_DEVICES=0` to disable remote queries or `REMOTE_SCRCPY_COMPLETION_TIMEOUT=8` to adjust the optional time limit. `REMOTE_SCRCPY_SSH_CONFIG` and `REMOTE_SCRCPY_REMOTE_ADB` are respected; corresponding `--ssh-config` and `--remote-adb` arguments work too.
 

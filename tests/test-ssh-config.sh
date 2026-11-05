@@ -23,7 +23,7 @@ config=$fixture/home/.ssh/config
 # wildcard patterns, deduplication, and an unterminated final physical line.
 cat > "$config" <<'CONFIG'
 # Host comment
-Host alienware first-alias # Host ghost
+Host remote-host first-alias # Host ghost
 hoST="quoted" equals
 Host = spaced-equals
 Host first-alias *.example !except ?wild *
@@ -32,7 +32,7 @@ Host "#literal" 'single-quoted'
 Host -option
 CONFIG
 printf 'Host last-no-newline' >> "$config"
-assert_discovery $'alienware\nfirst-alias\nquoted\nequals\nspaced-equals\n#literal\nsingle-quoted\nlast-no-newline' "$config"
+assert_discovery $'remote-host\nfirst-alias\nquoted\nequals\nspaced-equals\n#literal\nsingle-quoted\nlast-no-newline' "$config"
 
 # Includes are lexical, recurse in place, preserve quoted paths, and resolve
 # relative names against ~/.ssh rather than the including file's directory.

@@ -22,10 +22,10 @@
 #        remote-scrcpy --help
 #        remote-scrcpy --prerequisites
 #        remote-scrcpy                      # choose SSH host, then phone
-#        remote-scrcpy alienware            # choose phone on SSH host
-#        remote-scrcpy alienware SERIAL     # connect without prompts
+#        remote-scrcpy remote-host            # choose phone on SSH host
+#        remote-scrcpy remote-host SERIAL     # connect without prompts
 #        remote-scrcpy --list-hosts
-#        remote-scrcpy --list-devices alienware
+#        remote-scrcpy --list-devices remote-host
 #   Enable Bash completion in your interactive shell (optional):
 #        source <(remote-scrcpy --completion bash)
 #
@@ -266,11 +266,11 @@ WORKFLOW
 
 EXAMPLES
   remote-scrcpy
-  remote-scrcpy alienware
-  remote-scrcpy alienware A00000K5801C0602948
-  remote-scrcpy alienware -- --max-size=1280 --max-fps=30
-  remote-scrcpy --list-devices alienware
-  remote-scrcpy --non-interactive alienware A00000K5801C0602948
+  remote-scrcpy remote-host
+  remote-scrcpy remote-host A00000K5801C0602948
+  remote-scrcpy remote-host -- --max-size=1280 --max-fps=30
+  remote-scrcpy --list-devices remote-host
+  remote-scrcpy --non-interactive remote-host A00000K5801C0602948
 
 OPTIONS
   --host HOST           SSH alias, hostname, or user@hostname
@@ -1191,7 +1191,7 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 4. SSH ALIASES AND FIREWALL
    Optionally add a readable SSH alias in ~/.ssh/config, for example:
 
-     Host alienware
+     Host remote-host
          HostName 192.0.2.10
          User myuser
 

@@ -50,7 +50,7 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 4. SSH ALIASES AND FIREWALL
    Optionally add a readable SSH alias in ~/.ssh/config, for example:
 
-     Host alienware
+     Host remote-host
          HostName 192.0.2.10
          User myuser
 

@@ -7,8 +7,8 @@ sandbox=$(mktemp -d)
 trap 'rm -rf -- "$sandbox"' EXIT
 mkdir "$sandbox/bin"
 cat > "$sandbox/config" <<'CONFIG'
-Host alienware
-Host alpha beta
+Host remote-host
+Host remote-backup beta
 CONFIG
 cat > "$sandbox/bin/ssh" <<'SSH'
 #!/usr/bin/env bash
@@ -40,27 +40,27 @@ complete_words() {
     COMPREPLY=()
     _complete-remote-scrcpy
 }
-complete_words al
-assert_eq 'SSH aliases' 'alienware alpha' "${COMPREPLY[*]}"
-complete_words alienware A
+complete_words r
+assert_eq 'SSH aliases' 'remote-host remote-backup' "${COMPREPLY[*]}"
+complete_words remote-host A
 assert_eq 'serial positional' 'A00000K5801C0602948' "${COMPREPLY[*]}"
-complete_words --host alienware A
+complete_words --host remote-host A
 assert_eq 'serial after named host' 'A00000K5801C0602948' "${COMPREPLY[*]}"
-complete_words --host=ali
-assert_eq 'host equals' '--host=alienware' "${COMPREPLY[*]}"
-complete_words alienware --serial=A
+complete_words --host=remote-h
+assert_eq 'host equals' '--host=remote-host' "${COMPREPLY[*]}"
+complete_words remote-host --serial=A
 assert_eq 'serial equals' '--serial=A00000K5801C0602948' "${COMPREPLY[*]}"
-complete_words --host alienware --serial Z
+complete_words --host remote-host --serial Z
 assert_eq 'serial with flag' 'Z99999' "${COMPREPLY[*]}"
 complete_words --color=a
 assert_eq 'color equals' '--color=auto --color=always' "${COMPREPLY[*]}"
 count=$(wc -l < "$SSH_COMPLETION_CALLS")
 assert_eq 'queries after six lookups' '4' "$count"
 REMOTE_SCRCPY_COMPLETE_DEVICES=0
-complete_words alienware A
+complete_words remote-host A
 assert_eq 'disabled network serial' '' "${COMPREPLY[*]}"
 assert_eq 'disabled network query count' "$count" "$(wc -l < "$SSH_COMPLETION_CALLS")"
 unset REMOTE_SCRCPY_COMPLETE_DEVICES
 # The chosen host must appear exactly once; do not introduce unsafe word splitting.
-[[ $(tail -1 "$SSH_COMPLETION_CALLS") == *alienware* ]] || exit 1
+[[ $(tail -1 "$SSH_COMPLETION_CALLS") == *remote-host* ]] || exit 1
 printf 'Completion checks: %d passed.\n' "$passed"

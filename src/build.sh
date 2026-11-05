@@ -32,10 +32,10 @@ cat > "$build_tmp" <<'HEADER'
 #        remote-scrcpy --help
 #        remote-scrcpy --prerequisites
 #        remote-scrcpy                      # choose SSH host, then phone
-#        remote-scrcpy alienware            # choose phone on SSH host
-#        remote-scrcpy alienware SERIAL     # connect without prompts
+#        remote-scrcpy remote-host            # choose phone on SSH host
+#        remote-scrcpy remote-host SERIAL     # connect without prompts
 #        remote-scrcpy --list-hosts
-#        remote-scrcpy --list-devices alienware
+#        remote-scrcpy --list-devices remote-host
 #   Enable Bash completion in your interactive shell (optional):
 #        source <(remote-scrcpy --completion bash)
 #
