@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  bash-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntax check the bundled script
+        run: bash -n remote-scrcpy.sh
+
+      - name: Rebuild and compare against checked-in bundle
+        run: |
+          bash build.sh /tmp/rebuilt.sh
+          diff -u /tmp/rebuilt.sh remote-scrcpy.sh
+
+      - name: Maintenance checks
+        run: bash tests/test-maintenance.sh
+
+      - name: Completion checks
+        run: bash tests/test-completion.sh
+
+      - name: CLI and UI review checks
+        run: bash tests/test-cli-ui-review.sh
+
+      - name: SSH config parser checks
+        run: bash tests/test-ssh-config.sh
