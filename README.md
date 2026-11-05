@@ -6,13 +6,16 @@ A single [Bash](https://www.gnu.org/software/bash/) executable for viewing and c
 
 Only `remote-scrcpy.sh` is needed at runtime — everything under `src/` is for development.
 
+The examples below install into `$HOME/.local/bin`, which is on `PATH` by default in most modern distributions. Any directory on your `PATH` works equally well; common alternatives include `/usr/local/bin` (needs `sudo`) or a project-specific `bin/` directory you source into `PATH` yourself. The file name is up to you: it is referenced here as `remote-scrcpy`, but if you install it under a different name, re-register Bash completion with `complete -F _complete-remote-scrcpy your-command-name`.
+
 ### Option 1 — download the single-file script
 
 ```bash
-mkdir -p "$HOME/.local/bin"
-curl -fsSL -o "$HOME/.local/bin/remote-scrcpy" \
+install_dir="$HOME/.local/bin"            # or /usr/local/bin, or anywhere on PATH
+mkdir -p "$install_dir"
+curl -fsSL -o "$install_dir/remote-scrcpy" \
     https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/remote-scrcpy.sh
-chmod +x "$HOME/.local/bin/remote-scrcpy"
+chmod +x "$install_dir/remote-scrcpy"
 ```
 
 ### Option 2 — clone and install from a checkout
@@ -22,7 +25,7 @@ git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
 install -m 755 remote-scrcpy/remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"
 ```
 
-Ensure `$HOME/.local/bin` is on your `PATH`, then verify:
+Ensure the chosen install directory is on your `PATH`, then verify:
 
 ```bash
 remote-scrcpy --version
