@@ -15,7 +15,7 @@ cat > "$sandbox/bin/ssh" <<'SSH'
 printf '%s\n' "$*" >> "$SSH_COMPLETION_CALLS"
 cat <<'DEVICES'
 List of devices attached
-A00000K5801C0602948 device product:Nokia model:Nokia_1_4
+DEVICE1234567890 device product:test model:Test_Phone_A
 OFFLINE offline
 Z99999 device product:other model:Another
 UNAUTH unauthorized
@@ -42,14 +42,14 @@ complete_words() {
 }
 complete_words r
 assert_eq 'SSH aliases' 'remote-host remote-backup' "${COMPREPLY[*]}"
-complete_words remote-host A
-assert_eq 'serial positional' 'A00000K5801C0602948' "${COMPREPLY[*]}"
-complete_words --host remote-host A
-assert_eq 'serial after named host' 'A00000K5801C0602948' "${COMPREPLY[*]}"
+complete_words remote-host D
+assert_eq 'serial positional' 'DEVICE1234567890' "${COMPREPLY[*]}"
+complete_words --host remote-host D
+assert_eq 'serial after named host' 'DEVICE1234567890' "${COMPREPLY[*]}"
 complete_words --host=remote-h
 assert_eq 'host equals' '--host=remote-host' "${COMPREPLY[*]}"
-complete_words remote-host --serial=A
-assert_eq 'serial equals' '--serial=A00000K5801C0602948' "${COMPREPLY[*]}"
+complete_words remote-host --serial=D
+assert_eq 'serial equals' '--serial=DEVICE1234567890' "${COMPREPLY[*]}"
 complete_words --host remote-host --serial Z
 assert_eq 'serial with flag' 'Z99999' "${COMPREPLY[*]}"
 complete_words --color=a
@@ -57,7 +57,7 @@ assert_eq 'color equals' '--color=auto --color=always' "${COMPREPLY[*]}"
 count=$(wc -l < "$SSH_COMPLETION_CALLS")
 assert_eq 'queries after six lookups' '4' "$count"
 REMOTE_SCRCPY_COMPLETE_DEVICES=0
-complete_words remote-host A
+complete_words remote-host D
 assert_eq 'disabled network serial' '' "${COMPREPLY[*]}"
 assert_eq 'disabled network query count' "$count" "$(wc -l < "$SSH_COMPLETION_CALLS")"
 unset REMOTE_SCRCPY_COMPLETE_DEVICES

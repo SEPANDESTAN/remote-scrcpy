@@ -25,10 +25,10 @@ WORKFLOW
 EXAMPLES
   remote-scrcpy
   remote-scrcpy remote-host
-  remote-scrcpy remote-host A00000K5801C0602948
+  remote-scrcpy remote-host DEVICE1234567890
   remote-scrcpy remote-host -- --max-size=1280 --max-fps=30
   remote-scrcpy --list-devices remote-host
-  remote-scrcpy --non-interactive remote-host A00000K5801C0602948
+  remote-scrcpy --non-interactive remote-host DEVICE1234567890
 
 OPTIONS
   --host HOST           SSH alias, hostname, or user@hostname
