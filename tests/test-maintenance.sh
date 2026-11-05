@@ -11,7 +11,7 @@ equals() { [[ $1 == "$2" ]]; }
 status() { local wanted=$1; shift; local result=0; "$@" >/dev/null 2>&1 || result=$?; [[ $result == "$wanted" ]]; }
 
 check bash -n "$script"
-check contains "$("$script" --version)" '3.0.1'
+check contains "$("$script" --version)" '3.0.2'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent /bin/bash "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env PATH=/nonexistent /bin/bash "$script" --completion bash)" '_complete-remote-scrcpy()'
