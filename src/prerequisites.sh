@@ -60,6 +60,8 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
    on loopback and are routed through the authenticated SSH session.
 
 5. SITE-SPECIFIC SETUP (TO BE PROVIDED BY THE MAINTAINER)
+   Tracked by: https://github.com/SEPANDESTAN/remote-scrcpy/issues/1
+
    [TODO: Add remote server provisioning steps, packages, service setup,
     SSH hardening decisions, USB permissions, ADB startup procedures, and
     any site-specific reconnect or recovery steps.]
@@ -70,6 +72,7 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 
    Please supply exact OS, device model, installation and authorization
    procedures before turning these TODOs into prescriptive instructions.
+   Issue #1 holds a questionnaire that enumerates what's needed.
 
 6. TROUBLESHOOTING
    - `remote-scrcpy --list-hosts` lists aliases locally, without SSH.

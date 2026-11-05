@@ -102,6 +102,8 @@ The long file-level header on the generated executable explains setup, usage, he
 
 Use `remote-scrcpy --prerequisites` for the current generic checklist. That command is designed for later site-specific instructions, once details are provided. Do not invent platform-specific commands; add exact steps for the remote operating system, Android models, USB permissions and SSH policy once verified.
 
+> **TODO** — the site-specific portion of the prerequisites is intentionally still a placeholder. Expansion is tracked in [issue #1](https://github.com/SEPANDESTAN/remote-scrcpy/issues/1), which contains a questionnaire covering remote OS, USB permissions, phone models, SSH policy, auth, and recovery. Fill those in before turning the `[TODO]` markers in `src/prerequisites.sh` into prescriptive instructions.
+
 ## Tests and limits
 
 Run `bash -n remote-scrcpy.sh`, `bash tests/test-maintenance.sh`, `bash tests/test-completion.sh`, `bash tests/test-cli-ui-review.sh`, and `bash tests/test-ssh-config.sh`. The source also retains an optional integration fixture for real OpenSSH/ADB with simulated devices; that *development-only* fixture uses Python and is **not** required to install, build, or run the launcher. Physical phone mirroring still needs testing on the viewer.
