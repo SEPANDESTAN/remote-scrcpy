@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash -n *)",
+      "Bash(bash src/build.sh*)",
+      "Bash(bash tests/*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git show*)",
+      "Bash(git ls-files*)",
+      "Bash(gh issue view*)",
+      "Bash(gh issue list*)",
+      "Bash(gh release view*)",
+      "Bash(gh run list*)"
+    ]
+  }
+}
