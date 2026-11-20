@@ -22,7 +22,7 @@ chmod +x "$install_dir/remote-scrcpy"
 
 ```bash
 git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
-install -m 755 remote-scrcpy/remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"
+install -D -m 755 remote-scrcpy/remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"   # -D creates the directory
 ```
 
 Ensure the chosen install directory is on your `PATH`, then verify:
