@@ -1,10 +1,21 @@
+# Build intermediates written by src/build.sh next to its output.
 *.build.*
+
+# Python caches from the optional integration fixture.
 __pycache__/
 *.pyc
 .venv/
+
+# Editor and OS noise.
 .vscode/
 .idea/
-.claude/
 *.swp
 *~
 .DS_Store
+
+# AI coding agents: shared config is tracked (.claude/settings.json,
+# .claude/skills -> ../.agents/skills, .agents/). Per-machine files stay local.
+.claude/settings.local.json
+.claude/*.local.*
+.agents/**/*.local.*
+.agents/local/
