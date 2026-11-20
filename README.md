@@ -62,41 +62,9 @@ Remote completion invokes a noninteractive `ssh HOST 'adb devices -l'` equivalen
 
 Completion output is ordinary Bash, with no special runtime UI. If the executable is installed under a different name, register that command with `complete -F _complete-remote-scrcpy your-command-name`.
 
-## Internal naming
+## Developing
 
-Internal shell variables are grouped by prefix. These are **internal**, not a public API; documented `REMOTE_SCRCPY_*` environment variables are the supported interface.
-
-| Internal group | Purpose | Example |
-|---|---|---|
-| `SETTINGS_*` | Parsed options and environment defaults | `SETTINGS_SSH_HOST`, `SETTINGS_DEVICE_SERIAL` |
-| `SESSION_*` | Resources owned by the active connection | `SESSION_SSH_CONTROL_SOCKET`, `SESSION_LOCAL_ADB_TUNNEL_PORT` |
-| `DISCOVERED_DEVICE_*` | Parallel arrays of remote device metadata | `DISCOVERED_DEVICE_SERIALS` |
-| `DISPLAY_*` | Optional terminal escape codes and symbols | `DISPLAY_COLOR_WARNING` |
-| `CLI_*` | Tracks explicitly supplied arguments | `CLI_HOST_EXPLICIT` |
-| `INPUT_RESPONSE` | Last answer received from the plain-text picker | `INPUT_RESPONSE` |
-| `APPLICATION_VERSION` | Program version | — |
-
-The long file-level header on the generated executable explains setup, usage, help, and prerequisites. `src/core.sh` contains the shared-state glossary; `src/transport.sh` documents which connection resources must be cleaned up. Source changes should be made in the individual modules, followed by `bash src/build.sh` and the regressions below.
-
-## Architecture for maintainers
-
-`remote-scrcpy.sh` is built from the source modules under `src/` using `bash src/build.sh`. The bundled script at the repo root is the only file necessary at runtime. Source modules are concatenated in this order: `core.sh`, `cli.sh`, `ssh-config.sh`, `presentation.sh`, `ui.sh`, `transport.sh`, `prerequisites.sh`, `completion.sh`, `main.sh` (all under `src/`).
-
-- `core.sh`: one-time state initialization, reusable validation/logging, prerequisite executable resolution.
-- `cli.sh`: parsing, help and precedence; no network access.
-- `ssh-config.sh`: static alias discovery; never interpret executable SSH config expressions.
-- `presentation.sh`: plain TTY formatting; stdout data remains unstyled.
-- `ui.sh`: numbered host/device menus and device listing, with remote transport abstracted behind an internal adb helper.
-- `transport.sh`: SSH master, forward allocation, ADB protocol compatibility, scrcpy lifecycle and cleanup.
-- `prerequisites.sh`: detailed static instructions, including marked placeholders for future site-specific setup.
-- `completion.sh`: writes an opt-in completion function to stdout; no installation side effects.
-- `main.sh`: `remote-scrcpy` is the single public function; it orchestrates lifecycle and traps.
-
-**Function conventions:** public entry point is `remote-scrcpy` (two words); internal helpers start with `_` and use explanatory kebab-case names. Functions should have short purpose, arguments/state, side-effect, and failure comments. Internal globals use named namespaces: `SETTINGS_*` (resolved configuration), `DISCOVERED_DEVICE_*` (parallel device arrays), `DISPLAY_*` (terminal styles), `CLI_*` (explicit CLI-argument flags), `INPUT_RESPONSE` (last prompt), and `SESSION_*` (connection resources owned by transport). This keeps these internal values distinct from the public `REMOTE_SCRCPY_*` environment-variable interface. Prefer explicit `local` inside helpers. Do not introduce `eval`, execute SSH config, or launch any GUI/tunnel during completion; remote SSH device discovery is intentional and bounded. Avoid adding dependency bootstrap code to the normal execution path.
-
-**Lifecycle invariant:** install EXIT/signal cleanup before opening SSH; use private control socket/port leases; never terminate a shared remote ADB server. Use `tcp:PORT` only when starting the remote *local* ADB daemon, and `tcp:127.0.0.1:PORT` for a remote server accessed through an SSH tunnel. A protocol check prevents automatically restarting a mismatched shared server. Scrcpy device and tunnel flags are owned by the launcher.
-
-**Port reservation:** local SSH listeners reserve chosen ports; the remote port is atomically allocated through ADB `forward tcp:0`. Cleanup checks the original session's device and unique reservation before removing an unclaimed forwarding record. Never hardcode one shared mirroring port when supporting simultaneous sessions.
+Internal naming, module responsibilities and the lifecycle invariants now live in [`docs/architecture.md`](docs/architecture.md).
 
 ## Remote server and phone preparation
 
