@@ -4,6 +4,35 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `AGENTS.md` as the entry point for AI coding agents, with `CLAUDE.md` as a
+  symlink to it; shared skills under `.agents/skills/` (`build-and-test`,
+  `add-cli-option`, `release`) linked from `.claude/skills`; a tracked
+  `.claude/settings.json` that allowlists read-only and build/test commands.
+- `docs/`: `CONTRIBUTING.md`, `architecture.md`, `testing.md`, `release.md`,
+  `decisions.md`, `history.md`, and `review-2026-11-06.md` recording the
+  adversarial review of 3.0.2 and its tracking issues (#2 to #8).
+
+### Changed
+- README: the "Internal naming" and "Architecture for maintainers" sections
+  moved to `docs/architecture.md`; a "Developing" section links every
+  document under `docs/`; "Tests and limits" reduced to the commands plus the
+  environment caveat.
+- README install Option 2 uses `install -D` so the target directory is
+  created when missing.
+- `.gitignore` tracks the shared agent configuration and ignores only
+  per-machine files (`.claude/settings.local.json`, `*.local.*`).
+
+### Fixed
+- The 3.0.2 changelog entry, the v3.0.2 release notes and issue #1 no longer
+  quote the example values that the 3.0.2 cleanup removed.
+
+### Compatibility
+- No change to the launcher, its CLI, the `REMOTE_SCRCPY_*` variables or the
+  bundle; `remote-scrcpy.sh` is byte-identical to 3.0.2.
+
 ## [3.0.2] — 2026-11-05
 
 ### Changed
@@ -13,12 +42,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Rewrote the README opening with explicit **Install** and **Usage** sections,
   including `curl` and `git clone` recipes pointing at
   `SEPANDESTAN/remote-scrcpy` on GitHub.
-- Replaced the brand-specific `alienware` example SSH alias with a generic
-  `remote-host` across CLI help, prerequisites guide, README, bundled HEADER,
-  and all test fixtures.
-- Replaced a realistic-looking Android serial (`A00000K5801C0602948`) and
-  `Nokia`/`Nokia_1_4` model strings with synthetic `DEVICE1234567890` /
-  `test` / `Test_Phone_A` placeholders.
+- Replaced a brand-specific example SSH alias with the generic `remote-host`
+  across CLI help, prerequisites guide, README, bundled HEADER, and all test
+  fixtures.
+- Replaced a realistic-looking Android serial and OEM model strings with the
+  synthetic `DEVICE1234567890` / `test` / `Test_Phone_A` placeholders.
 - Linked each externally-maintained tool and standard on first mention in the
   README: [scrcpy](https://github.com/Genymobile/scrcpy),
   [Bash](https://www.gnu.org/software/bash/),
