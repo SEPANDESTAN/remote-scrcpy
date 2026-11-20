@@ -1,0 +1,110 @@
+# Testing
+
+## The fast suites (run in CI)
+
+```bash
+unset "${!REMOTE_SCRCPY_@}"          # the suites inherit your environment; see below
+bash -n remote-scrcpy.sh
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 31 passed.
+bash tests/test-completion.sh        # expects: Completion checks: 10 passed.
+bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 23 passed, 0 failed.
+bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
+```
+
+CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
+it against the committed `remote-scrcpy.sh`; a stale bundle fails the build.
+Run the same check locally:
+
+```bash
+bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
+```
+
+### Which code each suite touches
+
+| Suite | Runs against | Covers |
+|---|---|---|
+| `test-maintenance.sh` | the bundle | version string, help/prerequisites/completion output, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
+| `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, `--host=`/`--serial=` forms, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
+| `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts |
+| `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
+
+Two suites run the bundle and two source the modules, so **always rebuild
+before testing** a `src/` change, or half the suites test stale code.
+
+### Not covered
+
+`src/transport.sh` (SSH master, port leases, ADB protocol probe, remote
+start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
+the fast suites, and neither do `_validate-scrcpy-arguments`, the device-state
+filter in `src/ui.sh`, styled output, or the module list in `src/build.sh`.
+The 2026-11-06 review proved it by mutation (table in
+`review-2026-11-06.md`). Tracking: issue #3.
+
+### Environment caveat
+
+The suites do not scrub the environment. Exporting `REMOTE_SCRCPY_HOST`
+makes the maintenance suite's completion check open a real `ssh` to that
+host and fails three suites; `REMOTE_SCRCPY_COLOR=always` fails one check.
+Until issue #4 lands, `unset "${!REMOTE_SCRCPY_@}"` first.
+
+## The integration suite (not in CI)
+
+`tests/test_launcher_integration.py` runs the real launcher against a real
+OpenSSH server and a real `adb` binary, with a simulated ADB server
+(`tests/native_adb_fixture.py`) and a simulated scrcpy (`tests/fake_scrcpy.py`).
+It is the only end-to-end test of `src/transport.sh`.
+
+Requirements: root (it starts an isolated `sshd` on a loopback port with
+temporary keys), `sshd`, `ssh-keygen`, Python 3, a real `adb`. No existing
+credentials, phones or servers are used.
+
+```bash
+sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
+```
+
+Without root or `sshd` it skips itself. On an Ubuntu GitHub runner it could
+run as a separate job (`sudo apt-get install -y openssh-server
+android-tools-adb`); see issue #3.
+
+## Writing a hermetic transport test
+
+No refactoring is required. Source `src/core.sh`, `presentation.sh`,
+`ui.sh`, `transport.sh` and `main.sh` (its entry point is guarded by
+`BASH_SOURCE == $0`), run each case in a `( … )` subshell because
+`_exit-with-error` calls `exit`, set the `SETTINGS_*`/`SESSION_*` globals
+directly, and put fake programs first on `PATH`:
+
+- `ssh`: `-fMNT … -- host` creates the `-S` socket path and exits 0; `-O check`
+  exits 0; `-O forward -L 127.0.0.1:C:127.0.0.1:R` starts a loopback relay
+  from `C` to the fake ADB port; `-O exit` stops it. Log every argv.
+- `adb`: prints `Android Debug Bridge version 1.0.41`; canned `devices -l`
+  output including `\r` endings, `no permissions (…)`, `model:A_B`, a
+  `host:5555` serial; `forward tcp:0 TOKEN` prints a port; `forward --list`
+  prints rows. Log argv and `ADB_SERVER_SOCKET`.
+- `scrcpy`: logs argv, environment and process group; sleeps or exits with a
+  chosen status; optionally ignores INT and TERM to exercise escalation.
+- Fake ADB server: reuse `NativeADBServer` from `tests/native_adb_fixture.py`
+  on a loopback port. `_read-adb-server-protocol` only needs
+  `SESSION_LOCAL_ADB_TUNNEL_PORT`, so no `sshd` is needed.
+
+Functions already callable in isolation: `_quote-remote-shell-argument`,
+`_validate-scrcpy-arguments`, `_read-adb-server-protocol`,
+`_probe-adb-server`, `_create-local-ssh-forward`,
+`_reserve-device-forwarding-port`, `_launch-scrcpy`, `_stop-scrcpy-process`,
+`_cleanup-remote-connection`, `_load-remote-device-list`,
+`_validate-selected-device`. Override `_probe-adb-server` by redefining it
+when a case does not need a server.
+
+Use the mutation table in `review-2026-11-06.md` as the acceptance list: a
+transport suite is good enough when every row that reads "none" is caught.
+
+## Static analysis
+
+shellcheck is not in CI. Running 0.11.0 on the bundle, the modules and the
+tests reports no real defect. Expected false positives: SC1007 (deliberate
+`A= B=` chained empty assignments), SC1003 (quoted backslash), SC2088
+(literal `'~/'` case pattern), SC2030/SC2031 (`LC_ALL` export scoped to a
+subshell on purpose), SC2034 (cross-module variables when a module is
+checked alone), SC1090/SC1091/SC2329 in the tests (dynamic `source`, helpers
+invoked indirectly). Static binaries:
+https://github.com/koalaman/shellcheck/releases
