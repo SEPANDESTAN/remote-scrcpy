@@ -64,7 +64,16 @@ Completion output is ordinary Bash, with no special runtime UI. If the executabl
 
 ## Developing
 
-Internal naming, module responsibilities and the lifecycle invariants now live in [`docs/architecture.md`](docs/architecture.md).
+Only `remote-scrcpy.sh` is needed at runtime; it is generated from the modules under `src/` by `bash src/build.sh` and committed. Edit the modules, rebuild, run the four fast suites, and commit the regenerated bundle together with the change. The details live in `docs/`:
+
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): prerequisites, first build, layout, conventions, commit style.
+- [`docs/architecture.md`](docs/architecture.md): internal naming, module responsibilities, lifecycle, transport invariants, exit codes.
+- [`docs/testing.md`](docs/testing.md): what each suite covers, what is not covered, the integration suite, shellcheck.
+- [`docs/release.md`](docs/release.md): how to cut a version.
+- [`docs/decisions.md`](docs/decisions.md) and [`docs/history.md`](docs/history.md): why things are the way they are, and what happened when.
+- [`docs/review-2026-11-06.md`](docs/review-2026-11-06.md): the last full review and its open items, tracked in the [issues](https://github.com/SEPANDESTAN/remote-scrcpy/issues).
+
+AI coding agents start at [`AGENTS.md`](AGENTS.md), which links the same material and the procedures under `.agents/skills/`.
 
 ## Remote server and phone preparation
 
@@ -74,6 +83,14 @@ Use `remote-scrcpy --prerequisites` for the current generic checklist. That comm
 
 ## Tests and limits
 
-Run `bash -n remote-scrcpy.sh`, `bash tests/test-maintenance.sh`, `bash tests/test-completion.sh`, `bash tests/test-cli-ui-review.sh`, and `bash tests/test-ssh-config.sh`. The source also retains an optional integration fixture for real OpenSSH/ADB with simulated devices; that *development-only* fixture uses Python and is **not** required to install, build, or run the launcher. Physical phone mirroring still needs testing on the viewer.
+```bash
+bash -n remote-scrcpy.sh
+bash tests/test-maintenance.sh
+bash tests/test-completion.sh
+bash tests/test-cli-ui-review.sh
+bash tests/test-ssh-config.sh
+```
+
+These run without a network, a phone or root, but they inherit your environment: `unset "${!REMOTE_SCRCPY_@}"` first. An optional integration fixture exercises real OpenSSH and ADB with simulated devices; it needs root and is not required to install, build or run the launcher. See [`docs/testing.md`](docs/testing.md) for what each suite covers and what is not covered.
 
 Supported expectations are intentionally explicit: this Bash implementation is verified primarily on Linux. It needs Bash 4.4+ and OpenSSH Unix-style control sockets. Do not assume every operating system/architecture is verified simply because the script contains no native embedded payload.
