@@ -1,0 +1,30 @@
+---
+name: release
+description: Cut a remote-scrcpy release - the four version locations, the release commit, tag and GitHub release with pinned install URL, and the wording rule for notes.
+---
+
+# Release
+
+Full prose version: `docs/release.md`. Short form:
+
+1. Decide the number: new option or variable → minor; fix or docs → patch
+   ([SemVer](https://semver.org/spec/v2.0.0.html)).
+2. Edit the three files where the version lives:
+   - `src/core.sh`: `APPLICATION_VERSION=X.Y.Z`
+   - `tests/test-maintenance.sh`: the `--version` assertion string
+   - `CHANGELOG.md`: `## [Unreleased]` → `## [X.Y.Z] — YYYY-MM-DD`, keep
+     `### Compatibility`
+3. `bash src/build.sh` (fourth location: the bundle's `--version`).
+4. Run the `build-and-test` skill.
+5. Commit everything as one `release: bump to X.Y.Z and finalize CHANGELOG`
+   commit whose body lists the four files; stage them by name.
+6. `git push origin main`; wait for `gh run list --limit 1` to show success.
+7. `gh release create vX.Y.Z --title "vX.Y.Z — <summary>" --notes-file notes.md`
+   where the notes contain the pinned install block
+   (`https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/vX.Y.Z/remote-scrcpy.sh`),
+   the CHANGELOG section, and a "Next" pointer to open issues.
+8. `git fetch --tags`.
+9. Verify with a fresh `curl` of the pinned URL and `--version`.
+
+Never quote removed example values (old hostnames, serials, device models)
+in release notes or changelog entries; describe the change instead.
