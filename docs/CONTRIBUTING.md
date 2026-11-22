@@ -27,7 +27,7 @@ bash tests/test-maintenance.sh && bash tests/test-completion.sh \
   && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh
 ```
 
-Expected: 32, 32 and 28 passed checks and "SSH config discovery checks
+Expected: 37, 32 and 28 passed checks and "SSH config discovery checks
 passed." Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 

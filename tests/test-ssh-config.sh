@@ -78,6 +78,15 @@ actual=$(cd -- "$fixture" && discover_fixture "$config" 2> "$fixture/warnings")
 # A missing config is a normal empty inventory.
 assert_discovery '' "$fixture/missing"
 
+# Without a home directory, an Include that needs one is skipped with a
+# diagnostic instead of being resolved against the root directory; hosts and
+# absolute Includes still work.
+printf 'Host absolute-include\n' > "$fixture/elsewhere/absolute"
+printf 'Host homeless\nInclude ~/parts/10.conf parts/20.conf %s\n' "$fixture/elsewhere/absolute" > "$config"
+actual=$(unset HOME; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings")
+[[ $actual == $'homeless\nabsolute-include' ]]
+[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 2 ]]
+
 # State and caller glob settings do not leak across separate discoveries.
 printf 'Host second-call\n' > "$config"
 shopt -s failglob dotglob nocaseglob

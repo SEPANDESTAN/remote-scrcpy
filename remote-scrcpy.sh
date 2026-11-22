@@ -81,7 +81,9 @@ _initialize-configuration() {
     SETTINGS_SSH_HOST=${REMOTE_SCRCPY_HOST:-}
     SETTINGS_DEVICE_SERIAL=${REMOTE_SCRCPY_SERIAL:-}
     SETTINGS_SSH_CONFIG_FILE=${REMOTE_SCRCPY_SSH_CONFIG:-}
-    SETTINGS_SSH_DISCOVERY_CONFIG_FILE=${SETTINGS_SSH_CONFIG_FILE:-${HOME:?HOME is not set}/.ssh/config}
+    # Without HOME there is no default config to scan, and nothing here needs
+    # one: help, version and an explicitly named host all work without it.
+    SETTINGS_SSH_DISCOVERY_CONFIG_FILE=${SETTINGS_SSH_CONFIG_FILE:-${HOME:+$HOME/.ssh/config}}
     SETTINGS_LOCAL_ADB_EXECUTABLE=${REMOTE_SCRCPY_ADB:-${ADB:-adb}}
     SETTINGS_REMOTE_ADB_EXECUTABLE=${REMOTE_SCRCPY_REMOTE_ADB:-${REMOTE_ADB:-adb}}
     SETTINGS_REMOTE_ADB_SERVER_PORT=${REMOTE_SCRCPY_ADB_PORT:-${ADB_PORT:-5037}}
@@ -519,6 +521,12 @@ _visit-ssh-configuration-file() {
 
             # A static inventory cannot resolve connection-specific tokens or
             # conditions. Expand current-user ~ only, without invoking a shell.
+            if [[ -z $ssh_user_home && $value != /* ]]; then
+                # ~ and relative Includes are resolved against the home
+                # directory; without one they would point at the root.
+                printf 'Skipping SSH Include that needs a home directory in %s: %s\n' "$file" "$value" >&2
+                continue
+            fi
             case $value in
                 *'$'*|*'%'*|~[^/]*)
                     printf 'Skipping dynamic SSH Include in %s: %s\n' "$file" "$value" >&2
@@ -551,8 +559,8 @@ _visit-ssh-configuration-file() {
 # Enumerate unique literal Host aliases in declaration order.
 # Args: optional config/home; subshell isolates parser state and globs.
 _discover-ssh-host-aliases() (
-    local config=${1:-$HOME/.ssh/config}
-    local ssh_user_home=${2:-$HOME}
+    local config=${1:-${HOME:+$HOME/.ssh/config}}
+    local ssh_user_home=${2:-${HOME:-}}
     local ssh_directory=$ssh_user_home/.ssh
     local -a visited=()
     export LC_ALL=C
@@ -659,7 +667,7 @@ _prompt-for-ssh-host() {
     local -a choices=()
     local choice index
     mapfile -t choices < <(_discover-ssh-host-aliases "$SETTINGS_SSH_DISCOVERY_CONFIG_FILE")
-    _print-section-heading "Remote hosts from $SETTINGS_SSH_DISCOVERY_CONFIG_FILE:"
+    _print-section-heading "Remote hosts from ${SETTINGS_SSH_DISCOVERY_CONFIG_FILE:-the SSH config (none: HOME is not set)}:"
     if (( ${#choices[@]} )); then
         for index in "${!choices[@]}"; do
             _print-numbered-choice "$((index + 1))" "${choices[index]}"

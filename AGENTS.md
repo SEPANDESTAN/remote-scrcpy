@@ -72,7 +72,7 @@ daily use come first; polish for strangers second.
 bash src/build.sh                                   # regenerate the bundle
 bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   # CI parity
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh      # Maintenance checks: 32 passed.
+bash tests/test-maintenance.sh      # Maintenance checks: 37 passed.
 bash tests/test-completion.sh       # Completion checks: 32 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 28 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.

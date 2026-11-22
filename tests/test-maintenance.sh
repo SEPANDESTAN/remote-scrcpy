@@ -49,6 +49,12 @@ config=$(mktemp)
 trap 'rm -f "$config"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# None of the local modes needs HOME; only the default SSH config does.
+check contains "$(env -u HOME "$script" --version)" '3.0.2'
+check contains "$(env -u HOME "$script" --help)" 'USAGE'
+check contains "$(env -u HOME "$script" --completion bash)" '_complete-remote-scrcpy()'
+check contains "$(env -u HOME "$script" --list-hosts --ssh-config "$config")" 'gamma'
+check equals "$(env -u HOME "$script" --list-hosts)" ''
 check bash -n <("$script" --completion bash)
 # Explicitly exercise the emitted completion function with a prefixed SSH alias.
 source <("$script" --completion bash)
