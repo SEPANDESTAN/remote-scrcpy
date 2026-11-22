@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Focused data-only discovery tests; no SSH server or network is needed.
 set -euo pipefail
+# The suite must never see the developer's own launcher configuration: with a
+# host exported, an inherited environment once made a check contact it.
+unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
 source "$(dirname -- "${BASH_SOURCE[0]}")/../src/ssh-config.sh"
 
-fixture=$(mktemp -d /tmp/scrcpy-ssh-config-test.XXXXXX)
+fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
 # Inject the discovery home without modifying the process's HOME.
 discover_fixture() { _discover-ssh-host-aliases "$1" "$fixture/home"; }
@@ -64,9 +67,11 @@ Host "$(touch\tSHOULD_NOT_EXIST)"
 Host "unterminated
 Host valid-after-malformed
 CONFIG
-actual=$(discover_fixture "$config" 2> "$fixture/warnings")
+# Run from inside the fixture so that a command executed by mistake would
+# leave its marker there, not in the caller's directory.
+actual=$(cd -- "$fixture" && discover_fixture "$config" 2> "$fixture/warnings")
 [[ $actual == *valid-after-malformed ]]
-[[ ! -e SHOULD_NOT_EXIST ]]
+[[ ! -e $fixture/SHOULD_NOT_EXIST ]]
 [[ $(< "$fixture/warnings") == *'Skipping dynamic SSH Include'* ]]
 [[ $(< "$fixture/warnings") == *'Skipping malformed SSH config line'* ]]
 

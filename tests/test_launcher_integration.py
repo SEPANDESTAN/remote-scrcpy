@@ -130,8 +130,12 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         cls.scrcpy = cls.tools_dir / "scrcpy"
         write_executable(cls.scrcpy, "#!/bin/sh\nexec " + shlex.quote(sys.executable) +
                          " " + shlex.quote(str(Path(__file__).with_name("fake_scrcpy.py"))) + " \"$@\"\n")
-        cls.base_env = dict(os.environ)
-        for name in ("ADB_SERVER_SOCKET", "ANDROID_SERIAL", "ADB", "REMOTE_ADB", "ADB_PORT"):
+        # Never pass the developer's launcher configuration to the launcher under
+        # test: everything it needs is passed as an option or set explicitly below.
+        cls.base_env = {name: value for name, value in os.environ.items()
+                        if not name.startswith("REMOTE_SCRCPY_")}
+        for name in ("ADB_SERVER_SOCKET", "ANDROID_SERIAL", "ADB", "REMOTE_ADB", "ADB_PORT",
+                     "NO_COLOR"):
             cls.base_env.pop(name, None)
         cls.base_env.update(SCRCPY=str(cls.scrcpy), SCRCPY_TEST_EVENTS=str(cls.events_path),
                             TMPDIR=str(cls.tmp_dir), ADB_MDNS_AUTO_CONNECT="0")

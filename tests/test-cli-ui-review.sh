@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Focused regressions for command-line continuation and unambiguous menu input.
 set -euo pipefail
+# The suite must never see the developer's own launcher configuration: with a
+# host exported, an inherited environment once made a check contact it.
+unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
 review_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source "$review_dir/src/core.sh"
 source "$review_dir/src/cli.sh"
