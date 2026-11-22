@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Tests
+- Every check in the fast suites says what failed, and so do the discovery
+  and completion calls that run before a check. Eleven checks in
+  `tests/test-ssh-config.sh` were bare tests that ended the suite with
+  status 1 and no output, and so did a discovery or a completion call that
+  returned non-zero before its check, in that suite and in two others. The
+  two checks that the caller's glob settings survive a discovery could not
+  fail, because the discovery ran in a command substitution; it is called
+  directly now (#38).
+
 ## [3.1.0] — 2026-11-22
 
 ### Added

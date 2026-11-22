@@ -38,7 +38,7 @@ export PATH="$sandbox/bin:$PATH"
 export SSH_COMPLETION_CALLS="$sandbox/calls"
 export SSH_COMPLETION_STDIN="$sandbox/stdin"
 export REMOTE_SCRCPY_SSH_CONFIG="$sandbox/config"
-source <("$script" --completion bash)
+source <("$script" --completion bash) || { printf 'FAIL sourcing the completion script ended with status %s\n' "$?" >&2; exit 1; }
 passed=0
 assert_eq() {
     local label=$1 expected=$2 actual=$3
@@ -64,7 +64,7 @@ complete_words() {
     COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
     COMPREPLY=()
     calls_before=$(ssh_calls)
-    _complete-remote-scrcpy
+    _complete-remote-scrcpy || { printf 'FAIL the completion function ended with status %s for: %s\n' "$?" "$*" >&2; exit 1; }
 }
 ssh_calls() { wc -l < "$SSH_COMPLETION_CALLS"; }
 # The host the last complete_words asked ssh for. A lookup left over from an
@@ -128,7 +128,7 @@ assert_eq 'a serial given with = is never contacted' "$count" "$(ssh_calls)"
 # Where '=' was removed from COMP_WORDBREAKS the word arrives whole and Bash
 # replaces it whole, so the candidate keeps the option.
 COMP_WORDBREAKS=$' \t\n'; COMP_WORDS=("$script" --host=remote-h); COMP_CWORD=1; COMPREPLY=()
-_complete-remote-scrcpy
+_complete-remote-scrcpy || { printf 'FAIL the completion function ended with status %s for: --host=remote-h\n' "$?" >&2; exit 1; }
 assert_eq 'host equals when = does not break words' '--host=remote-host' "${COMPREPLY[*]}"
 
 count=$(ssh_calls)

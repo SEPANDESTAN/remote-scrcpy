@@ -13,11 +13,14 @@ fixture=$(mktemp -d)
 trap 'rm -rf -- "$fixture"' EXIT
 # Inject the discovery home without modifying the process's HOME.
 discover_fixture() { _discover-ssh-host-aliases "$1" "$fixture/home"; }
+# Every check says what was expected when it fails; a bare test or a bare
+# run of the discovery under `set -e` would end the suite without a word.
+fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 assert_discovery() {
     local expected=$1 config=$2 actual
-    actual=$(discover_fixture "$config")
+    actual=$(discover_fixture "$config") || fail "the discovery of $config ended with status $?"
     if [[ $actual != "$expected" ]]; then
-        printf 'Expected aliases:\n%s\nActual aliases:\n%s\n' "$expected" "$actual" >&2
+        printf 'FAIL: the aliases found differ.\nExpected aliases:\n%s\nActual aliases:\n%s\n' "$expected" "$actual" >&2
         exit 1
     fi
 }
@@ -72,11 +75,12 @@ Host valid-after-malformed
 CONFIG
 # Run from inside the fixture so that a command executed by mistake would
 # leave its marker there, not in the caller's directory.
-actual=$(cd -- "$fixture" && discover_fixture "$config" 2> "$fixture/warnings")
-[[ $actual == *valid-after-malformed ]]
-[[ ! -e $fixture/SHOULD_NOT_EXIST ]]
-[[ $(< "$fixture/warnings") == *'Skipping dynamic SSH Include'* ]]
-[[ $(< "$fixture/warnings") == *'Skipping malformed SSH config line'* ]]
+actual=$(cd -- "$fixture" && discover_fixture "$config" 2> "$fixture/warnings") \
+    || fail "the discovery ended with status $?: $(< "$fixture/warnings")"
+[[ $actual == *valid-after-malformed ]] || fail 'a host declared after a malformed line is still listed'
+[[ ! -e $fixture/SHOULD_NOT_EXIST ]] || fail 'nothing written in a config is executed'
+[[ $(< "$fixture/warnings") == *'Skipping dynamic SSH Include'* ]] || fail 'a dynamic Include ($, % or ~user) is skipped with a message'
+[[ $(< "$fixture/warnings") == *'Skipping malformed SSH config line'* ]] || fail 'a malformed line is skipped with a message'
 
 # A missing config is a normal empty inventory.
 assert_discovery '' "$fixture/missing"
@@ -88,26 +92,32 @@ assert_discovery '' "$fixture/missing"
 printf 'Host absolute-include\n' > "$fixture/elsewhere/absolute"
 # shellcheck disable=SC2016  # ${NOPE} is literal text of the config under test
 printf 'Host homeless\nInclude ~/parts/10.conf parts/20.conf %s "${NOPE}/x"\n' "$fixture/elsewhere/absolute" > "$config"
-actual=$(HOME=; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings")
-[[ $actual == $'homeless\nabsolute-include' ]]
-[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 2 ]]
-[[ $(grep -c 'Skipping dynamic SSH Include' "$fixture/warnings") == 1 ]]
+actual=$(HOME=; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings") \
+    || fail "the discovery with an empty HOME ended with status $?: $(< "$fixture/warnings")"
+[[ $actual == $'homeless\nabsolute-include' ]] || fail 'without a home directory, the hosts of the config and of an absolute Include are listed, and nothing else'
+[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 2 ]] || fail 'without a home directory, each of the two Includes that need one is skipped with a message'
+[[ $(grep -c 'Skipping dynamic SSH Include' "$fixture/warnings") == 1 ]] || fail 'without a home directory, a dynamic Include still gets its own message, once'
 
 # With HOME unset the scan takes the home directory from the password
 # database, as the launcher does for the default config, so an Include under
 # ~ is followed, not skipped. The name is one that does not exist: nothing is
 # read from the home of whoever runs the suite.
 printf 'Host database-home\nInclude ~/.remote-scrcpy-test-no-such-file\n' > "$config"
-actual=$(unset HOME; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings")
-[[ $actual == database-home ]]
-[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 0 ]]
+actual=$(unset HOME; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings") \
+    || fail "the discovery with HOME unset ended with status $?: $(< "$fixture/warnings")"
+[[ $actual == database-home ]] || fail 'with HOME unset, the host is listed'
+[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 0 ]] || fail 'with HOME unset, an Include under ~ is followed and not skipped'
 
 # State and caller glob settings do not leak across separate discoveries.
+# The discovery is called directly here, not inside a command substitution,
+# so that the caller whose settings must survive is this suite itself.
 printf 'Host second-call\n' > "$config"
 shopt -s failglob dotglob nocaseglob
 set -f
-assert_discovery second-call "$config"
-[[ $- == *f* ]]
-shopt -q failglob dotglob nocaseglob
+_discover-ssh-host-aliases "$config" "$fixture/home" > "$fixture/aliases" \
+    || fail "a discovery called directly ended with status $?"
+[[ $(< "$fixture/aliases") == second-call ]] || fail 'a second discovery lists only its own host'
+[[ $- == *f* ]] || fail "the caller's noglob setting survives a discovery"
+shopt -q failglob dotglob nocaseglob || fail "the caller's glob options survive a discovery"
 
 printf 'SSH config discovery checks passed.\n'

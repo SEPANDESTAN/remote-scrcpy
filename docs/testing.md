@@ -12,7 +12,7 @@ bash tests/test-install.sh
 ```
 
 They need no network, no phone and no root. A suite that fails exits
-non-zero, and most checks also say what failed. `test-cli-ui-review.sh` runs
+non-zero, and every check says what failed. `test-cli-ui-review.sh` runs
 all its checks and gives the number of failures in its last line; the others
 stop at the first failure. A suite that passes ends with a line saying so,
 most of them with the number of checks. That number grows when tests are
