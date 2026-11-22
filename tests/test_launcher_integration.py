@@ -358,6 +358,22 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertFalse(self.server.forwards)
         self.assert_closed()
 
+    def test_everything_through_the_tunnel_names_the_loopback_address(self):
+        # adb treats a host-less tcp:PORT as a local server that it may start or
+        # restart; only tcp:127.0.0.1:PORT is left alone. Both forms reach the
+        # tunnel, so nothing but the recorded endpoint tells them apart.
+        result = self.run_cli()
+        self.assert_success(result)
+        # `adb version` is the one call that never contacts a server and is
+        # made without an endpoint.
+        endpoints = [row["endpoint"] for row in self.events(adb=True)
+                     if row["role"] == "local" and row["args"] != ["version"]]
+        endpoints.append(self.events("scrcpy_started")[0]["adb_endpoint"])
+        self.assertGreater(len(endpoints), 1)
+        for endpoint in endpoints:
+            self.assertRegex(endpoint, r"^tcp:127\.0\.0\.1:\d+$")
+        self.assert_closed()
+
     def test_two_sessions_use_independent_ports_and_devices(self):
         first = self.start_cli(scrcpy=("--fake-hold=1.0",))
         second = self.start_cli(("fixture", "SERIAL_B"), scrcpy=("--fake-hold=1.0",))
@@ -429,9 +445,16 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assert_success(result)
         self.assertIn("offline", result.stdout)
         self.assertIn("unauthorized", result.stdout)
-        for serial in ("SERIAL_A", "SERIAL_B", "MISSING"):
+        # The fixture's ADB server would refuse these devices as well, so a
+        # non-zero status alone does not show that the launcher checked. Its
+        # own message and the absence of a port reservation do.
+        for serial, reason in (("SERIAL_A", "is offline"), ("SERIAL_B", "is unauthorized"),
+                               ("MISSING", "is not listed")):
             result = self.run_cli(("fixture", serial))
             self.assertNotEqual(result.returncode, 0)
+            self.assertIn(f"Device {serial} {reason}", result.stderr)
+        self.assertFalse([row for row in self.events(adb=True)
+                          if row["role"] == "local" and "forward" in row["args"]])
         self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed()
 
@@ -521,12 +544,29 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed()
 
+    def test_non_hex_length_in_protocol_response_is_rejected_by_the_probe(self):
+        # Without the hex check the length would only fail later, inside shell
+        # arithmetic, with an interpreter error instead of the probe's verdict.
+        self.server.version_response = b"OKAY00x40029"
+        result = self.run_cli()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("truncated or invalid response length", result.stderr)
+        self.assertFalse([row for row in self.events(adb=True) if "start-server" in row["args"]])
+        self.assertNotIn("host:kill", self.server.requests)
+        self.assertFalse(self.events("scrcpy_started"))
+        self.assert_closed()
+
     def test_failed_remote_startup_cleans_transport(self):
         self.fail_start_marker.touch()
         port = unused_port()
         result = self.run_cli(options=("--adb-port", str(port)))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("simulated remote ADB startup failure", result.stdout + result.stderr)
+        # The remote daemon is started with the host-less form, the only one
+        # adb will start a server for.
+        started = [row for row in self.events(adb=True)
+                   if row["role"] == "remote" and "start-server" in row["args"]]
+        self.assertEqual([row["endpoint"] for row in started], [f"tcp:{port}"])
         self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed()
 

@@ -126,7 +126,7 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   had a suite that drives the real launcher through a real `sshd` and adb
   client; it was simply never run. On a GitHub runner it needs two packages
   and `sudo`, so it runs there as its own job. Measured against the seven
-  mutations of issue #3 it catches five where the fast suites catch none; the
-  other two get tests of their own instead of a second infrastructure.
+  mutations of issue #3 it caught five where the fast suites catch none; the
+  other two got tests of their own instead of a second infrastructure.
 - **Releases go through a pull request too.** The release commit used to be
   pushed to `main`; `release.md` now puts it on a `release/X.Y.Z` branch.

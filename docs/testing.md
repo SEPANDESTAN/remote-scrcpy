@@ -38,10 +38,10 @@ the fast suites, and neither do `_validate-scrcpy-arguments`, the device-state
 filter in `src/ui.sh`, styled output, or the module list in `src/build.sh`.
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the
-transport, and CI runs it. Of the seven mutations listed in issue #3 it
-catches five; the two it misses are a removed hex check on the length field
-of the ADB version reply and an offline device accepted when its serial is
-given explicitly. Tracking: issue #3.
+transport, and CI runs it. It catches each of the seven mutations listed in
+issue #3 when they are planted one at a time, and each half of the
+socket-form mutation alone. Dropping a module from the build list is caught
+only where a test happens to need that module.
 
 ### Environment
 
