@@ -45,9 +45,10 @@ in the commit body. The `diff` must print nothing.
 
 ## 3. Know what is not tested
 
-`src/transport.sh` has no coverage in these suites (issue #3). If you changed
-it, say so in the commit body and, where possible, run the integration suite
-(root and `sshd` required):
+`src/transport.sh` has no coverage in these suites. The integration suite
+covers it and CI runs that on every pull request. If you changed the
+transport, say so in the commit body and run it yourself first where you can
+(root and `sshd` required; `docs/testing.md` has a rootless container recipe):
 
 ```bash
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
