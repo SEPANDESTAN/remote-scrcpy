@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Tests
+- Every check in `tests/test-ssh-config.sh` says what was expected when it
+  fails. Eleven of them were bare tests that ended the suite with status 1
+  and no output (#38).
+
 ## [3.1.0] — 2026-11-22
 
 ### Added
