@@ -4,7 +4,7 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 58 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
@@ -42,8 +42,8 @@ The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the
 transport, and CI runs it. It catches each of the seven mutations listed in
 issue #3 when they are planted one at a time, and each half of the
-socket-form mutation alone. Dropping a module from the build list is caught
-only where a test happens to need that module. Each check the protocol probe
+socket-form mutation alone. A module dropped from the build list is caught
+by the maintenance suite, whichever module it is. Each check the protocol probe
 makes on the content of a reply has a test of its own, including the hex
 check on the version payload: that payload comes from the remote and is
 converted with shell arithmetic, and the check is what keeps anything but

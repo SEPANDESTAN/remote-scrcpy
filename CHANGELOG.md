@@ -66,9 +66,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   v7.
 
 ### Tests
-- The maintenance suite fails when a module under `src/` is missing from the
-  bundle; a module dropped from the build list used to pass every check,
-  including the rebuild comparison in CI (#6).
+- The maintenance suite fails, naming the file, when a module under `src/`
+  is missing from the bundle. The rebuild comparison in CI cannot show such
+  a loss, and the fast suites noticed it only for modules they happen to
+  call: without `ui.sh` or `transport.sh` all four passed, and only the
+  integration suite failed (#6).
 - The integration suite now fails for each transport mutation listed in
   issue #3, including a removed hex check on the length of the ADB version
   reply, an offline device accepted by serial, and the host-less socket form

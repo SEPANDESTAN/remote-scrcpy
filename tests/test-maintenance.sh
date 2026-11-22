@@ -16,17 +16,13 @@ status() { local wanted=$1; shift; local result=0; "$@" >/dev/null 2>&1 || resul
 check bash -n "$script"
 # Every module under src/ is in the bundle. A module dropped from the list in
 # src/build.sh still gives a bundle that parses, and a rebuilt copy is then
-# identical to the committed one, so only its section marker shows the loss.
+# identical to the committed one, so that comparison cannot show the loss.
+# Other checks notice it only when they happen to call into the module.
 for module in "$project"/src/*.sh; do
     [[ ${module##*/} == build.sh ]] && continue
     grep -Fqx "# ===== ${module##*/} =====" "$script" || fail "${module##*/} is not in the bundle"
 done
 passed=$((passed+1))
-# The build script explains itself and refuses what it does not understand,
-# instead of taking an option for the output path.
-check contains "$(bash "$project/src/build.sh" --help)" 'Usage: bash src/build.sh [OUTPUT]'
-check status 2 bash "$project/src/build.sh" --bogus
-check status 2 bash "$project/src/build.sh" one two
 check contains "$("$script" --version)" '3.0.2'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
@@ -47,6 +43,12 @@ check contains "$(REMOTE_ADB=$'two\nlines' "$script" --non-interactive --list-de
 # independent of which real tools this machine has.
 tools=$(mktemp -d)
 trap 'rm -rf "$tools"' EXIT
+# The build script explains itself and refuses what it does not understand,
+# instead of taking an option for the output path, and writes nothing then.
+check contains "$(bash "$project/src/build.sh" --help)" 'Usage: bash src/build.sh [OUTPUT]'
+check status 2 bash "$project/src/build.sh" --bogus
+check status 2 bash "$project/src/build.sh" "$tools/one" "$tools/two"
+check equals "$(ls -A "$tools")" ''
 for missing in cat env; do
     mkdir "$tools/without-$missing"
     for tool in ssh awk cat env mktemp rm sleep; do
