@@ -43,8 +43,9 @@ The 2026-11-06 review proved it by mutation (table in
 
 Every fast suite begins by clearing the launcher's public environment
 (`REMOTE_SCRCPY_*`, the fallbacks `ADB`, `REMOTE_ADB`, `ADB_PORT`, `SCRCPY`,
-and `NO_COLOR`), and the integration fixture drops the same variables from
-what it passes on. An exported `REMOTE_SCRCPY_HOST`, which is how the
+and `NO_COLOR`). The integration fixture drops the same variables from the
+environment it hands to the launcher, except `SCRCPY`, which it points at its
+stand-in. An exported `REMOTE_SCRCPY_HOST`, which is how the
 launcher is meant to be configured, therefore cannot make a test contact
 that host. The maintenance suite fails if a `tests/test-*.sh` file lacks the
 line, so a new suite has to start with it too.
