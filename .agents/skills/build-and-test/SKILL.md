@@ -36,7 +36,7 @@ Expected last lines:
 ```
 Maintenance checks: 32 passed.
 Completion checks: 32 passed.
-CLI/menu review checks: 27 passed, 0 failed.
+CLI/menu review checks: 28 passed, 0 failed.
 SSH config discovery checks passed.
 ```
 

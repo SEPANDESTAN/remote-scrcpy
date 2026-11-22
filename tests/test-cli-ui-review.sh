@@ -37,13 +37,16 @@ parse_scrcpy_values() (
 )
 
 # Whether status output would be colored for a color mode and a NO_COLOR value
-# (empty for unset). Standard error is not a terminal here, so auto never
-# colors and only the explicit modes can tell the cases apart.
+# (empty for unset). The mode is set directly, or read from the environment
+# when written as env:MODE. Styles are decided with standard error detached,
+# so the result does not depend on where the suite was started; the price is
+# that the terminal half of the auto mode cannot be reached here.
 color_state() (
+    if [[ $1 == env:* ]]; then export REMOTE_SCRCPY_COLOR=${1#env:}; fi
     _initialize-configuration
-    SETTINGS_COLOR_MODE=$1
+    [[ $1 == env:* ]] || SETTINGS_COLOR_MODE=$1
     if [[ -n $2 ]]; then export NO_COLOR=$2; else unset NO_COLOR; fi
-    _initialize-terminal-styles
+    _initialize-terminal-styles 2>/dev/null
     if [[ -n $DISPLAY_COLOR_RESET ]]; then printf on; else printf off; fi
 )
 
@@ -137,7 +140,8 @@ expect_output 'Default presentation uses automatic color and symbols' 'auto|0||'
 expect_output 'An explicit always colors without a terminal' 'on' color_state always ''
 expect_output 'An explicit always overrides NO_COLOR' 'on' color_state always 1
 expect_output 'An explicit never stays uncolored' 'off' color_state never ''
-expect_output 'Auto does not color when NO_COLOR is set' 'off' color_state auto 1
+expect_output 'Always from the environment overrides NO_COLOR too' 'on' color_state env:always 1
+expect_output 'Auto does not color without a terminal' 'off' color_state auto ''
 expect_output 'Color option retains host-only continuation' 'never|0|remote-host|' \
     parse_presentation --color never remote-host
 expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \

@@ -82,8 +82,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No change to the launcher's command line or to the `REMOTE_SCRCPY_*`
-  variables.
+- No option or `REMOTE_SCRCPY_*` variable was added, removed or renamed. Two
+  behaviours changed:
 - Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
   now completes as a host, as the launcher reads it. To complete a serial on
   the environment host, use `--serial <Tab>` or `--serial=<Tab>`.

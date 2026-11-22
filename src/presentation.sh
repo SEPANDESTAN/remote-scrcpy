@@ -1,6 +1,6 @@
 # Human-facing colors and Unicode symbols, limited to stderr in a TTY.
 # Never add terminal escapes to stdout; listing/completion modes need plain text.
-# An explicit color mode overrides NO_COLOR; NO_COLOR decides only in auto mode.
+# An explicit "always" overrides NO_COLOR; NO_COLOR decides only in auto mode.
 # --ascii changes decoration independently.
 
 # Small terminal decorations for the numbered UI. No cursor movement, raw input
