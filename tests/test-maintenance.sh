@@ -121,10 +121,10 @@ check bash -n <("$script" --completion bash)
 source <("$script" --completion bash)
 COMP_WORDS=("$script" 'al') COMP_CWORD=1
 REMOTE_SCRCPY_SSH_CONFIG=$config
-_complete-remote-scrcpy
+_complete-remote-scrcpy || fail "the completion function ended with status $? for: al"
 check equals "${COMPREPLY[*]}" 'alpha'
 COMP_WORDS=("$script" --color a) COMP_CWORD=2
-_complete-remote-scrcpy
+_complete-remote-scrcpy || fail "the completion function ended with status $? for: --color a"
 check equals "${COMPREPLY[*]}" 'auto always'
 
 # Regression guard: every fast suite clears the launcher's public environment

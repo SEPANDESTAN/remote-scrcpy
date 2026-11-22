@@ -7,9 +7,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Tests
-- Every check in `tests/test-ssh-config.sh` says what was expected when it
-  fails. Eleven of them were bare tests that ended the suite with status 1
-  and no output (#38).
+- A failing fast suite always says what failed. Eleven checks in
+  `tests/test-ssh-config.sh` were bare tests that ended the suite with
+  status 1 and no output, and so did a discovery or a completion call that
+  returned non-zero before its check, in that suite and in two others. The
+  two checks that the caller's glob settings survive a discovery could not
+  fail, because the discovery ran in a command substitution; it is called
+  directly now (#38).
 
 ## [3.1.0] — 2026-11-22
 
