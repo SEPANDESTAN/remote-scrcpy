@@ -23,6 +23,16 @@ help or completion, or a CI failure. Work through every row.
   `bash -c 'source …'` idiom).
 - `tests/test-completion.sh`: `complete_words --<prefix>` offers the new word.
 
+## A short form
+
+Only for an option that is typed often. The letter joins the option's
+`case` pattern in `_parse-command-line` (`-l|--list-devices`), its line in
+the help's OPTIONS block (`-l, --list-devices`; an option without one is
+indented by four more spaces), the `options` word list of the completion,
+the header line in `src/build.sh` and the table in the README. Short options
+are not bundled and take no attached value. `tests/test-maintenance.sh`
+checks that each letter gives what its long name gives.
+
 ## Documentation
 
 - `README.md` Usage block and the paragraph on options and variables.

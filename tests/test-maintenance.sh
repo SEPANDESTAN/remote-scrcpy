@@ -104,6 +104,22 @@ config=$(mktemp)
 trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# Each one-letter option gives what its long name gives, and the help shows
+# the two side by side. -l is the one that needs a host; the parser checks
+# for it are in tests/test-cli-ui-review.sh.
+check equals "$("$script" -v)" "$("$script" --version)"
+check equals "$("$script" -h)" "$("$script" --help)"
+check equals "$("$script" -p)" "$("$script" --prerequisites)"
+check equals "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" -L)" "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)"
+help=$("$script" --help)
+for pair in '-L, --list-hosts ' '-l, --list-devices ' '-n, --non-interactive ' '-q, --quiet ' \
+    '-V, --verbose ' '-p, --prerequisites ' '-h, --help ' '-v, --version '; do
+    check contains "$help" "  $pair"
+done
+# Short options are not bundled, and an unknown letter is refused.
+check contains "$("$script" -ql 2>&1 || true)" 'Unknown launcher option: -ql.'
+check status 2 "$script" -ql
+check status 2 "$script" -x
 # None of the local modes needs HOME.
 check contains "$(env -u HOME "$script" --version)" '3.1.0'
 check contains "$(env -u HOME "$script" --help)" 'USAGE'

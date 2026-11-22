@@ -103,6 +103,19 @@ complete_words --completion=
 assert_eq 'completion equals' 'bash' "${COMPREPLY[*]}"
 complete_words --list
 assert_eq 'only the documented listing options are offered' '--list-hosts --list-devices' "${COMPREPLY[*]}"
+# A word that starts with one dash offers the options, short and long, and
+# is never taken for a host or serial to look up.
+all_options='--help --version --host --serial --list-hosts --list-devices --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion -h -v -l -L -p -q -n -V'
+complete_words -
+assert_eq 'a single dash offers every option' "$all_options" "${COMPREPLY[*]}"
+complete_words -l
+assert_eq 'a short option completes to itself' '-l' "${COMPREPLY[*]}"
+complete_words remote-host -
+assert_eq 'a dash after a host offers the options' "$all_options" "${COMPREPLY[*]}"
+assert_eq 'a dash after a host starts no lookup' '(no lookup)' "$(queried_host)"
+# A short option before the host is not counted as the host.
+complete_words -l remote-host D
+assert_eq 'a short option does not shift the positions' 'remote-host' "$(queried_host)"
 complete_words remote-host 192.0.2.10:5
 assert_eq 'serial with a colon' '5555' "${COMPREPLY[*]}"
 # With two break characters in the word, the cut is at the last one.

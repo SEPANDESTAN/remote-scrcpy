@@ -55,6 +55,7 @@ cat > "$build_tmp" <<'HEADER'
 #        remote-scrcpy remote-host SERIAL     # connect without prompts
 #        remote-scrcpy --list-hosts
 #        remote-scrcpy --list-devices remote-host
+#   The everyday options have one-letter forms (-h -v -l -L -p -q -n -V).
 #   Enable Bash completion in your interactive shell (optional):
 #        source <(remote-scrcpy --completion bash)
 #

@@ -48,6 +48,21 @@ remote-scrcpy remote-host SERIAL        # connect directly
 remote-scrcpy --list-devices remote-host
 ```
 
+The options used every day also have a one-letter form:
+
+| Option | Short | What it does |
+|---|---|---|
+| `--list-devices HOST` | `-l` | list the phones attached to `HOST` |
+| `--list-hosts` | `-L` | list the host aliases in your SSH config |
+| `--prerequisites` | `-p` | print the setup checklist |
+| `--quiet` | `-q` | hide the banner and progress lines |
+| `--non-interactive` | `-n` | never prompt |
+| `--verbose` | `-V` | show SSH and transport details |
+| `--version` | `-v` | print the version |
+| `--help` | `-h` | print the help |
+
+So `remote-scrcpy -l remote-host` is `remote-scrcpy --list-devices remote-host`. A short option stands alone, one per word: `-q -l`, not `-ql`. Options for scrcpy itself go after `--` and keep scrcpy's own meaning there.
+
 The viewer requires Bash 4.4+, an [OpenSSH](https://www.openssh.com/) client, an accessible `adb`, and `scrcpy`. `awk`, `cat`, `env`, `mktemp`, `rm`, and `sleep` are standard operating-system utilities used by this script. The remote needs an SSH server with local TCP forwarding enabled, `adb`, and authorized USB debugging. The viewing computer must have a graphical session. If your scrcpy installation ships adb, it must still be accessible as an executable, because the launcher calls it directly. See `--prerequisites` for checks.
 
 ## Interactive flow and customization
