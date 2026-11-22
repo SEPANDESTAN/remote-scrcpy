@@ -89,18 +89,33 @@ done
 check equals "$messages" ''
 # What it cannot use is refused with status 2 before anything is written.
 for arguments in '--bogus' 'extra' '--dir' '--dir=' '-d' '-d=x' '--version' '--version=' '-v' '--ref' '--ref=' \
-    '--version=a b' '--version=../main' '--version=-x' '--version=a..b' '--ref=../main' '-v ../main' '-x' '-cd'; do
+    '--version=a b' '--version=../main' '--version=-x' '--version=a..b' '--ref=../main' '-v ../main' '-x' '-cd x' '-dx'; do
     read -r -a words <<< "$arguments"
     [[ $arguments != '--version=a b' ]] || words=('--version=a b')
     run "$bin" "$installer" "${words[@]}"
     equals "$result" 2 || fail "status $result instead of 2 for: $arguments"
 done
 passed=$((passed+1))
-# The refusal names what was typed, also when it was a short form.
+# A refusal quotes what was typed, also a short form or an older name, and
+# shows the usage text, on standard error. --version is the one a person
+# may type expecting a number to be printed.
+run "$bin" "$installer" --version
+check equals "$result" 2
+check contains "$messages" 'install.sh: --version needs a value'
+check contains "$messages" 'Usage: install.sh [--dir DIR] [--version VERSION] [--with-tab-completion]'
+check equals "$output" ''
 run "$bin" "$installer" -d
 check contains "$messages" 'install.sh: -d needs a value'
 run "$bin" "$installer" --ref
 check contains "$messages" 'install.sh: --ref needs a value'
+run "$bin" "$installer" -d ''
+check contains "$messages" 'install.sh: -d needs a value that is not empty'
+run "$bin" "$installer" --ref=
+check contains "$messages" 'install.sh: --ref= needs a value that is not empty'
+run "$bin" "$installer" -x
+check contains "$messages" 'install.sh: cannot use this argument: -x'
+run "$bin" "$installer" -cd x
+check contains "$messages" 'install.sh: cannot use this argument: -cd'
 check equals "$(ls -A "$home" "$sandbox/work")" "$home:
 
 $sandbox/work:"
@@ -296,6 +311,10 @@ check equals "$(downloaded_version --ref=3.0.2)" 'v3.0.2'
 check equals "$(downloaded_version --version main)" 'main'
 check equals "$(downloaded_version --version release/next)" 'release/next'
 check equals "$(downloaded_version --version 3.0)" '3.0'
+# Only a value that is a release number and nothing more gets the "v".
+check equals "$(downloaded_version --version 3.0.2-rc1)" '3.0.2-rc1'
+check equals "$(downloaded_version --version 3.0.2.1)" '3.0.2.1'
+check equals "$(downloaded_version --version 3.0.2/x)" '3.0.2/x'
 
 # A download that fails, is not Bash, or is not the launcher installs
 # nothing: the existing launcher stays and no temporary file is left.

@@ -45,18 +45,24 @@ say() { printf '%s\n' "$*" >&2; }
 # Print an error and exit. Args: message, optional status (default 1).
 die() { say "install.sh: $1"; exit "${2:-1}"; }
 
+# Refuse the command line: print an error and the usage text, exit with 2.
+# Args: message.
+refuse() { say "install.sh: $1"; usage >&2; exit 2; }
+
 # Install the launcher. Args: the path of this file ('' when it is read from
 # a pipe), then the command line. Exits 2 for usage errors, 127 when curl is
 # needed and missing, 1 when the launcher could not be installed or, after
 # it was, ~/.bashrc could not be written.
 main() {
     local self=$1; shift
-    local dir='' ref='' completion=0 bundle='' target version tool missing='' line typed
+    local dir='' ref='' completion=0 bundle='' target version tool missing='' line
+    local typed name value
     local url=https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy
     local marker='# remote-scrcpy completion (added by install.sh)'
     while (( $# )); do
-        # A short form or an older name is another spelling of the long name.
-        typed=$1
+        # A short form or an older name is another spelling of the long
+        # name; refusals quote what was typed.
+        typed=$1 name=''
         case $1 in
             -d) set -- --dir "${@:2}" ;;
             -v|--ref) set -- --version "${@:2}" ;;
@@ -67,13 +73,16 @@ main() {
             -h|--help) usage; return 0 ;;
             --with-tab-completion) completion=1 ;;
             --dir|--version)
-                (( $# > 1 )) || die "$typed needs a value" 2
-                set -- "$1=$2" "${@:3}"
-                continue ;;
-            --dir=?*) dir=${1#*=} ;;
-            --version=?*) ref=${1#*=} ;;
-            *) say "install.sh: cannot use this argument: $typed"; usage >&2; exit 2 ;;
+                (( $# > 1 )) || refuse "$typed needs a value"
+                name=$1 value=$2
+                shift ;;
+            --dir=*|--version=*) name=${1%%=*} value=${1#*=} ;;
+            *) refuse "cannot use this argument: $typed" ;;
         esac
+        if [[ -n $name ]]; then
+            [[ -n $value ]] || refuse "$typed needs a value that is not empty"
+            if [[ $name == --dir ]]; then dir=$value; else ref=$value; fi
+        fi
         shift
     done
     # The version is a tag or a branch of the repository; a bare release
