@@ -1,9 +1,9 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on **remote-scrcpy**. Humans: read
-[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) instead; it says the same
-things in prose. `CLAUDE.md` is a symlink to this file, and `.claude/skills`
-links to `.agents/skills`, so there is one copy of every instruction.
+Instructions for AI coding agents working on **remote-scrcpy**. The rules
+below are a copy of those in [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md),
+which is their home and wins where the two differ. `CLAUDE.md` is a symlink
+to this file, and `.claude/skills` links to `.agents/skills`.
 
 ## What this project is
 
@@ -27,8 +27,8 @@ daily use come first; polish for strangers second.
 | `src/core.sh` `cli.sh` `ssh-config.sh` `presentation.sh` `ui.sh` `transport.sh` `prerequisites.sh` `completion.sh` `main.sh` | the source. `main.sh` holds the lifecycle; `transport.sh` owns every SSH/ADB/scrcpy resource |
 | `tests/test-*.sh` | five fast suites, no network, run by CI |
 | `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; run by CI in its own job |
-| `docs/` | architecture, testing, workflow, release, decisions, history, the last review |
-| `.agents/skills/` | step-by-step procedures: `build-and-test`, `add-cli-option`, `release` |
+| `docs/` | contributing rules, architecture, testing, workflow, adding a CLI option, release, decisions, the last review |
+| `.agents/skills/` | `build-and-test`, `add-cli-option`, `release`: each points to its procedure under `docs/` |
 | `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the five suites, and the integration suite in a second job |
 
 ## Rules
@@ -40,9 +40,9 @@ daily use come first; polish for strangers second.
 2. **Never run the launcher against a real host or phone from a work
    session.** No `remote-scrcpy HOST`, no `--list-devices HOST`, no Tab
    completion with a real alias, unless `ssh`, `adb` and `scrcpy` on `PATH`
-   are fakes you wrote (pattern: `tests/test-completion.sh`; recipe:
-   `docs/testing.md`). Safe anywhere: `--help`, `--version`,
-   `--prerequisites`, `--completion bash`, `--list-hosts`.
+   are fakes you wrote (pattern: `tests/test-completion.sh`). Safe anywhere:
+   `--help`, `--version`, `--prerequisites`, `--completion bash`,
+   `--list-hosts`.
 3. **Keep the suites deaf to your environment.** Each one starts by
    clearing `REMOTE_SCRCPY_*` and the generic fallbacks and then closing its
    standard input with `exec < /dev/null` (why: `docs/testing.md`,
@@ -77,11 +77,11 @@ daily use come first; polish for strangers second.
 bash src/build.sh                                   # regenerate the bundle
 bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   # CI parity
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh      # Maintenance checks: 59 passed.
-bash tests/test-completion.sh       # Completion checks: 34 passed.
-bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 31 passed, 0 failed.
-bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
-bash tests/test-install.sh          # Install checks: 74 passed.
+bash tests/test-maintenance.sh
+bash tests/test-completion.sh
+bash tests/test-cli-ui-review.sh
+bash tests/test-ssh-config.sh
+bash tests/test-install.sh
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```
 
@@ -96,9 +96,9 @@ sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v 
   SIGTERM, 129 SIGHUP, 1 runtime failure, scrcpy's own status otherwise.
 - Adding an option touches `core.sh`, `cli.sh` (parser and three help
   blocks), `completion.sh`, the `build.sh` header, README, CHANGELOG and
-  three test files. Follow `.agents/skills/add-cli-option/SKILL.md`.
+  three test files. Follow `docs/adding-a-cli-option.md`.
 - Version lives in `src/core.sh`, `tests/test-maintenance.sh`, `CHANGELOG.md`
-  and the regenerated bundle. Follow `.agents/skills/release/SKILL.md`.
+  and the regenerated bundle. Follow `docs/release.md`.
 
 ## Git
 
@@ -112,10 +112,10 @@ author: `Co-Authored-By: <agent name> <noreply@...>`.
 
 - `docs/architecture.md`: lifecycle, transport invariants and the reasons
   behind them, Bash floor, exit codes.
-- `docs/testing.md`: what each suite covers, what is not covered, how to
-  write a hermetic transport test.
+- `docs/testing.md`: what each suite covers, what is not covered, the
+  integration suite.
 - `docs/workflow.md`: branch, pull request, review and merge procedure.
-- `docs/decisions.md` and `docs/history.md`: why things are this way.
+- `docs/decisions.md`: why things are this way.
 - `docs/review-2026-11-06.md`: the last full review; its findings were filed
   as GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill
   in site-specific prerequisites.

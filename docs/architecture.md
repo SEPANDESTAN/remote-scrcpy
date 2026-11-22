@@ -1,48 +1,52 @@
 # Architecture
 
-How `remote-scrcpy.sh` is put together and the rules that keep it correct.
-The first two sections were moved here from the README on 2026-11-19 without
-change; the rest was added from the 2026-11-06 review.
+How `remote-scrcpy.sh` is put together and the invariants that keep it
+correct. The rules for changing it are in [`CONTRIBUTING.md`](CONTRIBUTING.md);
+the reasons behind the design are in [`decisions.md`](decisions.md).
+
+## Modules
+
+`remote-scrcpy.sh` at the repository root is the only file needed at
+runtime. `bash src/build.sh` generates it by writing a header and then the
+nine modules under `src/`, in this order:
+
+| Module | Responsibility |
+|---|---|
+| `core.sh` | configuration defaults from the environment, validation, logging, resolving the local executables; holds the glossary of shared state |
+| `cli.sh` | argument parsing, help text, precedence; no network access |
+| `ssh-config.sh` | static discovery of host aliases; an SSH configuration is read as data and never interpreted |
+| `presentation.sh` | colors and symbols for stderr; stdout stays plain |
+| `ui.sh` | numbered host and device menus, device listing |
+| `transport.sh` | SSH master, port forwards, ADB protocol probe, scrcpy launch and cleanup; owns every `SESSION_*` variable |
+| `prerequisites.sh` | the static setup guide, with marked placeholders for site-specific steps |
+| `completion.sh` | prints the Bash completion script; that script never opens the tunnel or a window, and its device lookup is one read-only SSH query, bounded where `timeout` is installed |
+| `main.sh` | `remote-scrcpy`, the single public function: lifecycle and traps |
+
+The header that `src/build.sh` writes carries the usage summary a reader of
+the bundle sees first, and the Bash version guard.
 
 ## Internal naming
 
-Internal shell variables are grouped by prefix. These are **internal**, not a public API; documented `REMOTE_SCRCPY_*` environment variables are the supported interface.
+Shell variables are grouped by prefix. They are internal; the supported
+interface is the command line and the `REMOTE_SCRCPY_*` environment
+variables.
 
-| Internal group | Purpose | Example |
+| Group | Purpose | Example |
 |---|---|---|
-| `SETTINGS_*` | Parsed options and environment defaults | `SETTINGS_SSH_HOST`, `SETTINGS_DEVICE_SERIAL` |
-| `SESSION_*` | Resources owned by the active connection | `SESSION_SSH_CONTROL_SOCKET`, `SESSION_LOCAL_ADB_TUNNEL_PORT` |
-| `DISCOVERED_DEVICE_*` | Parallel arrays of remote device metadata | `DISCOVERED_DEVICE_SERIALS` |
-| `DISPLAY_*` | Optional terminal escape codes and symbols | `DISPLAY_COLOR_WARNING` |
-| `CLI_*` | Tracks explicitly supplied arguments | `CLI_HOST_EXPLICIT` |
-| `INPUT_RESPONSE` | Last answer received from the plain-text picker | `INPUT_RESPONSE` |
-| `APPLICATION_VERSION` | Program version | — |
+| `SETTINGS_*` | parsed options and environment defaults | `SETTINGS_SSH_HOST`, `SETTINGS_DEVICE_SERIAL` |
+| `SESSION_*` | resources owned by the active connection; transport only | `SESSION_SSH_CONTROL_SOCKET`, `SESSION_LOCAL_ADB_TUNNEL_PORT` |
+| `DISCOVERED_DEVICE_*` | parallel arrays of remote device metadata | `DISCOVERED_DEVICE_SERIALS` |
+| `DISPLAY_*` | terminal escape codes and symbols | `DISPLAY_COLOR_WARNING` |
+| `CLI_*` | which arguments were given explicitly | `CLI_HOST_EXPLICIT` |
+| `INPUT_RESPONSE` | the last answer read at a prompt | |
+| `APPLICATION_VERSION` | the program version | |
 
-The long file-level header on the generated executable explains setup, usage, help, and prerequisites. `src/core.sh` contains the shared-state glossary; `src/transport.sh` documents which connection resources must be cleaned up. Source changes should be made in the individual modules, followed by `bash src/build.sh` and the regressions below.
-
-## Architecture for maintainers
-
-`remote-scrcpy.sh` is built from the source modules under `src/` using `bash src/build.sh`. The bundled script at the repo root is the only file necessary at runtime. Source modules are concatenated in this order: `core.sh`, `cli.sh`, `ssh-config.sh`, `presentation.sh`, `ui.sh`, `transport.sh`, `prerequisites.sh`, `completion.sh`, `main.sh` (all under `src/`).
-
-- `core.sh`: one-time state initialization, reusable validation/logging, prerequisite executable resolution.
-- `cli.sh`: parsing, help and precedence; no network access.
-- `ssh-config.sh`: static alias discovery; never interpret executable SSH config expressions.
-- `presentation.sh`: plain TTY formatting; stdout data remains unstyled.
-- `ui.sh`: numbered host/device menus and device listing, with remote transport abstracted behind an internal adb helper.
-- `transport.sh`: SSH master, forward allocation, ADB protocol compatibility, scrcpy lifecycle and cleanup.
-- `prerequisites.sh`: detailed static instructions, including marked placeholders for future site-specific setup.
-- `completion.sh`: writes an opt-in completion function to stdout; no installation side effects.
-- `main.sh`: `remote-scrcpy` is the single public function; it orchestrates lifecycle and traps.
-
-**Function conventions:** public entry point is `remote-scrcpy` (two words); internal helpers start with `_` and use explanatory kebab-case names. Functions should have short purpose, arguments/state, side-effect, and failure comments. Internal globals use named namespaces: `SETTINGS_*` (resolved configuration), `DISCOVERED_DEVICE_*` (parallel device arrays), `DISPLAY_*` (terminal styles), `CLI_*` (explicit CLI-argument flags), `INPUT_RESPONSE` (last prompt), and `SESSION_*` (connection resources owned by transport). This keeps these internal values distinct from the public `REMOTE_SCRCPY_*` environment-variable interface. Prefer explicit `local` inside helpers. Do not introduce `eval`, execute SSH config, or launch any GUI/tunnel during completion; remote SSH device discovery is intentional and bounded. Avoid adding dependency bootstrap code to the normal execution path.
-
-**Lifecycle invariant:** install EXIT/signal cleanup before opening SSH; use private control socket/port leases; never terminate a shared remote ADB server. Use `tcp:PORT` only when starting the remote *local* ADB daemon, and `tcp:127.0.0.1:PORT` for a remote server accessed through an SSH tunnel. A protocol check prevents automatically restarting a mismatched shared server. Scrcpy device and tunnel flags are owned by the launcher.
-
-**Port reservation:** local SSH listeners reserve chosen ports; the remote port is atomically allocated through ADB `forward tcp:0`. Cleanup checks the original session's device and unique reservation before removing an unclaimed forwarding record. Never hardcode one shared mirroring port when supporting simultaneous sessions.
+The one public function is `remote-scrcpy`; helpers start with `_` and have
+kebab-case names that say what they do.
 
 ## Lifecycle walk-through
 
-`remote-scrcpy()` in `src/main.sh` is the whole program in forty lines:
+`remote-scrcpy()` in `src/main.sh` is the whole program:
 
 1. `_initialize-configuration` (environment defaults), `_parse-command-line`,
    `_validate-configuration`, `_validate-scrcpy-arguments`,
@@ -109,7 +113,9 @@ The long file-level header on the generated executable explains setup, usage, he
   removes a forward only when serial, port form and the exact token match;
   a port that another session obtained later is never touched, at the price
   of leaving behind a forward that this session's scrcpy rebound and then
-  failed to remove.
+  failed to remove. Simultaneous sessions therefore never share a port, and
+  the device and tunnel flags are the launcher's: passing them after `--` is
+  refused.
 - **Remote output is data.** `adb devices -l` and `forward --list` rows are
   read with `read -r` into variables, compared with quoted `==`, and never
   globbed, evaluated or used in a path. Device names are passed through
@@ -149,3 +155,19 @@ do not say which program failed.
 | 130 | cancelled (`q`, EOF at a prompt) or SIGINT, at any time |
 | 143 / 129 | SIGTERM / SIGHUP received, at any time |
 | any | scrcpy's own exit status once it runs, including its own 1 and 2 |
+
+## Upstream references
+
+What the invariants above rely on, and where each is stated.
+
+| Fact | Source |
+|---|---|
+| scrcpy's `--force-adb-forward`, `--tunnel-host`, `--tunnel-port` and `--port`, and running it through an SSH tunnel | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
+| scrcpy is built on SDL, which installs handlers for SIGINT and SIGTERM and turns them into a quit event; it lists none for SIGHUP, which is why a received HUP is forwarded as TERM | [scrcpy: build](https://github.com/Genymobile/scrcpy/blob/master/doc/build.md) for the dependency, [SDL: `SDL_HINT_NO_SIGNAL_HANDLERS`](https://wiki.libsdl.org/SDL3/SDL_HINT_NO_SIGNAL_HANDLERS) for the handlers |
+| `ADB_SERVER_SOCKET` tells the adb client, and scrcpy through it, which server to talk to | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
+| `adb forward` accepts `tcp:0` to pick any open port | [adb manual page](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md) |
+| it then prints the port it picked | observed, not documented there: the launcher reads that line, and the integration suite exercises it with a real adb |
+| `host:version` is the request that returns the server's protocol version | [adb: services](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/dev/services.md) |
+| a host-less `tcp:PORT` counts as a local server, which the client may start; a server whose version differs from the client's is killed and restarted by the client ("doesn't match this client; killing...") | adb source: [`socket_spec.cpp`](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/socket_spec.cpp) (`is_local_socket_spec`) and [`client/adb_client.cpp`](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/client/adb_client.cpp) |
+| `ControlMaster`, `ControlPath`, `-O check`, `-O forward` and `-O exit` | [ssh(1)](https://man.openbsd.org/ssh) and [ssh_config(5)](https://man.openbsd.org/ssh_config) |
+| `NO_COLOR` is a default for programs that color on their own; a setting made for the program overrides it | [no-color.org](https://no-color.org/) |

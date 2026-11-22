@@ -3,7 +3,11 @@
 Why the project is the way it is. One entry per decision, oldest first. Entries
 marked *pre-import* were taken before the repository was published on
 2026-11-05 and are reconstructed from the code and its comments; their exact
-dates are not recorded.
+dates are not recorded. Nothing else of the design history before that day
+survives: the import commit carries version 3.0.1, so at least three major
+iterations came before it, and the sessions with the AI coding agent that
+produced most commits since are not preserved either. What mattered in them
+is on this page and in the other documents.
 
 Format: **Decision.** Why. Consequences / where it shows in the code.
 
@@ -32,8 +36,8 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   An adb client that meets a server of a different protocol version kills
   and restarts that server. The remote server may be shared with other
   users, so the launcher reads `host:version` itself and refuses to continue
-  on a mismatch. Rule stated in the README: never terminate a shared remote
-  ADB server.
+  on a mismatch. The rule, never terminate a shared remote ADB server, is in
+  `CONTRIBUTING.md`.
 - **`tcp:PORT` only when starting the remote daemon, `tcp:127.0.0.1:PORT`
   through the tunnel.** adb treats a host-less `tcp:PORT` as local and may
   start a server for it; a `127.0.0.1` address is treated as remote and never
@@ -74,7 +78,10 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   `Test_Phone_A`. Nothing tied to a real host, phone or person.
 - **Track site-specific setup as a questionnaire in issue #1** instead of
   inventing instructions for hardware and operating systems that were not
-  verified.
+  verified. The maintainer still has to answer it before the `[TODO]`
+  markers in `src/prerequisites.sh` and the matching README section can
+  become instructions; it is the one standing reminder carried over from
+  before the import.
 - **CI token gets `contents: read` only, plus `workflow_dispatch`.**
 
 ## 2026-11-06
@@ -102,7 +109,9 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   to that directory, so there is one copy of every instruction. Windows
   checkouts need `git config core.symlinks true`.
 - **Long-form context lives under `docs/`**, readable by humans and agents
-  alike; `AGENTS.md` and the README only point there.
+  alike; `AGENTS.md` and the README only point there. The occasion was the
+  maintainer moving to another machine: everything a later person or agent
+  needs had to be in the repository, not in chat sessions.
 - **A shared `.claude/settings.json` allowlists read-only and build/test
   commands only.** Anything that writes (commits, pushes, GitHub edits) still
   prompts. Per-machine overrides stay in the ignored `settings.local.json`.
@@ -167,3 +176,61 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   downloads anything stands; the installer downloads the launcher and
   nothing else. Its work sits in a function called from a brace group on the
   last line, so a download cut short at any byte installs nothing.
+- **`docs/` is the single source; the agent files are indexes.** By
+  2026-11-22 the repository held about as much markdown as shell, with the
+  same facts in up to five files: the build and test procedure in four, the
+  module order in five, the pass counts of the suites in four. Every change
+  had to update the copies, and they drifted. Decided with the maintainer:
+  rules live in `CONTRIBUTING.md`, each procedure on its own page, and
+  `AGENTS.md`, `.agents/` and the skills route to them and add only what
+  applies to agents alone. Consequences in `docs/`: no pass counts anywhere;
+  the option checklist moved from a skill to `adding-a-cli-option.md`;
+  `history.md` is gone, because it restated `git log` up to the twelfth
+  commit and the facts only it held are now on this page (the introduction,
+  the entry on issue #1, and the occasion for the 2026-11-19 files); the
+  README's developer sections shrank to pointers.
+- **The recipe for a transport test built on fake programs is removed.**
+  `testing.md` described how to source the modules and drive single
+  transport functions against fake `ssh`, `adb` and `scrcpy` programs. No
+  such test was ever written, the suite it sketched was declined in favour
+  of the integration suite (entry above), and a page of instructions for
+  code that does not exist misleads more than it helps.
+- **Declined findings of the 2026-11-06 review**, so that nobody reopens
+  them without a new reason. From issue #6:
+  - *A terminal with `stty tostop` stops scrcpy at its first log line.*
+    Documented as a limit in the README, not fixed: the fix is to pipe
+    scrcpy's output through the launcher, which adds a process and changes
+    how its output reaches the terminal, for a setting that is off by
+    default.
+  - *A forward channel refused by `sshd` is taken for "no remote daemon".*
+    It needs a server that forbids forwarding, with which the launcher
+    cannot work at all, and two adb versions on the remote. Telling the two
+    apart would mean reading the SSH master's diagnostics.
+  - *No fallback when the control socket is gone.* `-O exit` is the only
+    handle on the master; a second one (its process ID) would cover the
+    case of something else deleting a private directory under `/tmp` while
+    a session runs.
+  - *Rows that adb prints as `(no serial number)` are split wrongly.* Such a
+    device cannot be selected by serial at all; the row is cosmetic and
+    rare.
+
+  From issue #8:
+  - *UTF-8 C1 control characters pass the display sanitizer.* The strings
+    come from the user's own remote machine and phone. Worth doing if the
+    launcher is ever pointed at machines its user does not control.
+  - *Tab is unbounded without the `timeout` program.* The README says the
+    wrapper is used where installed; a bound written in Bash would be a
+    second implementation of it.
+  - *The SSH configuration tokenizer is quadratic.* It needs a `Host` line
+    of tens of thousands of characters.
+  - *`REMOTE_SCRCPY_COMPLETE_DEVICES` honours only `0`.* It is documented
+    that way.
+  - *`_resolve-executable-path` trusts `command -v`.* It needs an exported
+    shell function named `adb` and a file of that name in the working
+    directory.
+
+  One item of issue #8 is neither fixed nor declined: a `~` in the command
+  word (`~/bin/remote-scrcpy r<Tab>`) gives no host completions, because the
+  completion function runs that word as Bash handed it over. It is deferred
+  to issue #22, which collects the cases of completion taking Bash's word
+  pieces at face value.

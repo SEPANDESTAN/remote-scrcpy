@@ -23,7 +23,7 @@ old string.
 1. Make sure `main` is green, then start a `release/X.Y.Z` branch in a
    worktree as in [`workflow.md`](workflow.md).
 2. Edit the three files above, then `bash src/build.sh`.
-3. Run everything in `testing.md`; expected counts unchanged.
+3. Run everything in [`testing.md`](testing.md).
 4. One commit:
    `release: bump to X.Y.Z and finalize CHANGELOG` with a body that lists the
    four files and summarizes the release (see `git show f623525` for the
@@ -41,19 +41,17 @@ old string.
    working after `main` moves on:
 
    ```bash
-   install_dir="$HOME/.local/bin"
-   mkdir -p "$install_dir"
-   curl -fsSL -o "$install_dir/remote-scrcpy" \
-       https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/vX.Y.Z/remote-scrcpy.sh
-   chmod +x "$install_dir/remote-scrcpy"
+   curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/vX.Y.Z/install.sh \
+       | bash -s -- --ref vX.Y.Z
    ```
 
    followed by the CHANGELOG section for the version and a "Next" pointer to
-   open issues. Never quote removed example values (hostnames, serials,
-   models) in notes or changelog entries; describe the change instead.
+   open issues. The rule on example values in
+   [`CONTRIBUTING.md`](CONTRIBUTING.md) applies to the notes as well:
+   describe a removed value, never quote it.
 7. `git fetch --tags` so the local clone sees the tag `gh` created.
-8. Verify: `remote-scrcpy --version` from a fresh `curl` of the pinned URL
-   prints the new version.
+8. Verify: the pinned install command, run with a scratch `HOME`, reports
+   the new version.
 
 Tags are `vX.Y.Z`, unsigned, created by `gh release create`. Releases are
 not drafts and not pre-releases. The README's install command points at

@@ -20,14 +20,22 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `add-cli-option`, `release`) linked from `.claude/skills`; a tracked
   `.claude/settings.json` that allowlists read-only and build/test commands.
 - `docs/`: `CONTRIBUTING.md`, `architecture.md`, `testing.md`, `release.md`,
-  `decisions.md`, `history.md`, and `review-2026-11-06.md` recording the
-  adversarial review of 3.0.2 and its tracking issues (#2 to #8).
+  `decisions.md`, and `review-2026-11-06.md` recording the adversarial
+  review of 3.0.2 and its tracking issues (#2 to #8).
 - `docs/workflow.md`: every change reaches `main` through a worktree branch,
   a pull request, an independent review and a squash merge; out-of-scope
   findings become issues; issue and pull request bodies follow the new
   templates under `.github/` and carry a type label.
 
 ### Changed
+- Documentation has one home per fact under `docs/`. `CONTRIBUTING.md` holds
+  every rule and a section on how the documents are kept; the option
+  checklist moved from a skill to `docs/adding-a-cli-option.md`; the skills
+  point at the documents and no longer copy them; no document states how
+  many checks a suite has; `docs/architecture.md` lists the upstream sources
+  its invariants rely on; the README's "Developing" section is a pointer,
+  and "Tests and limits" became "Limits" with a new note on `stty tostop`
+  (#13, #6).
 - Source comments: every module has one header and every function one doc
   comment. Most modules opened with two overlapping headers and a few
   functions carried two or three stacked comments. Comments that were wrong
@@ -59,8 +67,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the program itself overrides it. With the mode left at `auto`, `NO_COLOR`
   still disables color.
 - README: the "Internal naming" and "Architecture for maintainers" sections
-  moved to `docs/architecture.md`; a "Developing" section links every
-  document under `docs/`; "Tests and limits" reduced to the commands.
+  moved to `docs/architecture.md`; a "Developing" section points to the
+  contributing guide.
 - README install Option 2 uses `install -D` so the target directory is
   created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only
