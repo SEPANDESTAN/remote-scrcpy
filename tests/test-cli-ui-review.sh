@@ -33,6 +33,31 @@ parse_destinations() (
     printf '%s|%s' "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"
 )
 
+# What a command line makes the launcher do: connect, hosts, devices,
+# prerequisites or completion.
+parse_operation() (
+    _initialize-configuration
+    _parse-command-line "$@"
+    printf '%s' "$SETTINGS_OPERATION"
+)
+
+# The usage error a command line is refused with, or "accepted".
+parse_refusal() (
+    _initialize-configuration
+    local message
+    if message=$(_parse-command-line "$@" 2>&1 > /dev/null); then
+        printf 'accepted'
+    else
+        printf '%s' "${message#*remote-scrcpy: }"
+    fi
+)
+
+# Run a command with a host and a serial that come from the environment only.
+with_environment_destination() (
+    export REMOTE_SCRCPY_HOST=remote-host REMOTE_SCRCPY_SERIAL=PHONE_A
+    "$@"
+)
+
 parse_scrcpy_values() (
     _initialize-configuration
     _parse-command-line "$@"
@@ -140,6 +165,46 @@ expect_output 'Named serial alone preserves host picker' '|PHONE_A' parse_destin
 expect_output 'Duplicate host rejected' '2' exit_status parse_destinations remote-host --host other
 expect_output 'Duplicate serial rejected' '2' exit_status parse_destinations remote-host PHONE_A --serial other
 expect_output 'Extra positional rejected' '2' exit_status parse_destinations remote-host PHONE_A extra
+# One mode per run: each mode option alone selects its mode, and any two of
+# them, the same one twice included, are refused the same way in either order.
+modes=(--list-hosts --list-devices --prerequisites --completion=bash)
+operations=(hosts devices prerequisites completion)
+for index in "${!modes[@]}"; do
+    expect_output "${modes[index]} alone selects its mode" "${operations[index]}" parse_operation "${modes[index]}"
+    for second in "${modes[@]}"; do
+        expect_output "${modes[index]} then $second is refused" \
+            'Choose only one of --list-hosts, --list-devices, --prerequisites and --completion.' \
+            parse_refusal "${modes[index]}" "$second"
+        expect_output "${modes[index]} then $second exits with status 2" '2' exit_status parse_operation "${modes[index]}" "$second"
+    done
+done
+# The two-word form of --completion is a mode option like the others.
+one_mode='Choose only one of --list-hosts, --list-devices, --prerequisites and --completion.'
+expect_output '--completion bash alone selects its mode' 'completion' parse_operation --completion bash
+for second in --list-hosts --list-devices --prerequisites; do
+    expect_output "--completion bash then $second is refused" "$one_mode" parse_refusal --completion bash "$second"
+    expect_output "$second then --completion bash is refused" "$one_mode" parse_refusal "$second" --completion bash
+done
+expect_output 'No mode option means connect' 'connect' parse_operation remote-host
+# A host or serial belongs to a connection or to the device list only.
+expect_output '--list-devices takes a host' 'devices' parse_operation --list-devices remote-host
+expect_output '--list-devices refuses a serial' '--list-devices does not take a serial.' parse_refusal --list-devices remote-host PHONE_A
+expect_output '--list-hosts refuses a host' '--list-hosts does not take a host or serial.' parse_refusal remote-host --list-hosts
+expect_output '--prerequisites refuses a host' '--prerequisites does not take a host or serial.' parse_refusal remote-host --prerequisites
+expect_output '--prerequisites refuses a serial' '--prerequisites does not take a host or serial.' parse_refusal --prerequisites --serial PHONE_A
+expect_output '--completion refuses a host' '--completion does not take a host or serial.' parse_refusal --completion bash remote-host
+# Only what is typed counts: a host and serial that come from the
+# environment, as in a shell set up for daily use, refuse none of these.
+expect_output 'An environment destination does not refuse --prerequisites' 'prerequisites' with_environment_destination parse_operation --prerequisites
+expect_output 'An environment destination does not refuse --completion' 'completion' with_environment_destination parse_operation --completion bash
+expect_output 'An environment destination does not refuse --list-hosts' 'hosts' with_environment_destination parse_operation --list-hosts
+expect_output 'An environment serial does not refuse --list-devices' 'devices' with_environment_destination parse_operation --list-devices
+# Only a connection starts scrcpy, so only it takes options after --.
+for index in "${!modes[@]}"; do
+    expect_output "${modes[index]} refuses scrcpy options" "${modes[index]%%=*} does not take scrcpy options." \
+        parse_refusal "${modes[index]}" -- --max-size=1024
+done
+expect_output 'A connection takes scrcpy options' 'connect' parse_operation remote-host -- --max-size=1024
 expect_output 'Quoted scrcpy option values survive parsing' '<--record><phone capture.mkv><--max-size=1280>' \
     parse_scrcpy_values remote-host PHONE_A -- --record 'phone capture.mkv' --max-size=1280
 expect_output 'Manual numeric SSH destination is not a menu number' '1' choose_numeric_manual_host

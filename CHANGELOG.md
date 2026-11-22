@@ -24,6 +24,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   fail, because the discovery ran in a command substitution; it is called
   directly now (#38).
 
+### Fixed
+- Two mode options on one command line are now refused whichever two they
+  are and in whichever order. Before, `--completion=bash --list-hosts`
+  failed while `--list-hosts --completion=bash` printed the completion
+  script and ignored the listing, and `--prerequisites` silently won or
+  lost depending on where it stood (#32).
+
+### Compatibility
+- `--prerequisites` and `--completion` no longer accept a host or serial
+  next to them; `--list-hosts` already refused one. A second mode option is
+  always an error, also the same one twice. The refusal of scrcpy options
+  next to a mode names the option ("--prerequisites does not take scrcpy
+  options.") where it said "Listing modes" for all four.
+
 ## [3.1.0] — 2026-11-22
 
 ### Added
