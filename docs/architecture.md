@@ -163,7 +163,7 @@ What the invariants above rely on, and where each is stated.
 | Fact | Source |
 |---|---|
 | scrcpy's `--force-adb-forward`, `--tunnel-host`, `--tunnel-port` and `--port`, and running it through an SSH tunnel | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
-| scrcpy is built on SDL, which installs handlers for SIGINT and SIGTERM and turns them into a quit event; it lists none for SIGHUP, which is why a received HUP is forwarded as TERM | [scrcpy: build](https://github.com/Genymobile/scrcpy/blob/master/doc/build.md) for the dependency, [SDL: `SDL_HINT_NO_SIGNAL_HANDLERS`](https://wiki.libsdl.org/SDL2/SDL_HINT_NO_SIGNAL_HANDLERS) for the handlers |
+| scrcpy is built on SDL, which installs handlers for SIGINT and SIGTERM and turns them into a quit event; it lists none for SIGHUP, which is why a received HUP is forwarded as TERM | [scrcpy: build](https://github.com/Genymobile/scrcpy/blob/master/doc/build.md) for the dependency, [SDL: `SDL_HINT_NO_SIGNAL_HANDLERS`](https://wiki.libsdl.org/SDL3/SDL_HINT_NO_SIGNAL_HANDLERS) for the handlers |
 | `ADB_SERVER_SOCKET` tells the adb client, and scrcpy through it, which server to talk to | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
 | `adb forward` accepts `tcp:0` to pick any open port | [adb manual page](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md) |
 | it then prints the port it picked | observed, not documented there: the launcher reads that line, and the integration suite exercises it with a real adb |

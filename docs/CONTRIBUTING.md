@@ -130,8 +130,8 @@ what each one covers, the check CI adds, and the integration suite.
   suite has or how many lines a file has; say what the output looks like.
 - **Dated records are not edited.** `review-2026-11-06.md` describes the
   repository on that day. Decisions are appended to `decisions.md`; an
-  existing entry is changed only to correct a fact or a reference that has
-  gone stale.
+  existing entry is changed only to correct or complete its facts, or to
+  fix a reference that has gone stale.
 - `README.md` is for users: install, usage, limits. `CHANGELOG.md` records
   what changed for them.
 

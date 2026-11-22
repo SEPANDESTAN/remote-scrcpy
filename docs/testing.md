@@ -12,10 +12,10 @@ bash tests/test-install.sh
 ```
 
 They need no network, no phone and no root. A suite that fails exits
-non-zero and says which check failed; one that passes ends with a line
-saying so, most of them with the number of checks. That number grows when
-tests are added; a check is not removed without the reason in the commit
-body.
+non-zero and does not reach its closing line; most checks also say what
+failed. A suite that passes ends with a line saying so, most of them with
+the number of checks. That number grows when tests are added; a check is
+not removed without the reason in the commit body.
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
 it against the committed `remote-scrcpy.sh`; a stale bundle fails the build.
@@ -107,8 +107,7 @@ sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
 Without root or `sshd` it skips itself. CI runs it on every pull request and
 on every push to `main` in a job of its own, `integration`, next to the fast
 suites; that job fails if the suite skips. If you changed
-`src/transport.sh`, run it yourself first where you can, and say in the
-commit body that the transport changed.
+`src/transport.sh`, say so in the commit body.
 
 Without root on your machine, a rootless [Podman](https://podman.io/)
 container gives it a root of its own and keeps everything on the container's
