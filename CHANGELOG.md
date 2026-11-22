@@ -34,6 +34,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `src/transport.sh` is exercised end to end before a change is merged. `actions/checkout` moves from v4 to
   v7.
 
+### Tests
+- The integration suite now fails for each transport mutation listed in
+  issue #3, including a removed hex check on the length of the ADB version
+  reply, an offline device accepted by serial, and the host-less socket form
+  used through the tunnel (#3).
+
 ### Fixed
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
