@@ -113,6 +113,14 @@ assert_eq 'a short option completes to itself' '-l' "${COMPREPLY[*]}"
 complete_words remote-host -
 assert_eq 'a dash after a host offers the options' "$all_options" "${COMPREPLY[*]}"
 assert_eq 'a dash after a host starts no lookup' '(no lookup)' "$(queried_host)"
+# A dash-led word that is the value --host or --serial waits for is a value,
+# not an option word: it completes as on earlier versions.
+complete_words --host -
+assert_eq 'a dash as the value of --host offers nothing' '' "${COMPREPLY[*]}"
+assert_eq 'a dash as the value of --host starts no lookup' '(no lookup)' "$(queried_host)"
+complete_words remote-host --serial -
+assert_eq 'a dash as the value of --serial offers no option words' '' "${COMPREPLY[*]}"
+assert_eq 'a dash as the value of --serial is looked up as a serial' 'remote-host' "$(queried_host)"
 # A short option before the host is not counted as the host.
 complete_words -l remote-host D
 assert_eq 'a short option does not shift the positions' 'remote-host' "$(queried_host)"

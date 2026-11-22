@@ -9,7 +9,9 @@ usage() {
         '' \
         'Concatenate the modules under src/ into the single-file launcher.' \
         'OUTPUT defaults to remote-scrcpy.sh at the repository root. The' \
-        'result is syntax-checked, and OUTPUT is replaced only if it passes.'
+        'result is syntax-checked, and OUTPUT is replaced only if it passes.' \
+        '' \
+        '  -h, --help   show this help'
 }
 
 case ${1:-} in

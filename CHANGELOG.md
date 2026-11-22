@@ -43,7 +43,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`-v` and `-V` have swapped.** `-v` now prints the version and `-V` turns
   on verbose output, as in scrcpy; until 3.1.0 it was the other way round.
   A script that passes `-v` for verbose output gets the version and status
-  0 instead of a connection: write `--verbose` or `-V`.
+  0 instead of a connection: write `--verbose` or `-V`. In the other
+  direction, `-V` used to print the version and stop; it now goes on with
+  the run, which is a connection when a host and serial are given or
+  exported: write `--version` or `-v`.
+- The new letters used to be refused before the `--` as unknown options.
+  Four of them mean something else to scrcpy (`-n` no control, `-p` port,
+  `-v` and `-V`), so a command line that forgets the `--` in front of one is
+  no longer an error: it gets the launcher's meaning.
 - `--prerequisites` and `--completion` no longer accept a host or serial
   next to them; `--list-hosts` already refused one. A second mode option is
   always an error, also the same one twice. The refusal of scrcpy options

@@ -49,6 +49,7 @@ trap 'rm -rf "$tools"' EXIT
 # The build script explains itself and refuses what it does not understand,
 # instead of taking an option for the output path, and writes nothing then.
 check contains "$(bash "$project/src/build.sh" --help)" 'Usage: bash src/build.sh [OUTPUT]'
+check contains "$(bash "$project/src/build.sh" -h)" '  -h, --help   show this help'
 check status 2 bash "$project/src/build.sh" --bogus
 check status 2 bash "$project/src/build.sh" "$tools/one" "$tools/two"
 check equals "$(ls -A "$tools")" ''
@@ -104,9 +105,10 @@ config=$(mktemp)
 trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
-# Each one-letter option gives what its long name gives, and the help shows
-# the two side by side. -l is the one that needs a host; the parser checks
-# for it are in tests/test-cli-ui-review.sh.
+# The one-letter options that end the run without connecting print what
+# their long names print, and the help shows every letter beside its long
+# name. That each letter sets what its long name sets, including the ones
+# that go on to connect, is checked in tests/test-cli-ui-review.sh.
 check equals "$("$script" -v)" "$("$script" --version)"
 check equals "$("$script" -h)" "$("$script" --help)"
 check equals "$("$script" -p)" "$("$script" --prerequisites)"

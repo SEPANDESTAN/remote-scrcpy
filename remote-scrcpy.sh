@@ -1424,7 +1424,13 @@ _remote-scrcpy-complete-words() {
                 < <(compgen -W 'auto always never' -- "$current")
             return ;;
         --completion=*) COMPREPLY=( $(compgen -W '--completion=bash' -- "$current") ); return ;;
-        -*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
+        --*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
+        -*)
+            # A single dash starts an option word, unless the word is the
+            # value that --host or --serial is waiting for.
+            if (( ! complete_host && ! complete_serial )); then
+                COMPREPLY=( $(compgen -W "$options" -- "$current") ); return
+            fi ;;
     esac
 
     if (( complete_host == 0 && complete_serial == 0 )); then

@@ -280,3 +280,19 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   parser's rules for a valid line would mean two copies of those rules to
   keep in step, for lines nobody types on purpose. Decided by the author of
   the change that recorded it, under the entry above on declining.
+- **The launcher's letters, and what was left out.** Chosen by the
+  maintainer: `-l` `--list-devices`, `-L` `--list-hosts`, `-p`
+  `--prerequisites`, `-q` `--quiet`, `-n` `--non-interactive`, and `-v` for
+  the version with `-V` for verbose, which swaps the two as they stood up to
+  3.1.0 and makes that release's successor a major version. Host and serial
+  get no letter because they are positional. Letters are not bundled and
+  take no attached value: none of them takes a value, and the parser stays
+  a `case` over whole words. Four letters mean something else to scrcpy:
+  `-n` is its no-control, `-p` its port, and `-v` and `-V` are its version
+  and verbosity. scrcpy's options belong after `--`, where the launcher's
+  letters do not apply, but a command line that forgets the `--` used to be
+  refused and now gets the launcher's meaning; with `-n` that is a session
+  with control where a view-only one was meant. The price was accepted for
+  letters that are quick to type; `--help` and the README say which side of
+  `--` each meaning lives on.
+
