@@ -6,7 +6,7 @@
 bash -n remote-scrcpy.sh
 bash tests/test-maintenance.sh       # expects: Maintenance checks: 32 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 32 passed.
-bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 23 passed, 0 failed.
+bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 27 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
 ```
 

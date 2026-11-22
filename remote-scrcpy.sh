@@ -299,7 +299,8 @@ CONFIGURATION
   REMOTE_SCRCPY_ASCII, REMOTE_SCRCPY_VERBOSE,
   REMOTE_SCRCPY_QUIET, REMOTE_SCRCPY_NON_INTERACTIVE (toggles: 0 or 1).
   ADB, REMOTE_ADB, ADB_PORT and SCRCPY remain secondary fallbacks.
-  NO_COLOR=1 disables color unconditionally.
+  NO_COLOR=1 disables color unless --color=always or
+  REMOTE_SCRCPY_COLOR=always asks for it.
 
 PREREQUISITES
   Local: Bash 4.4+, OpenSSH client, scrcpy, and an accessible adb client;
@@ -565,7 +566,8 @@ _discover-ssh-host-aliases() (
 # ===== presentation.sh =====
 # Human-facing colors and Unicode symbols, limited to stderr in a TTY.
 # Never add terminal escapes to stdout; listing/completion modes need plain text.
-# NO_COLOR overrides --color. --ascii changes decoration independently.
+# An explicit color mode overrides NO_COLOR; NO_COLOR decides only in auto mode.
+# --ascii changes decoration independently.
 
 # Small terminal decorations for the numbered UI. No cursor movement, raw input
 # mode, external UI program, terminal database, or subprocess is needed for setup.
@@ -581,9 +583,12 @@ _initialize-terminal-styles() {
     DISPLAY_SYMBOL_WARNING='!' DISPLAY_SYMBOL_ERROR='x' DISPLAY_SYMBOL_INFO='*'
     if [[ -t 2 && -n ${TERM:-} && $TERM != dumb ]]; then terminal=1; fi
 
-    # NO_COLOR takes precedence, including over an explicit --color=always.
-    if [[ -z ${NO_COLOR:-} ]] \
-        && { [[ $SETTINGS_COLOR_MODE == always ]] || { [[ $SETTINGS_COLOR_MODE == auto ]] && (( terminal )); }; }; then
+    # NO_COLOR is a default for programs that color on their own; a setting
+    # made for this program overrides it (https://no-color.org). So "always",
+    # from --color or REMOTE_SCRCPY_COLOR, colors regardless, and NO_COLOR
+    # decides only when the mode is left at auto.
+    if [[ $SETTINGS_COLOR_MODE == always ]] \
+        || { [[ $SETTINGS_COLOR_MODE == auto && -z ${NO_COLOR:-} ]] && (( terminal )); }; then
         DISPLAY_COLOR_RESET=$'\033[0m'
         DISPLAY_COLOR_BOLD=$'\033[1m'
         DISPLAY_COLOR_MUTED=$'\033[2m'

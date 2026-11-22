@@ -57,7 +57,8 @@ CONFIGURATION
   REMOTE_SCRCPY_ASCII, REMOTE_SCRCPY_VERBOSE,
   REMOTE_SCRCPY_QUIET, REMOTE_SCRCPY_NON_INTERACTIVE (toggles: 0 or 1).
   ADB, REMOTE_ADB, ADB_PORT and SCRCPY remain secondary fallbacks.
-  NO_COLOR=1 disables color unconditionally.
+  NO_COLOR=1 disables color unless --color=always or
+  REMOTE_SCRCPY_COLOR=always asks for it.
 
 PREREQUISITES
   Local: Bash 4.4+, OpenSSH client, scrcpy, and an accessible adb client;

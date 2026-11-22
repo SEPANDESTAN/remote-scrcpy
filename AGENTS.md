@@ -74,7 +74,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   
 bash -n remote-scrcpy.sh
 bash tests/test-maintenance.sh      # Maintenance checks: 32 passed.
 bash tests/test-completion.sh       # Completion checks: 32 passed.
-bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 23 passed, 0 failed.
+bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 27 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```

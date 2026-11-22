@@ -36,6 +36,17 @@ parse_scrcpy_values() (
     printf '<%s>' "${SETTINGS_SCRCPY_EXTRA_ARGUMENTS[@]}"
 )
 
+# Whether status output would be colored for a color mode and a NO_COLOR value
+# (empty for unset). Standard error is not a terminal here, so auto never
+# colors and only the explicit modes can tell the cases apart.
+color_state() (
+    _initialize-configuration
+    SETTINGS_COLOR_MODE=$1
+    if [[ -n $2 ]]; then export NO_COLOR=$2; else unset NO_COLOR; fi
+    _initialize-terminal-styles
+    if [[ -n $DISPLAY_COLOR_RESET ]]; then printf on; else printf off; fi
+)
+
 parse_presentation() (
     _initialize-configuration
     _parse-command-line "$@"
@@ -123,6 +134,10 @@ expect_output 'A displayed device number always selects that row' 'PHONE_A' choo
 expect_output 'Huge host menu numbers cannot become unintended destinations' 'alpha' reject_huge_host_menu_number
 expect_output 'Exact serial entry disambiguates a numeric device serial' '1' choose_exact_numeric_device_serial
 expect_output 'Default presentation uses automatic color and symbols' 'auto|0||' parse_presentation
+expect_output 'An explicit always colors without a terminal' 'on' color_state always ''
+expect_output 'An explicit always overrides NO_COLOR' 'on' color_state always 1
+expect_output 'An explicit never stays uncolored' 'off' color_state never ''
+expect_output 'Auto does not color when NO_COLOR is set' 'off' color_state auto 1
 expect_output 'Color option retains host-only continuation' 'never|0|remote-host|' \
     parse_presentation --color never remote-host
 expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \
