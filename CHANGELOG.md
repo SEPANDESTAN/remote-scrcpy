@@ -24,10 +24,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - Source comments: every module has one header and every function one doc
   comment. Most modules opened with two overlapping headers and a few
-  functions carried two or three stacked comments. Two comments are also
-  corrected: which of colors and symbols need a terminal, and why cleanup
-  leaves a forward behind once scrcpy has taken over the reserved port
-  (#6). No code line changes.
+  functions carried two or three stacked comments. Comments that were wrong
+  are corrected: which of colors and symbols need a terminal, which
+  functions assign the session variables, and why cleanup leaves a forward
+  behind once scrcpy has taken over the reserved port (#6). No code line
+  changes.
 - `bash src/build.sh --help` prints its usage. Before, any option was taken
   for the output path and failed inside `mktemp`; unknown options and extra
   arguments are now refused with status 2 (#5).
