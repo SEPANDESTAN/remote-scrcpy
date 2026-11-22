@@ -397,6 +397,17 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertRegex(result.stdout.lower(), r"select|choose|device.*number")
         self.assert_closed()
 
+    def test_device_menu_offers_only_ready_devices(self):
+        self.server.devices = [("SERIAL_A", "offline", "Offline_Phone"),
+                               ("SERIAL_B", "device", "Beta_Phone")]
+        # Neither its serial nor the first number may pick the offline device:
+        # numbers count ready devices only, so 1 is SERIAL_B.
+        result = self.run_tty(("fixture",), b"SERIAL_A\n1\n")
+        self.assert_success(result)
+        self.assertIn("Choose an online device", result.stdout)
+        self.assertEqual(self.events("scrcpy_started")[0]["serial"], "SERIAL_B")
+        self.assert_closed()
+
     def test_host_and_device_menus_reject_bad_device_input(self):
         result = self.run_tty((), b"1\ninvalid\n9999999999999999999999999999\n0\n2\n")
         self.assert_success(result)
@@ -545,17 +556,53 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed()
 
+    def assert_probe_rejects(self, reply, message, sentinel=None):
+        """Serve one version reply and require the probe's own verdict on it.
+
+        The launcher must stop with `message`, without having started, killed or
+        queried the remote ADB server, and without creating `sentinel`.
+        """
+        self.server.version_response = reply
+        result = self.run_cli()
+        if sentinel is not None:
+            self.assertFalse(sentinel.exists(),
+                             "the launcher executed text taken from the ADB version reply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(message, result.stderr)
+        self.assertFalse([row for row in self.events(adb=True) if "start-server" in row["args"]])
+        self.assertNotIn("host:kill", self.server.requests)
+        self.assertNotIn("host:devices-l", self.server.requests)
+        self.assertFalse(self.events("scrcpy_started"))
+        self.assert_closed()
+
     def test_non_hex_length_in_protocol_response_is_rejected_by_the_probe(self):
         # Without the hex check the length would only fail later, inside shell
         # arithmetic, with an interpreter error instead of the probe's verdict.
-        self.server.version_response = b"OKAY00x40029"
-        result = self.run_cli()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("truncated or invalid response length", result.stderr)
-        self.assertFalse([row for row in self.events(adb=True) if "start-server" in row["args"]])
-        self.assertNotIn("host:kill", self.server.requests)
-        self.assertFalse(self.events("scrcpy_started"))
-        self.assert_closed()
+        self.assert_probe_rejects(b"OKAY00x40029", "truncated or invalid response length")
+
+    def test_probe_rejects_a_reply_with_an_unknown_status(self):
+        # Everything after the status is a well-formed answer for protocol 41.
+        self.assert_probe_rejects(b"XXXX00040029", "invalid protocol status")
+
+    def test_probe_rejects_a_length_outside_its_bounds(self):
+        for reply in (b"OKAY0000", b"OKAY1001" + b"0" * 0x1001):
+            with self.subTest(length=reply[4:8].decode()):
+                self.assert_probe_rejects(reply, "invalid version payload length")
+
+    def test_probe_rejects_a_fail_reply_even_with_a_plausible_version(self):
+        self.assert_probe_rejects(b"FAIL00040029", "rejected its version query")
+
+    def test_probe_never_evaluates_the_version_payload(self):
+        # The payload is converted with shell arithmetic, and Bash arithmetic runs
+        # a command substitution inside an array subscript. The hex check before
+        # the conversion is all that keeps a reply like this one from running a
+        # command on the viewing computer. The subscripted name has to be a set
+        # variable: under `set -u` an unset one aborts before the substitution.
+        sentinel = self.work / "PAYLOAD_MUST_NOT_RUN"
+        sentinel.unlink(missing_ok=True)
+        payload = f"0+BASH_VERSINFO[$(touch {sentinel})]".encode()
+        reply = b"OKAY" + f"{len(payload):04x}".encode() + payload
+        self.assert_probe_rejects(reply, "invalid protocol version", sentinel=sentinel)
 
     def test_failed_remote_startup_cleans_transport(self):
         self.fail_start_marker.touch()

@@ -39,6 +39,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   issue #3, including a removed hex check on the length of the ADB version
   reply, an offline device accepted by serial, and the host-less socket form
   used through the tunnel (#3).
+- Every validation step of the ADB protocol probe is tested on its own
+  (status, length bounds, a `FAIL` reply, the hex check on the version
+  payload), and the device menu is tested to offer only ready devices (#15).
 
 ### Fixed
 - The test suites no longer inherit the launcher's environment. With
