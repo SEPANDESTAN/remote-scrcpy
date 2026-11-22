@@ -61,10 +61,13 @@ _complete-remote-scrcpy
 check equals "${COMPREPLY[*]}" 'auto always'
 
 # Regression guard: every fast suite clears the launcher's public environment
-# before it does anything else, so it cannot reach the developer's real host.
+# as its first command after `set -euo pipefail`, so nothing in it can run
+# with the developer's real host configured. Comments and blank lines aside,
+# the scrub has to be the second line of the file.
 for suite in "$project"/tests/test-*.sh; do
-    grep -Fqx 'unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR' "$suite" \
-        || fail "$(basename -- "$suite") does not clear the launcher environment"
+    # shellcheck disable=SC2016  # the literal text of the line is compared, nothing should expand
+    [[ $(grep -vE '^[[:space:]]*(#|$)' "$suite" | sed -n 2p) == 'unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR' ]] \
+        || fail "$(basename -- "$suite") does not clear the launcher environment first"
 done
 passed=$((passed+1))
 

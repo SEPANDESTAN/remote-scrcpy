@@ -110,9 +110,9 @@ author: `Co-Authored-By: <agent name> <noreply@...>`.
   write a hermetic transport test.
 - `docs/workflow.md`: branch, pull request, review and merge procedure.
 - `docs/decisions.md` and `docs/history.md`: why things are this way.
-- `docs/review-2026-11-06.md`: the last full review; its open items are
-  GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill in
-  site-specific prerequisites.
+- `docs/review-2026-11-06.md`: the last full review; its findings were filed
+  as GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill
+  in site-specific prerequisites.
 
 ## Windows checkouts
 
