@@ -27,7 +27,7 @@ bash tests/test-maintenance.sh && bash tests/test-completion.sh \
   && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh
 ```
 
-Expected: 54, 34 and 31 passed checks and "SSH config discovery checks
+Expected: 58, 34 and 31 passed checks and "SSH config discovery checks
 passed." Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 
@@ -67,6 +67,9 @@ in `tests/test-completion.sh`).
 - One public function, `remote-scrcpy`. Helpers are `_kebab-case` with
   explanatory names and a two-line comment: purpose, then arguments, side
   effects and failure behaviour.
+- A script that takes arguments answers `--help` and refuses options it does
+  not know (`remote-scrcpy.sh`, `src/build.sh`). The test suites take no
+  arguments; their header comment says what they are.
 - Globals are namespaced: `SETTINGS_*` (resolved configuration), `SESSION_*`
   (resources owned by the active connection, transport only),
   `DISCOVERED_DEVICE_*`, `DISPLAY_*`, `CLI_*`, `INPUT_RESPONSE`,

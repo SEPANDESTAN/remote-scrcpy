@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 # Bundle maintained modules into one portable-to-copy Bash executable.
 set -euo pipefail
+
+# Print how to call this script. Args: none; writes to standard output.
+usage() {
+    printf '%s\n' \
+        'Usage: bash src/build.sh [OUTPUT]' \
+        '' \
+        'Concatenate the modules under src/ into the single-file launcher.' \
+        'OUTPUT defaults to remote-scrcpy.sh at the repository root. The' \
+        'result is syntax-checked, and OUTPUT is replaced only if it passes.'
+}
+
+case ${1:-} in
+    -h|--help) usage; exit 0 ;;
+    -*) printf 'build.sh: unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
+esac
+if (( $# > 1 )); then
+    printf 'build.sh: expected at most one argument\n' >&2; usage >&2; exit 2
+fi
+
 script_dir=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 project_dir=$(cd -- "$script_dir/.." && pwd)
 output=${1:-$project_dir/remote-scrcpy.sh}

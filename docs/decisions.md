@@ -135,3 +135,14 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   while approving the review plan: one name per thing, and nothing had ever
   documented them, so removing them breaks no stated interface. If either
   turns out to be in use, it comes back as a documented option.
+- **`--help` is required of scripts that take arguments, not of every
+  script.** The 2026-11-06 standard said every script should answer
+  `--help` and every function carry a doc comment, and issue #5 listed what
+  was missing: the build script, the four test suites, the three Python
+  fixtures, and seventeen test helpers. Only the build script takes an
+  argument, and it misread `--help` as an output path. It now explains
+  itself. The suites take no arguments and state their purpose in their
+  first lines; the fixtures are a library and two stand-ins driven by the
+  integration suite, each with a module docstring. Giving them option
+  parsing, and one-line helpers such as `fail` a comment, would add text
+  that tells a reader nothing. The doc-comment rule stays for `src/`.

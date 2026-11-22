@@ -62,9 +62,10 @@ daily use come first; polish for strangers second.
    changelog or release text either.
 8. **Every external tool or standard gets its URL on first mention** in
    markdown.
-9. **Every script should answer `--help`; every function carries a doc
-   comment** (purpose line, then arguments, side effects, failure). The
-   scripts that still lack `--help` are tracked in issue #5.
+9. **Every script that takes arguments answers `--help`; every function in
+   `src/` carries a doc comment** (purpose line, then arguments, side
+   effects, failure). The test suites take no arguments and say what they
+   are in their header comment.
 
 ## Commands
 
@@ -72,7 +73,7 @@ daily use come first; polish for strangers second.
 bash src/build.sh                                   # regenerate the bundle
 bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   # CI parity
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh      # Maintenance checks: 54 passed.
+bash tests/test-maintenance.sh      # Maintenance checks: 58 passed.
 bash tests/test-completion.sh       # Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.

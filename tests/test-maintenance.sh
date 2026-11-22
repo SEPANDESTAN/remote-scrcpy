@@ -14,6 +14,19 @@ equals() { [[ $1 == "$2" ]]; }
 status() { local wanted=$1; shift; local result=0; "$@" >/dev/null 2>&1 || result=$?; [[ $result == "$wanted" ]]; }
 
 check bash -n "$script"
+# Every module under src/ is in the bundle. A module dropped from the list in
+# src/build.sh still gives a bundle that parses, and a rebuilt copy is then
+# identical to the committed one, so only its section marker shows the loss.
+for module in "$project"/src/*.sh; do
+    [[ ${module##*/} == build.sh ]] && continue
+    grep -Fqx "# ===== ${module##*/} =====" "$script" || fail "${module##*/} is not in the bundle"
+done
+passed=$((passed+1))
+# The build script explains itself and refuses what it does not understand,
+# instead of taking an option for the output path.
+check contains "$(bash "$project/src/build.sh" --help)" 'Usage: bash src/build.sh [OUTPUT]'
+check status 2 bash "$project/src/build.sh" --bogus
+check status 2 bash "$project/src/build.sh" one two
 check contains "$("$script" --version)" '3.0.2'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
