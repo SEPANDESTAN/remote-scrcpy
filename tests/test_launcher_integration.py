@@ -359,9 +359,10 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assert_closed()
 
     def test_everything_through_the_tunnel_names_the_loopback_address(self):
-        # adb treats a host-less tcp:PORT as a local server that it may start or
-        # restart; only tcp:127.0.0.1:PORT is left alone. Both forms reach the
-        # tunnel, so nothing but the recorded endpoint tells them apart.
+        # adb treats a host-less tcp:PORT as local and may start a server for
+        # it; tcp:127.0.0.1:PORT is never auto-started. (A server of another
+        # version is protected by the protocol probe, not by this form.) Both
+        # forms reach the tunnel, so only the recorded endpoint tells them apart.
         result = self.run_cli()
         self.assert_success(result)
         # `adb version` is the one call that never contacts a server and is
@@ -562,8 +563,8 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         result = self.run_cli(options=("--adb-port", str(port)))
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("simulated remote ADB startup failure", result.stdout + result.stderr)
-        # The remote daemon is started with the host-less form, the only one
-        # adb will start a server for.
+        # The remote daemon is started with the host-less form, which adb
+        # treats as local and will start a server for.
         started = [row for row in self.events(adb=True)
                    if row["role"] == "remote" and "start-server" in row["args"]]
         self.assertEqual([row["endpoint"] for row in started], [f"tcp:{port}"])

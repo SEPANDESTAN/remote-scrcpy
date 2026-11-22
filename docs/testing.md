@@ -41,7 +41,9 @@ The 2026-11-06 review proved it by mutation (table in
 transport, and CI runs it. It catches each of the seven mutations listed in
 issue #3 when they are planted one at a time, and each half of the
 socket-form mutation alone. Dropping a module from the build list is caught
-only where a test happens to need that module.
+only where a test happens to need that module. Five neighbouring checks,
+four of them in the protocol probe, can still be removed unnoticed; they are
+listed in issue #15.
 
 ### Environment
 
