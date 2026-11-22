@@ -1065,10 +1065,11 @@ _wait-for-scrcpy-exit() {
 }
 
 # Signal only the owned scrcpy process group, then reap it.
-# Args: INT/TERM/HUP; idempotent, used by traps.
+# Args: INT or TERM; idempotent, used by traps.
 _stop-scrcpy-process() {
-    # Called by the main INT/TERM/HUP handler before it exits. The player has a
-    # separate process group, so a terminal signal is forwarded exactly once.
+    # Called by the main signal handler before it exits, which passes a
+    # received HUP on as TERM. The player has a separate process group, so a
+    # terminal signal is forwarded exactly once.
     local signal=${1:-INT}
     ((SESSION_STOPPING == 0)) || return 0
     SESSION_STOPPING=1
@@ -1444,11 +1445,17 @@ _handle-process-exit() {
     exit "$status"
 }
 
-# Forward signal to owned scrcpy, then exit with signal code.
+# Stop the owned scrcpy for a received signal, then exit with its code.
 # Args: signal and exit status; triggers EXIT cleanup.
 _handle-termination-signal() {
     local signal=$1 status=$2
     trap '' INT TERM HUP
+    # scrcpy shuts down cleanly on INT and TERM only; nothing in it handles
+    # HUP, which would kill it before its own shutdown: finishing a recording,
+    # stopping the server and, during startup, removing its adb forward. A
+    # closed terminal therefore reaches it as TERM. The exit status still
+    # says HUP.
+    [[ $signal != HUP ]] || signal=TERM
     _stop-scrcpy-process "$signal"
     exit "$status"
 }

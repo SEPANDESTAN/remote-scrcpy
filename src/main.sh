@@ -14,11 +14,17 @@ _handle-process-exit() {
     exit "$status"
 }
 
-# Forward signal to owned scrcpy, then exit with signal code.
+# Stop the owned scrcpy for a received signal, then exit with its code.
 # Args: signal and exit status; triggers EXIT cleanup.
 _handle-termination-signal() {
     local signal=$1 status=$2
     trap '' INT TERM HUP
+    # scrcpy shuts down cleanly on INT and TERM only; nothing in it handles
+    # HUP, which would kill it before its own shutdown: finishing a recording,
+    # stopping the server and, during startup, removing its adb forward. A
+    # closed terminal therefore reaches it as TERM. The exit status still
+    # says HUP.
+    [[ $signal != HUP ]] || signal=TERM
     _stop-scrcpy-process "$signal"
     exit "$status"
 }
