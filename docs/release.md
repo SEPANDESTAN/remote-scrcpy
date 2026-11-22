@@ -31,10 +31,15 @@ old string.
 5. Take it through the pull request, review and squash merge of
    `workflow.md`, then `git pull --ff-only` in the main checkout so that
    `main` is the release commit.
-6. Create the tag and release on GitHub in one step, from the main checkout:
+6. Create the tag and release on GitHub in one step, from the main checkout.
+   Check first that it is at the merged release commit (`git log -1` shows
+   the `release:` subject and `git status -sb` shows nothing ahead or
+   behind), and name that commit as the target, because `gh` otherwise tags
+   whatever the default branch points to at that moment:
 
    ```bash
-   gh release create vX.Y.Z --title "vX.Y.Z — <one-line summary>" --notes-file notes.md
+   gh release create vX.Y.Z --target "$(git rev-parse HEAD)" \
+       --title "vX.Y.Z — <one-line summary>" --notes-file notes.md
    ```
 
    The notes carry an install block that pins the tag, so the link keeps

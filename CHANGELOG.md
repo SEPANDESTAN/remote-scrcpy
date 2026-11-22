@@ -90,10 +90,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Tests
 - Every fast suite closes its standard input as well as clearing the
-  launcher's environment, and the maintenance suite checks both. A shell
-  started by a test with a socket on standard input took itself for a
-  remote login, read the user's startup files under a stripped `PATH`, and
-  forked without end.
+  launcher's environment, and the maintenance suite checks both. A draft of
+  the new installer suite, before it was merged, started a shell with a
+  socket on standard input and a stripped `PATH`; that shell took itself
+  for a remote shell, read the user's startup files, and forked without
+  end. The suites of earlier releases never ran under a stripped `PATH`.
 - The maintenance suite fails, naming the file, when a module under `src/`
   is missing from the bundle. The rebuild comparison in CI cannot show such
   a loss, and the fast suites noticed it only for modules they happen to
@@ -127,7 +128,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is then taken from the password database, where OpenSSH looks too, so the
   alias list is the same as with `HOME` set. With an empty `HOME` there is
   no default SSH config, and an `Include` that needs a home directory is
-  skipped with a message.
+  skipped with a message. A `HOME` that is not an absolute path now counts
+  as no home directory, where 3.0.2 used it as given.
 - Closing the terminal no longer kills scrcpy outright. The launcher passed
   the hangup signal on unchanged, and scrcpy, which handles only interrupt
   and terminate, died before its own shutdown, for example without finishing
@@ -147,14 +149,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No documented option or `REMOTE_SCRCPY_*` variable was removed or renamed;
-  the two aliases removed above were never documented. Two behaviours
-  changed:
+- No documented option or `REMOTE_SCRCPY_*` variable was removed or
+  renamed. Three behaviours changed:
+- `--list` and `--requirements` are gone; use `--list-devices` and
+  `--prerequisites`. Neither alias was in `--help` or the README, but Tab
+  completion offered `--list` up to 3.0.2.
 - Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
   now completes as a host, as the launcher reads it. To complete a serial on
   the environment host, use `--serial <Tab>` or `--serial=<Tab>`.
 - `NO_COLOR` together with an explicit `--color=always` or
-  `REMOTE_SCRCPY_COLOR=always`: the output is now colored.
+  `REMOTE_SCRCPY_COLOR=always`: the output is now colored. The help text of
+  3.0.2 said that `NO_COLOR` disables color unconditionally; it now decides
+  only while the color mode is `auto`.
 
 ## [3.0.2] — 2026-11-05
 
