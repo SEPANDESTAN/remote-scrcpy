@@ -72,7 +72,9 @@ The long file-level header on the generated executable explains setup, usage, he
 - **`set -m` around the scrcpy launch** puts scrcpy in its own process group
   without a `setsid` dependency. Ctrl-C therefore hits the launcher only;
   `_stop-scrcpy-process` forwards one signal, waits up to 5 s, then sends
-  TERM and KILL to the group. Every group kill is gated by `kill -0`, and the
+  TERM and KILL to the group. A received HUP is forwarded as TERM, because
+  scrcpy shuts down cleanly on INT and TERM only; the launcher still exits
+  with 129. Every group kill is gated by `kill -0`, and the
   PID comes only from `$!`, so PID 0, 1 or an empty value can never be
   targeted.
 - **The mux client uses `-F /dev/null -o ProxyCommand=false -o

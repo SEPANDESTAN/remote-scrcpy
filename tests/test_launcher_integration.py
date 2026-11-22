@@ -537,6 +537,21 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertFalse(self.server.forwards)
         self.assert_closed()
 
+    def test_sighup_lets_scrcpy_shut_down_instead_of_killing_it(self):
+        # A closed terminal sends HUP. scrcpy handles INT and TERM only, and so
+        # does the stand-in: passed on unchanged, HUP would kill it before its
+        # own cleanup ran and no "finished" event would exist.
+        process = self.start_cli(scrcpy=("--fake-hold=60",))
+        self.wait_event("scrcpy_connected")
+        process.send_signal(signal.SIGHUP)
+        stdout, stderr = process.communicate(timeout=10)
+        self.assertEqual(process.returncode, 129, stdout + stderr)
+        finished = self.events("scrcpy_finished")
+        self.assertEqual(len(finished), 1, stdout + stderr)
+        self.assertTrue(finished[0]["adb_available"], stdout + stderr)
+        self.assertFalse(self.server.forwards)
+        self.assert_closed()
+
     def test_protocol_mismatch_fails_before_real_adb_can_kill_daemon(self):
         self.server.protocol = 42
         result = self.run_cli()
