@@ -189,13 +189,15 @@ _resolve-executable-path() {
 # Validate all environment/CLI settings before connecting.
 # Checks modes, boolean flags, address, serial, path and ADB port.
 _validate-configuration() {
-    local flag
+    local flag variable
     for flag in SETTINGS_VERBOSE SETTINGS_QUIET SETTINGS_NON_INTERACTIVE SETTINGS_ASCII_ONLY; do
-        case ${!flag} in 0|1) ;; *) _exit-with-error "${flag#SETTINGS_} environment toggle must be 0 or 1." 2 ;; esac
+        # Name the variable the user set: REMOTE_SCRCPY_ASCII for ASCII_ONLY.
+        variable=REMOTE_SCRCPY_${flag#SETTINGS_}; variable=${variable%_ONLY}
+        case ${!flag} in 0|1) ;; *) _exit-with-error "$variable must be 0 or 1." 2 ;; esac
     done
     case $SETTINGS_COLOR_MODE in
         auto|always|never) ;;
-        *) _exit-with-error '--color must be auto, always, or never.' 2 ;;
+        *) _exit-with-error 'The color mode must be auto, always, or never (--color or REMOTE_SCRCPY_COLOR).' 2 ;;
     esac
     if [[ -n $SETTINGS_SSH_CONFIG_FILE && ( ! -f $SETTINGS_SSH_CONFIG_FILE || ! -r $SETTINGS_SSH_CONFIG_FILE ) ]]; then
         _exit-with-error "Cannot read SSH config: $SETTINGS_SSH_CONFIG_FILE" 2
@@ -209,14 +211,14 @@ _validate-configuration() {
         _exit-with-error 'A device serial cannot contain whitespace or control characters.' 2
     fi
     if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0-9]{1,5}$ ]]; then
-        _exit-with-error '--adb-port / ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     SETTINGS_REMOTE_ADB_SERVER_PORT=$((10#$SETTINGS_REMOTE_ADB_SERVER_PORT))
     if (( SETTINGS_REMOTE_ADB_SERVER_PORT < 1 || SETTINGS_REMOTE_ADB_SERVER_PORT > 65535 )); then
-        _exit-with-error '--adb-port / ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     if [[ -z $SETTINGS_REMOTE_ADB_EXECUTABLE || $SETTINGS_REMOTE_ADB_EXECUTABLE == *[[:cntrl:]]* ]]; then
-        _exit-with-error '--remote-adb must be an executable name or path, not a shell command.' 2
+        _exit-with-error 'The remote adb must be an executable name or path, not a shell command (--remote-adb, REMOTE_SCRCPY_REMOTE_ADB, or the fallback REMOTE_ADB).' 2
     fi
 }
 
@@ -224,7 +226,7 @@ _validate-configuration() {
 # Resolves SETTINGS_LOCAL_ADB_EXECUTABLE and SETTINGS_LOCAL_SCRCPY_EXECUTABLE; no download or installation.
 _check-runtime-dependencies() {
     local tool
-    for tool in ssh awk mktemp rm sleep; do
+    for tool in ssh awk cat env mktemp rm sleep; do
         command -v "$tool" >/dev/null || _exit-with-error "Missing prerequisite: $tool" 127
     done
     SETTINGS_LOCAL_ADB_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_ADB_EXECUTABLE") || exit $?
@@ -319,13 +321,33 @@ COMPLETION
   Add this to ~/.bashrc for persistent Bash tab completion. Host aliases
   are local; online device serials are queried by SSH on each Tab by default.
   REMOTE_SCRCPY_COMPLETE_DEVICES=0 disables remote device queries.
-  REMOTE_SCRCPY_COMPLETION_TIMEOUT=6 is the optional time bound (seconds).
+  REMOTE_SCRCPY_COMPLETION_TIMEOUT=6 bounds a lookup, in seconds from 1 to
+  99, where a `timeout` program is installed; other values mean 6.
 
 NOTES
   Host listing is a static SSH-config alias inventory; OpenSSH controls the
-  actual connection. The launcher owns scrcpy's device/tunnel flags. Do not
-  override --serial, --port or --tunnel-port after --. Use `scrcpy --help`
-  for supported display, audio, input, and recording options.
+  actual connection. The launcher owns scrcpy's device, tunnel and adb
+  lifecycle options and rejects them after --: --serial, --select-usb,
+  --select-tcpip, --tcpip, --otg, --port, --tunnel-host, --tunnel-port,
+  --force-adb-forward, --kill-adb-on-close and their abbreviations, and the
+  short flags -s -d -e -p. Other short flags are passed on one per word;
+  only -m, -b and -r may carry their value in the same word, so write
+  -V debug, not -Vdebug. A second -- is refused. Write an option's value as
+  --option=value when it starts with a dash. Use `scrcpy --help` for
+  supported display, audio, input, and recording options.
+
+EXIT STATUS
+  Listing and help modes exit 0. Otherwise, from the launcher itself,
+  before scrcpy is started:
+    1    runtime failure (SSH, ADB, forwarding, protocol mismatch)
+    2    usage or configuration error; nothing was connected
+    127  a required executable is missing
+  From a signal or a prompt, at any time:
+    129  the terminal was closed (SIGHUP)
+    130  cancelled at a prompt, or interrupted (SIGINT)
+    143  terminated (SIGTERM)
+  Once scrcpy runs, its own exit status is passed on unchanged: 0 when it
+  quits normally, and scrcpy uses 1 and 2 for failures of its own.
 END_HELP_TEXT
 }
 
@@ -431,9 +453,9 @@ _validate-scrcpy-arguments() {
             done
         elif [[ $arg == -* && $arg != - ]]; then
             case $arg in
-                -[psde]*) _exit-with-error "The launcher manages $arg." 2 ;;
+                -[psde]*) _exit-with-error "The launcher manages $arg. (If it is an option's value, write --option=value.)" 2 ;;
                 -[mbr]*|-[[:alnum:]]) ;;
-                *) _exit-with-error "Use separate short flags or full long options after --: $arg" 2 ;;
+                *) _exit-with-error "Use separate short flags or full long options after --: $arg (If it is an option's value, write --option=value.)" 2 ;;
             esac
         fi
     done
@@ -444,7 +466,7 @@ _validate-scrcpy-arguments() {
 # Handles static Host declarations and Include paths, without executing Match
 # expressions. OpenSSH itself remains authoritative for actual connections.
 
-# SSH alias discovery for the interactive menu. Requires Bash 4.3+.
+# SSH alias discovery for the interactive menu.
 # This reads configuration as data: it never executes Match exec, shell
 # substitutions, or ssh -G. Actual connection settings remain SSH's job.
 
@@ -1039,7 +1061,7 @@ _open-remote-connection() {
         _log-status "Starting ADB on $SETTINGS_SSH_HOST..."
         _run-remote-shell-command "$command" >&2 || _exit-with-error 'Could not start ADB on the remote host. Check its ADB installation, executable path and USB permissions.'
         if ! _probe-adb-server; then
-            _exit-with-error "${SESSION_ADB_PROBE_ERROR:-ADB is still unreachable through SSH.} Check SSH TCP forwarding and the remote ADB port."
+            _exit-with-error "${SESSION_ADB_PROBE_ERROR:-ADB is still unreachable through SSH.} Check SSH TCP forwarding, the remote ADB port, and that this Bash supports /dev/tcp."
         fi
     fi
     if [[ $SESSION_REMOTE_ADB_PROTOCOL != "$SESSION_LOCAL_ADB_PROTOCOL" ]]; then
@@ -1183,7 +1205,13 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
      packages depend on or bundle adb; this launcher still invokes adb itself
      to enumerate devices and configure forwarding. Check `command -v adb`.
    - A graphical desktop with video support for the scrcpy window.
-   - Standard tools: awk, mktemp, rm, sleep. No extra terminal UI dependency.
+   - Standard tools: awk, cat, env, mktemp, rm, sleep. No extra terminal UI
+     dependency.
+   - A Bash built with network redirections (/dev/tcp), as every mainstream
+     distribution ships it: the launcher asks the remote ADB server for its
+     version itself, without an adb client.
+   - A writable /tmp. The session's SSH control socket is created there
+     whatever TMPDIR says, because socket paths are limited in length.
 
    Check:
      bash --version
@@ -1193,6 +1221,8 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 
 2. REMOTE COMPUTER (phone is attached here)
    - Reachable SSH server and credentials/key for the SSH user.
+   - `env`, which every Unix-like system has: the launcher uses it to start
+     the ADB server there when none is running.
    - `adb` accessible from that user's noninteractive SSH shell, or provide
      `--remote-adb /absolute/path/to/adb`.
    - Permit local TCP forwarding through SSH (sshd policy AllowTcpForwarding).
@@ -1244,7 +1274,7 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
    - `remote-scrcpy --list-hosts` lists aliases locally, without SSH.
    - `remote-scrcpy --list-devices HOST` checks remote discovery without GUI.
    - `remote-scrcpy --verbose HOST SERIAL` prints SSH/ADB diagnostics.
-   - `ADB server mismatch`: align Android Platform Tools versions; the
+   - `ADB protocol mismatch`: align Android Platform Tools versions; the
      launcher does not forcibly restart an incompatible shared server.
    - scrcpy SDL/display errors: run on the viewer's graphical desktop,
      not from an ordinary SSH shell on the remote computer.

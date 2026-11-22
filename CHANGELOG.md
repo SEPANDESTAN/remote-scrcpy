@@ -20,6 +20,21 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates under `.github/` and carry a type label.
 
 ### Changed
+- `--help` describes what the launcher refuses after `--`, gives the range
+  of `REMOTE_SCRCPY_COMPLETION_TIMEOUT`, and has an EXIT STATUS section that
+  separates the launcher's statuses from scrcpy's. `--prerequisites` and the
+  README name `cat` and `env` among the required utilities and the
+  `/dev/tcp` and `/tmp` requirements. The README also says that completion
+  uses the default remote ADB port, names the fallback variables, and
+  explains what loopback tunnels mean on a shared machine (#7, #8).
+- Error messages name every place a rejected value can come from: an
+  invalid toggle its variable (`REMOTE_SCRCPY_ASCII`, not an internal name),
+  and the port, the color mode and the remote adb both the option and the
+  variables. The troubleshooting list quotes "ADB protocol mismatch" as the
+  error itself does, and a refused scrcpy option that may be a value says to
+  write `--option=value` (#7).
+- A launcher run now checks for `cat` and `env` up front along with the
+  other utilities, instead of failing later (#7).
 - `--color=always` and `REMOTE_SCRCPY_COLOR=always` now color the output
   even when `NO_COLOR` is set. `NO_COLOR` used to win over everything; the
   [NO_COLOR](https://no-color.org/) convention asks that a setting made for

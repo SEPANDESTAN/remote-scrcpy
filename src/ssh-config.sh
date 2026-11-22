@@ -2,7 +2,7 @@
 # Handles static Host declarations and Include paths, without executing Match
 # expressions. OpenSSH itself remains authoritative for actual connections.
 
-# SSH alias discovery for the interactive menu. Requires Bash 4.3+.
+# SSH alias discovery for the interactive menu.
 # This reads configuration as data: it never executes Match exec, shell
 # substitutions, or ssh -G. Actual connection settings remain SSH's job.
 

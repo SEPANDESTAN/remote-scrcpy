@@ -4,9 +4,9 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 41 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 50 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 32 passed.
-bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 28 passed, 0 failed.
+bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
 ```
 
@@ -34,8 +34,9 @@ before testing** a `src/` change, or half the suites test stale code.
 
 `src/transport.sh` (SSH master, port leases, ADB protocol probe, remote
 start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
-the fast suites, and neither do `_validate-scrcpy-arguments`, the device-state
-filter in `src/ui.sh`, the `auto` color mode on a terminal (the suites have
+the fast suites, and neither do the long-option branch of
+`_validate-scrcpy-arguments` (its short-flag branch is covered), the
+device-state filter in `src/ui.sh`, the `auto` color mode on a terminal (the suites have
 none; issue #27), or the module list in `src/build.sh`.
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the

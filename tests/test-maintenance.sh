@@ -19,6 +19,29 @@ check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
 check contains "$("$script" --help)" 'REMOTE_SCRCPY_HOST'
+check contains "$("$script" --help)" 'EXIT STATUS'
+# Errors name every place a rejected value can come from, not an internal
+# name and not the option alone. No command here names a host: all stop at
+# validation.
+check contains "$(REMOTE_SCRCPY_ASCII=maybe "$script" --list-hosts 2>&1 || true)" 'REMOTE_SCRCPY_ASCII must be 0 or 1'
+check contains "$(ADB_PORT=70000 "$script" --non-interactive --list-devices 2>&1 || true)" '(--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT)'
+check contains "$(REMOTE_SCRCPY_COLOR=sometimes "$script" --list-hosts 2>&1 || true)" '(--color or REMOTE_SCRCPY_COLOR)'
+check contains "$(REMOTE_ADB=$'two\nlines' "$script" --non-interactive --list-devices 2>&1 || true)" '(--remote-adb, REMOTE_SCRCPY_REMOTE_ADB, or the fallback REMOTE_ADB)'
+
+# Every utility the launcher calls is looked for before it connects, so a
+# missing one is reported at the start. The directory holds empty stand-ins:
+# the check only asks whether each name resolves, and stand-ins keep the test
+# independent of which real tools this machine has.
+tools=$(mktemp -d)
+trap 'rm -rf "$tools"' EXIT
+for missing in cat env; do
+    mkdir "$tools/without-$missing"
+    for tool in ssh awk cat env mktemp rm sleep; do
+        [[ $tool == "$missing" ]] || { : > "$tools/without-$missing/$tool"; chmod +x "$tools/without-$missing/$tool"; }
+    done
+    check contains "$(PATH=$tools/without-$missing "$BASH" "$script" --non-interactive --list-devices 2>&1 || true)" "Missing prerequisite: $missing"
+    check status 127 env PATH="$tools/without-$missing" "$BASH" "$script" --non-interactive --list-devices
+done
 check contains "$(head -n 45 "$script")" 'INSTALL ON THE VIEWING COMPUTER'
 check contains "$(head -n 45 "$script")" 'remote-scrcpy --help'
 check contains "$(head -n 45 "$script")" 'remote-scrcpy --prerequisites'
@@ -46,7 +69,7 @@ check equals "$(REMOTE_SCRCPY_COLOR=never bash -c 'source "$1"; shift; _initiali
 
 # Host completion is local; device completion queries SSH unless disabled.
 config=$(mktemp)
-trap 'rm -f "$config"' EXIT
+trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
 # None of the local modes needs HOME.

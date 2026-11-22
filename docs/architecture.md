@@ -135,12 +135,17 @@ which every mainstream distribution enables.
 
 ## Exit codes
 
+A status has one of two sources. Until scrcpy is started it is the
+launcher's own; once scrcpy runs, scrcpy's status is passed on unchanged,
+and scrcpy uses 1 and 2 for failures of its own, so those two values alone
+do not say which program failed.
+
 | Code | Meaning |
 |---|---|
-| 0 | scrcpy exited 0, or a listing/help mode completed |
-| 1 | runtime failure (SSH, ADB, forwarding, protocol mismatch) |
-| 2 | usage or configuration error, before any connection |
-| 127 | a required executable is missing |
-| 130 | cancelled (`q`, EOF at a prompt, or SIGINT) |
-| 143 / 129 | SIGTERM / SIGHUP received |
-| other | scrcpy's own exit status, propagated |
+| 0 | a listing or help mode completed, or scrcpy exited 0 |
+| 1 | launcher: runtime failure before scrcpy started (SSH, ADB, forwarding, protocol mismatch) |
+| 2 | launcher: usage or configuration error; nothing was connected |
+| 127 | launcher: a required executable is missing |
+| 130 | cancelled (`q`, EOF at a prompt) or SIGINT, at any time |
+| 143 / 129 | SIGTERM / SIGHUP received, at any time |
+| any | scrcpy's own exit status once it runs, including its own 1 and 2 |

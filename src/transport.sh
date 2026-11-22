@@ -189,7 +189,7 @@ _open-remote-connection() {
         _log-status "Starting ADB on $SETTINGS_SSH_HOST..."
         _run-remote-shell-command "$command" >&2 || _exit-with-error 'Could not start ADB on the remote host. Check its ADB installation, executable path and USB permissions.'
         if ! _probe-adb-server; then
-            _exit-with-error "${SESSION_ADB_PROBE_ERROR:-ADB is still unreachable through SSH.} Check SSH TCP forwarding and the remote ADB port."
+            _exit-with-error "${SESSION_ADB_PROBE_ERROR:-ADB is still unreachable through SSH.} Check SSH TCP forwarding, the remote ADB port, and that this Bash supports /dev/tcp."
         fi
     fi
     if [[ $SESSION_REMOTE_ADB_PROTOCOL != "$SESSION_LOCAL_ADB_PROTOCOL" ]]; then
