@@ -99,10 +99,9 @@ sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v 
 
 Follow [`docs/workflow.md`](docs/workflow.md): one worktree branch and one
 pull request per change, an independent review, then a squash merge. Never
-push to `main` and never rewrite published history. Do not create releases
-or edit issues unless the maintainer asked for it in the current task. Add
-this trailer to commits you author:
-`Co-Authored-By: <agent name> <noreply@...>`.
+push to `main` and never rewrite published history. The same page says what
+still needs the maintainer's request. Add this trailer to commits you
+author: `Co-Authored-By: <agent name> <noreply@...>`.
 
 ## Where to read next
 

@@ -22,47 +22,78 @@ It needs [git](https://git-scm.com/) with
 
 2. **Commit there.** Keep the change atomic: one purpose, and everything that
    purpose needs (source, regenerated bundle, tests, documentation). Stage
-   files by name; `git add -A` once leaked a local settings file.
+   files by name; `git add -A` once leaked a local settings file. Keep
+   message drafts and other scratch files outside the worktree.
 
 3. **Open a draft pull request** while the work is in progress.
 
    ```bash
    git push -u origin <type>/<slug>
    gh pr create --draft --title "<type>(<scope>): <summary>" \
-       --body-file <file> --label <label>
+       --body-file <body-file> --label <label>
    ```
 
    The body follows [Issue and pull request bodies](#issue-and-pull-request-bodies).
 
 4. **Review it yourself.** Read the whole diff as if someone else wrote it,
-   rebuild, and run everything in [`testing.md`](testing.md). Fix what you
-   find with new commits.
+   rebuild, and run the bundle parity check and the fast suites from
+   [`testing.md`](testing.md). Run the integration suite described there as
+   well when the change touches the connection lifecycle
+   (`src/transport.sh`, the traps in `src/main.sh`) or its fixtures. Fix
+   what you find with new commits.
 
 5. **Mark it ready and get an independent review** (`gh pr ready <number>`),
    as described under [Reviewing](#reviewing).
 
 6. **Address the review.** Read the findings on GitHub, fix them with new
-   commits, push, and ask the same reviewer to look again. Repeat until the
-   verdict is an approval.
+   commits, push, and ask the same reviewer to look again; an agent reviewer
+   is resumed, so that it keeps the context of its own review. Repeat until
+   the verdict is an approval.
 
 7. **Squash-merge** once the review approves and CI is green, then clean up
-   from the main checkout. The branch is deleted by hand because it is still
-   checked out in the worktree when the merge happens.
+   from the main checkout. The message file holds the squash commit body
+   described under [Commit and pull request messages](#commit-and-pull-request-messages),
+   not the pull request body. The branch is deleted by hand because it is
+   still checked out in the worktree when the merge happens.
 
    ```bash
    gh pr checks <number> --watch
    gh pr merge <number> --squash \
-       --subject "<type>(<scope>): <summary>" --body-file <file>
+       --subject "<type>(<scope>): <summary>" --body-file <message-file>
    git worktree remove .worktrees/<slug>
    git branch -D <type>/<slug>
    git push origin --delete <type>/<slug>
    git pull --ff-only
    ```
 
-Start the next change only after the previous one is merged. A change too
-large to review in one sitting is split into stacked pull requests: each
-branch starts from the previous one, and they are reviewed and merged in
-order.
+Start the next change only after the previous one is merged. Work that
+spans several pull requests is ordered from leaf to root: what the others
+depend on is merged first.
+
+## Stacked pull requests
+
+A change too large to review in one sitting may be split into pull requests
+that are open at the same time, each built on the one before. They are
+still reviewed and merged in order, and still without rebasing.
+
+```bash
+# start the next branch from the previous one and target it
+git worktree add .worktrees/<next> -b <type>/<next> <type>/<previous>
+gh pr create --draft --base <type>/<previous> ...
+
+# whenever the previous branch gains commits, in the next worktree
+git merge <type>/<previous>
+
+# after the previous pull request is squash-merged, in the next worktree
+git fetch origin
+git merge origin/main
+git push
+gh pr edit <number> --base main
+```
+
+Merging `origin/main` is clean at that point because both sides hold the
+same content for the previous change. It only stays clean if the next
+branch merged the previous one's last commits before the squash.
 
 ## What does not belong to the change
 
@@ -71,7 +102,7 @@ improvement that has nothing to do with the task. Do not fold it in and do
 not leave it in your head: open an issue at once and carry on.
 
 ```bash
-gh issue create --title "<summary>" --body-file <file> --label <label>
+gh issue create --title "<summary>" --body-file <body-file> --label <label>
 ```
 
 Write the issue for someone who has none of your context and should be able
@@ -99,6 +130,12 @@ file. The rules behind them:
   links to docs, issues and upstream sources.
 - **List open items as checkboxes** (`- [ ]`): outstanding tasks, and
   anything the reviewer or reader has to decide or verify.
+- **Link what a pull request resolves.** Name every issue it resolves with a
+  [closing keyword](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
+  in the body, one per issue (`Fixes #2`), so the issue closes when the pull
+  request merges and nothing stays open after its work is done. An issue
+  that is only partly resolved is referenced (`Refs #7`) with a note on what
+  remains; the pull request that resolves the last part closes it.
 - **End every pull request body with proof.** The last section pairs each
   deliverable with the exact command that demonstrates it and the result
   that was observed, so that anyone can run it again from a clean checkout
@@ -146,8 +183,10 @@ Commits authored by an AI agent carry a
 Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html),
 and the commit type says which part moves: `fix` is a patch, `feat` a minor,
 a breaking change (`!`) a major. `docs`, `test`, `ci`, `build`, `refactor`
-and `chore` do not call for a release by themselves. Cutting the release is
-described in [`release.md`](release.md).
+and `chore` do not call for a release by themselves; when such changes are
+released without a `feat` or a breaking change, the release is a patch.
+Cutting the release, itself a pull request of type `release`, is described
+in [`release.md`](release.md).
 
 ## Reviewing
 
@@ -161,13 +200,13 @@ What to check:
 
 - The change does what its title and body say, and nothing else.
 - Every rule in [`CONTRIBUTING.md`](CONTRIBUTING.md) still holds.
-- The bundle is rebuilt and the suites in [`testing.md`](testing.md) pass.
-  Never run the launcher against a real host or phone to find out.
+- The bundle is rebuilt and the suites named in step 4 pass. Never run the
+  launcher against a real host or phone to find out.
 - New behaviour is tested, or the message says plainly why it is not.
 - Documentation states each fact in one place and every link resolves.
 - Commit messages, the pull request body and its label meet the sections
-  above, and the proof at the end of the body gives the same results when
-  you run it.
+  above, the issues it links are the ones it resolves, and the proof at the
+  end of the body gives the same results when you run it.
 
 The review is posted on the pull request. Its first line is the verdict,
 `VERDICT: APPROVE` or `VERDICT: REQUEST CHANGES`. Each finding names the file
@@ -186,6 +225,7 @@ A reviewer with a different account uses `--approve` or `--request-changes`.
 
 Pushing branches, opening issues and pull requests, and squash-merging after
 an approving review are the normal path and need no further permission.
-Creating a release and closing or rewriting existing issues by hand happen
-only when the maintainer asked for it in the current task. A closing keyword
-in a pull request body (`Fixes #2`) is fine.
+Commenting on an issue or correcting its label is fine too. Publishing a
+release, and closing or rewriting an existing issue by hand instead of
+through a closing keyword, happen only when the maintainer asked for it in
+the current task.

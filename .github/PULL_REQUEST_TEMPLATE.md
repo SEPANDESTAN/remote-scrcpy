@@ -30,7 +30,10 @@ links to docs, issues and upstream sources.
 
 - [ ]
 
-<!-- Closing keyword, if the change resolves an issue: Fixes #N -->
+<!--
+One closing keyword per issue this resolves, so it closes on merge: Fixes #N
+For an issue only partly resolved: Refs #N, and say what remains.
+-->
 
 ## Proof
 
