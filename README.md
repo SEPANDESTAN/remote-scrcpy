@@ -92,6 +92,6 @@ bash tests/test-cli-ui-review.sh
 bash tests/test-ssh-config.sh
 ```
 
-These run without a network, a phone or root, and ignore any `REMOTE_SCRCPY_*` configuration in your shell. An optional integration fixture exercises real OpenSSH and ADB with simulated devices; it needs root and is not required to install, build or run the launcher. See [`docs/testing.md`](docs/testing.md) for what each suite covers and what is not covered.
+These run without a network, a phone or root, and ignore any `REMOTE_SCRCPY_*` configuration in your shell. An integration fixture exercises real OpenSSH and ADB with simulated devices; it needs root, so CI runs it for you, and it is not required to install, build or run the launcher. See [`docs/testing.md`](docs/testing.md) for what each suite covers and what is not covered.
 
 Supported expectations are intentionally explicit: this Bash implementation is verified primarily on Linux. It needs Bash 4.4+ and OpenSSH Unix-style control sockets. Do not assume every operating system/architecture is verified simply because the script contains no native embedded payload.

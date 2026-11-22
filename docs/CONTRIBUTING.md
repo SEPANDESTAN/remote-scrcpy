@@ -38,10 +38,10 @@ passed." Details, the CI parity check and the integration suite are in
 | `remote-scrcpy.sh` | the only runtime file; **generated**, never edit by hand |
 | `src/*.sh` | nine modules concatenated by `src/build.sh` in the order core, cli, ssh-config, presentation, ui, transport, prerequisites, completion, main |
 | `tests/test-*.sh` | four fast suites, no network |
-| `tests/*.py` | integration fixture: real OpenSSH and adb, simulated devices; needs root |
+| `tests/*.py` | integration fixture: real OpenSSH and adb, simulated devices; needs root; run by CI in its own job |
 | `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [release](release.md), [decisions](decisions.md), [history](history.md), the [2026-11-06 review](review-2026-11-06.md) |
 | `AGENTS.md`, `.agents/`, `.claude/` | instructions and skills for AI coding agents |
-| `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the four suites |
+| `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the four suites, and the integration suite in a second job |
 
 ## Making a change
 

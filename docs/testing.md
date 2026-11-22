@@ -37,7 +37,11 @@ start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
 the fast suites, and neither do `_validate-scrcpy-arguments`, the device-state
 filter in `src/ui.sh`, styled output, or the module list in `src/build.sh`.
 The 2026-11-06 review proved it by mutation (table in
-`review-2026-11-06.md`). Tracking: issue #3.
+`review-2026-11-06.md`). The integration suite below is what covers the
+transport, and CI runs it. Of the seven mutations listed in issue #3 it
+catches five; the two it misses are a removed hex check on the length field
+of the ADB version reply and an offline device accepted when its serial is
+given explicitly. Tracking: issue #3.
 
 ### Environment
 
@@ -51,7 +55,7 @@ that host. The maintenance suite fails unless that line is the first command
 after `set -euo pipefail` in every `tests/test-*.sh`, so a new suite has to
 start with it too.
 
-## The integration suite (not in CI)
+## The integration suite
 
 `tests/test_launcher_integration.py` runs the real launcher against a real
 OpenSSH server and a real `adb` binary, with a simulated ADB server
@@ -66,11 +70,28 @@ credentials, phones or servers are used.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
 ```
 
-Without root or `sshd` it skips itself. On an Ubuntu GitHub runner it could
-run as a separate job (`sudo apt-get install -y openssh-server
-android-tools-adb`); see issue #3.
+Without root or `sshd` it skips itself. CI runs it on every pull request and
+on every push to `main` in a job of its own, `integration`, next to the fast
+suites; that job fails if the suite skips.
+
+Without root on your machine, a rootless [Podman](https://podman.io/)
+container gives it a root of its own and keeps everything on the container's
+loopback interface:
+
+```bash
+podman run --rm --security-opt label=disable -v "$PWD":/repo:ro \
+    docker.io/library/ubuntu:24.04 bash -c '
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -qq && apt-get install -y -qq openssh-server adb python3
+        cd /repo && REAL_ADB="$(command -v adb)" python3 -B tests/test_launcher_integration.py -v'
+```
 
 ## Writing a hermetic transport test
+
+The project decided against building a full suite this way (see the
+2026-11-22 entry in `decisions.md`): the integration suite covers the
+transport. The recipe stays as the way to exercise a single transport
+function with fake programs when no `sshd` or root is at hand.
 
 No refactoring is required. Source `src/core.sh`, `presentation.sh`,
 `ui.sh`, `transport.sh` and `main.sh` (its entry point is guarded by

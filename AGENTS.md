@@ -25,10 +25,10 @@ daily use come first; polish for strangers second.
 | `src/build.sh` | concatenates the modules below into the bundle, in this order |
 | `src/core.sh` `cli.sh` `ssh-config.sh` `presentation.sh` `ui.sh` `transport.sh` `prerequisites.sh` `completion.sh` `main.sh` | the source. `main.sh` holds the lifecycle; `transport.sh` owns every SSH/ADB/scrcpy resource |
 | `tests/test-*.sh` | four fast suites, no network, run by CI |
-| `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; not in CI |
+| `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; run by CI in its own job |
 | `docs/` | architecture, testing, workflow, release, decisions, history, the last review |
 | `.agents/skills/` | step-by-step procedures: `build-and-test`, `add-cli-option`, `release` |
-| `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the four suites |
+| `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the four suites, and the integration suite in a second job |
 
 ## Rules
 
@@ -76,7 +76,7 @@ bash tests/test-maintenance.sh      # Maintenance checks: 32 passed.
 bash tests/test-completion.sh       # Completion checks: 10 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 23 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
-sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # optional, root + sshd
+sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```
 
 ## Conventions

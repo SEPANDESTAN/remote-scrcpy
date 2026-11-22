@@ -13,7 +13,7 @@ jobs:
   bash-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Syntax check the bundled script
         run: bash -n remote-scrcpy.sh
@@ -34,3 +34,28 @@ jobs:
 
       - name: SSH config parser checks
         run: bash tests/test-ssh-config.sh
+
+  # The only end-to-end test of src/transport.sh: the real launcher against a
+  # real OpenSSH server and adb client on loopback, with a simulated ADB
+  # server and scrcpy. It needs root for its private sshd.
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the OpenSSH server and adb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server adb
+
+      # The suite skips itself, and unittest then reports success, when it is
+      # not root or cannot find adb or sshd. A skip must fail this job, or a
+      # green check could again mean that nothing ran.
+      - name: Integration suite
+        shell: bash
+        run: |
+          sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v 2>&1 | tee "$RUNNER_TEMP/integration.log"
+          if grep -Eq '^(OK|FAILED) \(.*skipped=' "$RUNNER_TEMP/integration.log"; then
+            echo "::error::the integration suite skipped tests"; exit 1
+          fi

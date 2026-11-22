@@ -28,6 +28,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `.gitignore` tracks the shared agent configuration and ignores only
   per-machine files (`.claude/settings.local.json`, `*.local.*`).
 
+### CI
+- The integration suite (real OpenSSH and adb, simulated phone) runs on every
+  pull request and on every push to `main` in a second job, so
+  `src/transport.sh` is exercised end to end before a change is merged. `actions/checkout` moves from v4 to
+  v7.
+
 ### Fixed
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that

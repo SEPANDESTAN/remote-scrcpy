@@ -120,5 +120,13 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   to root".** A squash merge leaves one commit per pull request on `main`,
   so the order of commits inside a branch no longer reaches the history.
   The ordering rule now applies to the pull requests of a series.
+- **Transport coverage comes from the existing integration suite in CI, not
+  from a second, fake-ssh suite.** Issue #3 proposed a new hermetic suite
+  built on fake `ssh`, `adb` and `scrcpy` programs. The repository already
+  had a suite that drives the real launcher through a real `sshd` and adb
+  client; it was simply never run. On a GitHub runner it needs two packages
+  and `sudo`, so it runs there as its own job. Measured against the seven
+  mutations of issue #3 it catches five where the fast suites catch none; the
+  other two get tests of their own instead of a second infrastructure.
 - **Releases go through a pull request too.** The release commit used to be
   pushed to `main`; `release.md` now puts it on a `release/X.Y.Z` branch.
