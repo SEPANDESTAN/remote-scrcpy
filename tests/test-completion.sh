@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Verify both local SSH-alias and live remote device completion without network.
 set -euo pipefail
+# The suite must never see the developer's own launcher configuration: with a
+# host exported, an inherited environment once made a check contact it.
+unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
 project=$(cd -- "$(dirname -- "$0")/.." && pwd)
 script=$project/remote-scrcpy.sh
 sandbox=$(mktemp -d)

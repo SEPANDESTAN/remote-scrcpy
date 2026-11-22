@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Fast dependency-free maintenance regressions. No remote SSH/ADB required.
 set -euo pipefail
+# The suite must never see the developer's own launcher configuration: with a
+# host exported, an inherited environment once made a check contact it.
+unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
 project=$(cd -- "$(dirname -- "$0")/.." && pwd)
 script=$project/remote-scrcpy.sh
 passed=0
@@ -13,8 +16,8 @@ status() { local wanted=$1; shift; local result=0; "$@" >/dev/null 2>&1 || resul
 check bash -n "$script"
 check contains "$("$script" --version)" '3.0.2'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
-check contains "$(env PATH=/nonexistent /bin/bash "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
-check contains "$(env PATH=/nonexistent /bin/bash "$script" --completion bash)" '_complete-remote-scrcpy()'
+check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
+check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
 check contains "$("$script" --help)" 'REMOTE_SCRCPY_HOST'
 check contains "$(head -n 45 "$script")" 'INSTALL ON THE VIEWING COMPUTER'
 check contains "$(head -n 45 "$script")" 'remote-scrcpy --help'
@@ -56,6 +59,17 @@ check equals "${COMPREPLY[*]}" 'alpha'
 COMP_WORDS=("$script" --color a) COMP_CWORD=2
 _complete-remote-scrcpy
 check equals "${COMPREPLY[*]}" 'auto always'
+
+# Regression guard: every fast suite clears the launcher's public environment
+# as its first command after `set -euo pipefail`, so nothing in it can run
+# with the developer's real host configured. Comments and blank lines aside,
+# the scrub has to be the second line of the file.
+for suite in "$project"/tests/test-*.sh; do
+    # shellcheck disable=SC2016  # the literal text of the line is compared, nothing should expand
+    [[ $(grep -vE '^[[:space:]]*(#|$)' "$suite" | sed -n 2p) == 'unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR' ]] \
+        || fail "$(basename -- "$suite") does not clear the launcher environment first"
+done
+passed=$((passed+1))
 
 # Regression guard: reject prior approaches that were deliberately rejected —
 # a TUI framework dependency (gum), a --ui flag, and any base64-encoded

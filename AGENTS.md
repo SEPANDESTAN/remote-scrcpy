@@ -42,9 +42,9 @@ daily use come first; polish for strangers second.
    are fakes you wrote (pattern: `tests/test-completion.sh`; recipe:
    `docs/testing.md`). Safe anywhere: `--help`, `--version`,
    `--prerequisites`, `--completion bash`, `--list-hosts`.
-3. **Run `unset "${!REMOTE_SCRCPY_@}"` before the suites.** They inherit
-   the environment; an exported host makes one of them open a real SSH
-   connection (issue #4).
+3. **Keep the suites deaf to your environment.** Each one starts by
+   clearing `REMOTE_SCRCPY_*` and the generic fallbacks, and a maintenance
+   check fails if a suite stops doing so; a new suite must do the same.
 4. **No `eval`, no executing anything from an SSH config, no new runtime
    dependencies, no code that downloads or installs tools.** The bundle must
    stay plain Bash 4.4 plus OpenSSH, adb and scrcpy. `tests/test-maintenance.sh`
@@ -69,11 +69,10 @@ daily use come first; polish for strangers second.
 ## Commands
 
 ```bash
-unset "${!REMOTE_SCRCPY_@}"
 bash src/build.sh                                   # regenerate the bundle
 bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   # CI parity
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh      # Maintenance checks: 31 passed.
+bash tests/test-maintenance.sh      # Maintenance checks: 32 passed.
 bash tests/test-completion.sh       # Completion checks: 10 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 23 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
@@ -111,9 +110,9 @@ author: `Co-Authored-By: <agent name> <noreply@...>`.
   write a hermetic transport test.
 - `docs/workflow.md`: branch, pull request, review and merge procedure.
 - `docs/decisions.md` and `docs/history.md`: why things are this way.
-- `docs/review-2026-11-06.md`: the last full review; its open items are
-  GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill in
-  site-specific prerequisites.
+- `docs/review-2026-11-06.md`: the last full review; its findings were filed
+  as GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill
+  in site-specific prerequisites.
 
 ## Windows checkouts
 

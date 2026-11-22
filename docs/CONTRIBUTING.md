@@ -22,13 +22,12 @@ applies to you too.
 ```bash
 git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
 cd remote-scrcpy
-unset "${!REMOTE_SCRCPY_@}"      # the suites inherit your launcher configuration
 bash src/build.sh                # regenerates remote-scrcpy.sh (should be a no-op)
 bash tests/test-maintenance.sh && bash tests/test-completion.sh \
   && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh
 ```
 
-Expected: 31, 10 and 23 passed checks and "SSH config discovery checks
+Expected: 32, 10 and 23 passed checks and "SSH config discovery checks
 passed." Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 

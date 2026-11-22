@@ -3,9 +3,8 @@
 ## The fast suites (run in CI)
 
 ```bash
-unset "${!REMOTE_SCRCPY_@}"          # the suites inherit your environment; see below
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 31 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 32 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 10 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 23 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
@@ -40,12 +39,17 @@ filter in `src/ui.sh`, styled output, or the module list in `src/build.sh`.
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). Tracking: issue #3.
 
-### Environment caveat
+### Environment
 
-The suites do not scrub the environment. Exporting `REMOTE_SCRCPY_HOST`
-makes the maintenance suite's completion check open a real `ssh` to that
-host and fails three suites; `REMOTE_SCRCPY_COLOR=always` fails one check.
-Until issue #4 lands, `unset "${!REMOTE_SCRCPY_@}"` first.
+Every fast suite begins by clearing the launcher's public environment
+(`REMOTE_SCRCPY_*`, the fallbacks `ADB`, `REMOTE_ADB`, `ADB_PORT`, `SCRCPY`,
+and `NO_COLOR`). The integration fixture drops the same variables from the
+environment it hands to the launcher, except `SCRCPY`, which it points at its
+stand-in. An exported `REMOTE_SCRCPY_HOST`, which is how the
+launcher is meant to be configured, therefore cannot make a test contact
+that host. The maintenance suite fails unless that line is the first command
+after `set -euo pipefail` in every `tests/test-*.sh`, so a new suite has to
+start with it too.
 
 ## The integration suite (not in CI)
 

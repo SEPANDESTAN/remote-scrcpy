@@ -22,14 +22,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 - README: the "Internal naming" and "Architecture for maintainers" sections
   moved to `docs/architecture.md`; a "Developing" section links every
-  document under `docs/`; "Tests and limits" reduced to the commands plus the
-  environment caveat.
+  document under `docs/`; "Tests and limits" reduced to the commands.
 - README install Option 2 uses `install -D` so the target directory is
   created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only
   per-machine files (`.claude/settings.local.json`, `*.local.*`).
 
 ### Fixed
+- The test suites no longer inherit the launcher's environment. With
+  `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
+  host and three of the four fast suites failed; every suite and the
+  integration fixture now clear `REMOTE_SCRCPY_*` and the generic fallback
+  variables first (#4).
 - The 3.0.2 changelog entry, the v3.0.2 release notes and issue #1 no longer
   quote the example values that the 3.0.2 cleanup removed.
 
