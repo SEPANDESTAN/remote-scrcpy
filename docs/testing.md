@@ -12,10 +12,11 @@ bash tests/test-install.sh
 ```
 
 They need no network, no phone and no root. A suite that fails exits
-non-zero and does not reach its closing line; most checks also say what
-failed. A suite that passes ends with a line saying so, most of them with
-the number of checks. That number grows when tests are added; a check is
-not removed without the reason in the commit body.
+non-zero, and most checks also say what failed. `test-cli-ui-review.sh` runs
+all its checks and gives the number of failures in its last line; the others
+stop at the first failure. A suite that passes ends with a line saying so,
+most of them with the number of checks. That number grows when tests are
+added; a check is not removed without the reason in the commit body.
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
 it against the committed `remote-scrcpy.sh`; a stale bundle fails the build.
