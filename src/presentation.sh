@@ -1,9 +1,10 @@
 # Colors and Unicode symbols for the numbered UI and the status messages.
 # They go to stderr only: stdout is plain data for the listing and completion
 # modes and never gets a terminal escape. In auto mode colors need a terminal
-# and no NO_COLOR; an explicit "always" colors regardless. --ascii changes the
-# symbols independently. No cursor movement, raw input mode, external UI
-# program or terminal database is involved.
+# and no NO_COLOR; an explicit "always" colors regardless. Unicode symbols
+# need a terminal and a UTF-8 locale, whatever the color mode; --ascii turns
+# them off. No cursor movement, raw input mode, external UI program or
+# terminal database is involved.
 
 # Set safe color and decoration variables for human stderr.
 # Uses terminal, locale, SETTINGS_COLOR_MODE, SETTINGS_ASCII_ONLY and NO_COLOR.

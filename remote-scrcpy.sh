@@ -608,9 +608,10 @@ _discover-ssh-host-aliases() (
 # Colors and Unicode symbols for the numbered UI and the status messages.
 # They go to stderr only: stdout is plain data for the listing and completion
 # modes and never gets a terminal escape. In auto mode colors need a terminal
-# and no NO_COLOR; an explicit "always" colors regardless. --ascii changes the
-# symbols independently. No cursor movement, raw input mode, external UI
-# program or terminal database is involved.
+# and no NO_COLOR; an explicit "always" colors regardless. Unicode symbols
+# need a terminal and a UTF-8 locale, whatever the color mode; --ascii turns
+# them off. No cursor movement, raw input mode, external UI program or
+# terminal database is involved.
 
 # Set safe color and decoration variables for human stderr.
 # Uses terminal, locale, SETTINGS_COLOR_MODE, SETTINGS_ASCII_ONLY and NO_COLOR.
@@ -874,11 +875,10 @@ _prompt-for-device() {
 # SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE,
 # SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
 # Owns: the SESSION_* variables below, which no other module touches. They
-# start empty or inactive and are assigned by _open-remote-connection and
-# _reserve-device-forwarding-port. The EXIT trap must run
-# _cleanup-remote-connection on every failure after connecting, and that
-# function may run after partial setup, so it MUST tolerate unset or
-# incomplete resources.
+# start empty or inactive, and each is assigned by the function that creates
+# the resource it names. The EXIT trap must run _cleanup-remote-connection on
+# every failure after connecting, and that function may run after partial
+# setup, so it MUST tolerate unset or incomplete resources.
 #
 #   SESSION_WORK_DIRECTORY       Private temporary directory for socket/errors.
 #   SESSION_SSH_CONTROL_SOCKET   Private SSH master control socket path.
@@ -1296,7 +1296,8 @@ GUIDE
 #   source <(remote-scrcpy --completion bash)
 # Users can add the same line to ~/.bashrc for persistent completion.
 
-# Emit standalone completion code. No network access occurs until Tab is pressed.
+# Print the Bash completion script for the user's shell to source.
+# Static text to stdout; nothing is contacted until Tab is pressed.
 _print-bash-completion() {
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'COMPLETION'
 # Bash completion for remote-scrcpy; source once per interactive Bash shell.

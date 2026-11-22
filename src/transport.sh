@@ -5,11 +5,10 @@
 # SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE,
 # SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
 # Owns: the SESSION_* variables below, which no other module touches. They
-# start empty or inactive and are assigned by _open-remote-connection and
-# _reserve-device-forwarding-port. The EXIT trap must run
-# _cleanup-remote-connection on every failure after connecting, and that
-# function may run after partial setup, so it MUST tolerate unset or
-# incomplete resources.
+# start empty or inactive, and each is assigned by the function that creates
+# the resource it names. The EXIT trap must run _cleanup-remote-connection on
+# every failure after connecting, and that function may run after partial
+# setup, so it MUST tolerate unset or incomplete resources.
 #
 #   SESSION_WORK_DIRECTORY       Private temporary directory for socket/errors.
 #   SESSION_SSH_CONTROL_SOCKET   Private SSH master control socket path.

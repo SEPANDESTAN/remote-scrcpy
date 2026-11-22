@@ -9,7 +9,8 @@
 #   source <(remote-scrcpy --completion bash)
 # Users can add the same line to ~/.bashrc for persistent completion.
 
-# Emit standalone completion code. No network access occurs until Tab is pressed.
+# Print the Bash completion script for the user's shell to source.
+# Static text to stdout; nothing is contacted until Tab is pressed.
 _print-bash-completion() {
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'COMPLETION'
 # Bash completion for remote-scrcpy; source once per interactive Bash shell.
