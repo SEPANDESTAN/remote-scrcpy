@@ -6,7 +6,7 @@
 bash -n remote-scrcpy.sh
 bash tests/test-maintenance.sh       # expects: Maintenance checks: 32 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 32 passed.
-bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 23 passed, 0 failed.
+bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 28 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
 ```
 
@@ -24,7 +24,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 |---|---|---|
 | `test-maintenance.sh` | the bundle | version string, help/prerequisites/completion output, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
-| `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts |
+| `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether the explicit color modes color with and without `NO_COLOR` |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
 
 Two suites run the bundle and two source the modules, so **always rebuild
@@ -35,7 +35,8 @@ before testing** a `src/` change, or half the suites test stale code.
 `src/transport.sh` (SSH master, port leases, ADB protocol probe, remote
 start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
 the fast suites, and neither do `_validate-scrcpy-arguments`, the device-state
-filter in `src/ui.sh`, styled output, or the module list in `src/build.sh`.
+filter in `src/ui.sh`, the `auto` color mode on a terminal (the suites have
+none; issue #27), or the module list in `src/build.sh`.
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the
 transport, and CI runs it. It catches each of the seven mutations listed in

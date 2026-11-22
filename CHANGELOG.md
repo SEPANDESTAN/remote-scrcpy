@@ -20,6 +20,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates under `.github/` and carry a type label.
 
 ### Changed
+- `--color=always` and `REMOTE_SCRCPY_COLOR=always` now color the output
+  even when `NO_COLOR` is set. `NO_COLOR` used to win over everything; the
+  [NO_COLOR](https://no-color.org/) convention asks that a setting made for
+  the program itself overrides it. With the mode left at `auto`, `NO_COLOR`
+  still disables color.
 - README: the "Internal naming" and "Architecture for maintainers" sections
   moved to `docs/architecture.md`; a "Developing" section links every
   document under `docs/`; "Tests and limits" reduced to the commands.
@@ -77,11 +82,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No change to the launcher's command line or to the `REMOTE_SCRCPY_*`
-  variables.
+- No option or `REMOTE_SCRCPY_*` variable was added, removed or renamed. Two
+  behaviours changed:
 - Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
   now completes as a host, as the launcher reads it. To complete a serial on
   the environment host, use `--serial <Tab>` or `--serial=<Tab>`.
+- `NO_COLOR` together with an explicit `--color=always` or
+  `REMOTE_SCRCPY_COLOR=always`: the output is now colored.
 
 ## [3.0.2] — 2026-11-05
 
