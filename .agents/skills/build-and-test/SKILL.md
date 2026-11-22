@@ -35,11 +35,11 @@ bash tests/test-install.sh
 Expected last lines:
 
 ```
-Maintenance checks: 60 passed.
+Maintenance checks: 59 passed.
 Completion checks: 34 passed.
 CLI/menu review checks: 31 passed, 0 failed.
 SSH config discovery checks passed.
-Install checks: 48 passed.
+Install checks: 67 passed.
 ```
 
 Counts grow when tests are added; they never shrink without a reason stated

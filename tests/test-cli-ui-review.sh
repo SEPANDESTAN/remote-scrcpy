@@ -4,6 +4,9 @@ set -euo pipefail
 # The suite must never see the developer's own launcher configuration: with a
 # host exported, an inherited environment once made a check contact it.
 unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
+# Nor may any child inherit the caller's standard input: docs/testing.md,
+# "Environment", has the reason. Not dead code; the maintenance suite checks it.
+exec < /dev/null
 review_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source "$review_dir/src/core.sh"
 source "$review_dir/src/cli.sh"

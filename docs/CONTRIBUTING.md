@@ -28,8 +28,8 @@ bash tests/test-maintenance.sh && bash tests/test-completion.sh \
   && bash tests/test-install.sh
 ```
 
-Expected: 60, 34 and 31 passed checks, "SSH config discovery checks
-passed." and 48 install checks. Details, the CI parity check and the integration suite are in
+Expected: 59, 34 and 31 passed checks, "SSH config discovery checks
+passed." and 67 install checks. Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 
 ## Layout
@@ -48,8 +48,8 @@ passed." and 48 install checks. Details, the CI parity check and the integration
 ## Making a change
 
 1. Edit the module under `src/`, not the bundle.
-2. `bash src/build.sh`, then run the suites. Two suites test the bundle and
-   two source the modules, so an unrebuilt change passes half of them.
+2. `bash src/build.sh`, then run the suites. Three suites run the bundle and
+   two source the modules, so an unrebuilt change passes some of them.
 3. Add or adjust tests in the suite that already covers the area
    (see the table in `testing.md`). Adding a CLI option touches more places
    than you expect; follow `.agents/skills/add-cli-option/SKILL.md`.
@@ -70,8 +70,8 @@ in `tests/test-completion.sh`).
   explanatory names and a two-line comment: purpose, then arguments, side
   effects and failure behaviour.
 - A script that a person runs with arguments answers `--help` and refuses
-  options it does not know (`remote-scrcpy.sh`, `src/build.sh`; the
-  integration suite answers it through unittest). The fast suites take no
+  options it does not know (`remote-scrcpy.sh`, `install.sh`, `src/build.sh`;
+  the integration suite answers it through unittest). The fast suites take no
   arguments; their header comment says what they are.
 - Globals are namespaced: `SETTINGS_*` (resolved configuration), `SESSION_*`
   (resources owned by the active connection, transport only),
@@ -99,7 +99,7 @@ for commit messages and version numbers.
 ## Static analysis
 
 ```bash
-shellcheck -s bash remote-scrcpy.sh src/*.sh tests/*.sh
+shellcheck -s bash remote-scrcpy.sh install.sh src/*.sh tests/*.sh
 ```
 
 Expected false positives and their reasons are listed in `testing.md`; fix

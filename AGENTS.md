@@ -44,10 +44,10 @@ daily use come first; polish for strangers second.
    `docs/testing.md`). Safe anywhere: `--help`, `--version`,
    `--prerequisites`, `--completion bash`, `--list-hosts`.
 3. **Keep the suites deaf to your environment.** Each one starts by
-   clearing `REMOTE_SCRCPY_*` and the generic fallbacks, and a maintenance
-   check fails if a suite stops doing so; a new suite must do the same. A
-   suite that runs anything under `env -i` also starts with
-   `exec < /dev/null` (why: `docs/testing.md`, "Environment").
+   clearing `REMOTE_SCRCPY_*` and the generic fallbacks and then closing its
+   standard input with `exec < /dev/null` (why: `docs/testing.md`,
+   "Environment"). A maintenance check fails if a suite stops doing either;
+   a new suite must do the same.
 4. **No `eval`, no executing anything from an SSH config, no new runtime
    dependencies, no code that downloads or installs tools.** The bundle must
    stay plain Bash 4.4 plus OpenSSH, adb and scrcpy. `install.sh` downloads
@@ -77,11 +77,11 @@ daily use come first; polish for strangers second.
 bash src/build.sh                                   # regenerate the bundle
 bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh   # CI parity
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh      # Maintenance checks: 60 passed.
+bash tests/test-maintenance.sh      # Maintenance checks: 59 passed.
 bash tests/test-completion.sh       # Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
-bash tests/test-install.sh          # Install checks: 48 passed.
+bash tests/test-install.sh          # Install checks: 67 passed.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```
 

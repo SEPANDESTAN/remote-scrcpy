@@ -4,11 +4,11 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 60 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
-bash tests/test-install.sh           # expects: Install checks: 48 passed.
+bash tests/test-install.sh           # expects: Install checks: 67 passed.
 ```
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
@@ -27,10 +27,10 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
 | `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether the explicit color modes color with and without `NO_COLOR` |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
-| `test-install.sh` | `install.sh` and the bundle | the installer in a scratch `HOME` with a `PATH` of chosen tools and a fake `curl`: usage errors, install from a checkout without network, `--dir`, `--completion` (one line, once, and it registers the completion), the download URL for `main` and `--ref`, and that a failed, unparsable or foreign download installs nothing and leaves the old launcher in place. The real download is not exercised |
+| `test-install.sh` | `install.sh` and the bundle | the installer in a scratch `HOME` with a `PATH` of chosen tools and a fake `curl`: usage errors, which stream gets what, install from a checkout without network (by path and by bare name), `--dir` (relative, with a space, with `~` after `=`), `--completion` (one line, once, that registers the completion without `PATH`; an existing line for another place is left alone), the download URL for `main` and `--ref`, that a failed, unparsable or foreign download installs nothing and leaves the old launcher in place, and that an installer cut anywhere in its last line installs nothing. The real download is not exercised |
 
-Two suites run the bundle and two source the modules, so **always rebuild
-before testing** a `src/` change, or half the suites test stale code.
+Three suites run the bundle and two source the modules, so **always rebuild
+before testing** a `src/` change, or some of the suites test stale code.
 
 ### Not covered
 
@@ -65,11 +65,13 @@ that host. The maintenance suite fails unless that line is the first command
 after `set -euo pipefail` in every `tests/test-*.sh`, so a new suite has to
 start with it too.
 
-A suite that runs a program under `env -i` must also close its standard
-input, with `exec < /dev/null` as its next command; the maintenance suite
-checks that too. The reason is a startup rule of Bash: started with `-c`,
-without an inherited `SHLVL`, and with a socket on standard input, it takes
-itself for a remote shell and reads `/etc/bashrc` and `~/.bashrc`. An
+Every fast suite also closes its standard input, with `exec < /dev/null` as
+its next command; the maintenance suite checks that line too. It matters to
+a suite that starts programs in an emptied environment, and it is required
+of all five so that nobody has to work out which ones those are. The reason
+is a startup rule of Bash: started with `-c`, without an inherited `SHLVL`,
+and with a socket on standard input, it takes itself for a remote shell and
+reads `/etc/bashrc` and `~/.bashrc`. An
 agent's command runner and a remote command both provide such a socket,
 some of the time. The first version of `test-install.sh` did this with a
 `PATH` holding only the installer's tools: a command-not-found handler

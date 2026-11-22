@@ -16,7 +16,7 @@ curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/inst
 
 | Option | Effect |
 |---|---|
-| `--completion` | also add Bash completion to `~/.bashrc`: one marked line, added once |
+| `--completion` | also add Bash completion to `~/.bashrc`: one marked line, added once; an existing completion line is left alone |
 | `--dir DIR` | install into `DIR` instead of `~/.local/bin` |
 | `--ref REF` | download a tag or branch, such as `vX.Y.Z`, instead of `main` |
 

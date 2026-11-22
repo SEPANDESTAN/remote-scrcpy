@@ -156,10 +156,14 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   `raw.githubusercontent.com` and also sets up completion. It copies or
   downloads the bundle, checks that the file parses and answers `--version`
   before it replaces anything, and with `--completion` appends one marked
-  line to `~/.bashrc`, once. Kept out on purpose: `sudo`, installing `ssh`,
+  line to `~/.bashrc`, once. The line names the installed file, not the
+  command, because a login shell can read `~/.bashrc` before the directory
+  is on `PATH` (the stock `~/.profile` of Ubuntu does); a completion line
+  that is already there for another place is reported and left alone, not
+  rewritten. Kept out on purpose: `sudo`, installing `ssh`,
   `adb` or `scrcpy`, editing `PATH`, shells other than Bash, an uninstall
   command (delete one file and one line), and self-update. It is a separate
   file and not part of the bundle, so the rule that the launcher never
   downloads anything stands; the installer downloads the launcher and
-  nothing else. Its work sits in a function called on the last line, so a
-  download cut short runs nothing.
+  nothing else. Its work sits in a function called from a brace group on the
+  last line, so a download cut short at any byte installs nothing.

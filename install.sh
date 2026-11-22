@@ -7,7 +7,8 @@
 #
 # It writes one file and, when asked, one line in ~/.bashrc. It never uses
 # sudo and never installs ssh, adb or scrcpy. All work happens in main, which
-# is called on the last line, so a download that was cut short runs nothing.
+# is called from a brace group on the last line: cut short at any byte, that
+# line is an unfinished command, so a partial download installs nothing.
 set -euo pipefail
 
 INSTALL_TEMPORARY_FILE=''
@@ -43,7 +44,7 @@ die() { say "install.sh: $1"; exit "${2:-1}"; }
 # needed and missing, 1 when nothing could be installed.
 main() {
     local self=$1; shift
-    local dir='' ref='' completion=0 bundle='' target version tool missing=''
+    local dir='' ref='' completion=0 bundle='' target version tool missing='' line
     local url=https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy
     local marker='# remote-scrcpy completion (added by install.sh)'
     while (( $# )); do
@@ -63,6 +64,13 @@ main() {
     if [[ -n $ref ]] && { [[ ! $ref =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ $ref == *..* ]]; }; then
         die "not a branch or tag name: $ref" 2
     fi
+    # The shell expands ~ in "--dir ~/bin" but not in "--dir=~/bin".
+    # shellcheck disable=SC2088  # a literal ~ is what is being matched
+    case $dir in
+        '~'|'~/'*)
+            [[ -n ${HOME:-} ]] || die 'HOME is not set, so ~ in --dir has no meaning' 2
+            dir=$HOME${dir#'~'} ;;
+    esac
     if [[ -z $dir ]]; then
         [[ -n ${HOME:-} ]] || die 'HOME is not set; say where to install with --dir DIR' 2
         dir=$HOME/.local/bin
@@ -109,21 +117,28 @@ main() {
     done
     [[ -z $missing ]] || say "Note: not found on PATH:$missing. See: remote-scrcpy --prerequisites"
 
+    # The line names the installed file, not the command: a login shell may
+    # read ~/.bashrc before the directory is put on PATH.
+    line=$(printf '%q' "$target")
+    line="if [[ -x $line ]]; then source <($line --completion bash); fi  $marker"
     if (( ! completion )); then
         say 'For Tab completion, run this installer with --completion, or add to ~/.bashrc:'
         say '  source <(remote-scrcpy --completion bash)'
-    elif grep -Fqs -- "$marker" "$HOME/.bashrc"; then
+    elif grep -Fqsx -- "$line" "$HOME/.bashrc"; then
         say 'Tab completion is already set up in ~/.bashrc.'
+    elif grep -Fqs -e "$marker" -e 'remote-scrcpy --completion bash' "$HOME/.bashrc"; then
+        # shellcheck disable=SC2088  # message text
+        say '~/.bashrc already loads a remote-scrcpy completion that was not written for'
+        say 'this location; it was left unchanged. To load it from here, replace it with:'
+        say "  $line"
     else
         # On a line of its own, whatever the file ends with.
         {
             [[ ! -s $HOME/.bashrc ]] || printf '\n'
-            printf '%s  %s\n' \
-                'if command -v remote-scrcpy > /dev/null 2>&1; then source <(remote-scrcpy --completion bash); fi' \
-                "$marker"
+            printf '%s\n' "$line"
         } >> "$HOME/.bashrc" || die 'cannot write ~/.bashrc'
         say 'Added Tab completion to ~/.bashrc; it applies to new shells.'
     fi
 }
 
-main "${BASH_SOURCE[0]:-}" "$@"
+{ main "${BASH_SOURCE[0]:-}" "$@"; }
