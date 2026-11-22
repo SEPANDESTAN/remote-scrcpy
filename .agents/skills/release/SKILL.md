@@ -8,7 +8,8 @@ description: Cut a remote-scrcpy release - the four version locations, the relea
 Full prose version: `docs/release.md`. Short form:
 
 1. Decide the number from the commit types since the last release
-   (Versioning in `docs/workflow.md`).
+   (Versioning in `docs/workflow.md`), and start a `release/X.Y.Z` worktree
+   branch as described there. Everything below happens on that branch.
 2. Edit the three files where the version lives:
    - `src/core.sh`: `APPLICATION_VERSION=X.Y.Z`
    - `tests/test-maintenance.sh`: the `--version` assertion string
@@ -16,7 +17,7 @@ Full prose version: `docs/release.md`. Short form:
      `### Compatibility`
 3. `bash src/build.sh` (fourth location: the bundle's `--version`).
 4. Run the `build-and-test` skill.
-5. On a `release/X.Y.Z` worktree branch, commit everything as one
+5. Commit everything as one
    `release: bump to X.Y.Z and finalize CHANGELOG` commit whose body lists
    the four files; stage them by name.
 6. Pull request, review and squash merge as in `docs/workflow.md`; never

@@ -45,13 +45,14 @@ It needs [git](https://git-scm.com/) with
 5. **Mark it ready and get an independent review** (`gh pr ready <number>`),
    as described under [Reviewing](#reviewing).
 
-6. **Address the review.** Read the findings on GitHub, fix them with new
-   commits, push, and ask the same reviewer to look again; an agent reviewer
-   is resumed, so that it keeps the context of its own review. Repeat until
-   the verdict is an approval.
+6. **Settle the review** as described under
+   [From findings to merge](#from-findings-to-merge): discuss each finding,
+   implement what was agreed, and have the same reviewer go over the result.
+   An agent reviewer is resumed, so that it keeps the context of its own
+   review.
 
-7. **Squash-merge** once the review approves and CI is green, then clean up
-   from the main checkout. The message file holds the squash commit body
+7. **Squash-merge** once the last review approves, every review thread is
+   resolved and CI is green, then clean up from the main checkout. The message file holds the squash commit body
    described under [Commit and pull request messages](#commit-and-pull-request-messages),
    not the pull request body. The branch is deleted by hand because it is
    still checked out in the worktree when the merge happens.
@@ -79,21 +80,29 @@ still reviewed and merged in order, and still without rebasing.
 ```bash
 # start the next branch from the previous one and target it
 git worktree add .worktrees/<next> -b <type>/<next> <type>/<previous>
+git push -u origin <type>/<next>
 gh pr create --draft --base <type>/<previous> ...
 
 # whenever the previous branch gains commits, in the next worktree
 git merge <type>/<previous>
+git push
 
 # after the previous pull request is squash-merged, in the next worktree
 git fetch origin
 git merge origin/main
 git push
 gh pr edit <number> --base main
+gh pr view <number> --json closingIssuesReferences
 ```
 
 Merging `origin/main` is clean at that point because both sides hold the
 same content for the previous change. It only stays clean if the next
 branch merged the previous one's last commits before the squash.
+
+Closing keywords take effect only on a pull request that targets the default
+branch. If the last command lists no issue although the body names one, save
+the body again (`gh pr edit <number> --body-file <body-file>`) and check
+once more.
 
 ## What does not belong to the change
 
@@ -193,8 +202,8 @@ in [`release.md`](release.md).
 The reviewer is someone who did not write the change. For a change written by
 an AI agent, that is a separate agent started with a fresh context: it gets
 the pull request number and this section, never the author's reasoning or
-conclusions. A reviewer reads, builds and runs the suites, and does not edit,
-commit or push.
+conclusions. A reviewer reads, builds, runs the suites and writes its
+review, and does not edit, commit or push.
 
 What to check:
 
@@ -208,24 +217,87 @@ What to check:
   above, the issues it links are the ones it resolves, and the proof at the
   end of the body gives the same results when you run it.
 
-The review is posted on the pull request. Its first line is the verdict,
-`VERDICT: APPROVE` or `VERDICT: REQUEST CHANGES`. Each finding names the file
-and line, what is wrong, and what would resolve it, and is marked `blocking`
-or `nit`; only blocking findings prevent approval.
+### The review
+
+A review is one submission: a summary, and one comment per finding attached
+to the file and line the finding is about. It is not a single long comment.
+
+- **Each comment is atomic:** one problem, why it is a problem, and what
+  would resolve it, marked `blocking` or `nit`. Only blocking findings
+  prevent approval.
+- **Comments attach to the diff.** GitHub accepts them only on lines that
+  are part of the pull request's diff. A finding about anything else goes in
+  the summary with its path and line.
+- **The summary starts with the verdict,** `VERDICT: APPROVE` or
+  `VERDICT: REQUEST CHANGES` on its first line. After that it says what was
+  verified and how, which proof commands were run again with what result,
+  and what could not be verified. It does not repeat the comments.
+- **Say who is speaking.** When author and reviewer share a GitHub account,
+  every comment and reply starts with `**Reviewer:**` or `**Author:**`.
+
+Summary and comments are submitted together:
 
 ```bash
-gh pr review <number> --comment --body-file <file>
+gh api repos/<owner>/<repo>/pulls/<number>/reviews --method POST --input <review-file>
+```
+
+```json
+{
+  "commit_id": "<head commit of the pull request>",
+  "event": "COMMENT",
+  "body": "VERDICT: REQUEST CHANGES\n\n<what was verified and how>",
+  "comments": [
+    {"path": "docs/workflow.md", "line": 45, "side": "RIGHT",
+     "body": "**Reviewer:** blocking. <problem, reason, resolution>"},
+    {"path": "src/cli.sh", "start_line": 10, "line": 12, "side": "RIGHT",
+     "body": "**Reviewer:** nit. <problem, reason, resolution>"}
+  ]
+}
 ```
 
 GitHub does not let an account approve its own pull request, so when author
-and reviewer share an account the verdict line in a comment is the approval.
-A reviewer with a different account uses `--approve` or `--request-changes`.
+and reviewer share an account the event is `COMMENT` and the verdict line is
+the approval. A reviewer with a different account sets the event to `APPROVE`
+or `REQUEST_CHANGES` instead.
+
+### From findings to merge
+
+1. **Discuss first.** The author answers every thread before changing
+   anything. Accepting the proposed resolution as written settles the
+   thread. A different solution, or a disagreement, is argued in the thread
+   and needs the reviewer's answer; it goes back and forth until both agree.
+   Nothing contested is implemented before that.
+
+   ```bash
+   gh api repos/<owner>/<repo>/pulls/<number>/comments      # comments and their ids
+   gh api repos/<owner>/<repo>/pulls/<number>/comments/<id>/replies \
+       -f body='**Author:** ...'
+   ```
+
+2. **Implement what was agreed** with new commits, push, and name the commit
+   in each thread.
+
+3. **Final review.** The reviewer goes over the whole pull request again,
+   not only the threads: it checks each agreed resolution against the files,
+   resolves the threads it accepts, runs the proof again, and submits a new
+   review with a verdict. Anything new it finds starts again at 1.
+
+   ```bash
+   gh api graphql -f query='query { repository(owner:"<owner>", name:"<repo>") {
+     pullRequest(number:<number>) { reviewThreads(first:100) { nodes {
+       id isResolved comments(first:1) { nodes { path body } } } } } } }'
+   gh api graphql -f query='mutation { resolveReviewThread(
+     input:{threadId:"<thread id>"}) { thread { isResolved } } }'
+   ```
+
+4. **Merge** when the last verdict is an approval, every thread is resolved
+   and CI is green, as in step 7 of the procedure.
 
 ## What still needs the maintainer
 
 Pushing branches, opening issues and pull requests, and squash-merging after
 an approving review are the normal path and need no further permission.
-Commenting on an issue or correcting its label is fine too. Publishing a
-release, and closing or rewriting an existing issue by hand instead of
-through a closing keyword, happen only when the maintainer asked for it in
-the current task.
+Commenting on an issue or correcting its label is fine too. Starting or
+publishing a release, and closing or rewriting an existing issue by hand
+instead of through a closing keyword, happen only when the maintainer asked
+for it in the current task.
