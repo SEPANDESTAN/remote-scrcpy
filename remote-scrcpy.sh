@@ -1280,28 +1280,31 @@ _remote-scrcpy-query-device-serials() {
     done < <("${bounded_command[@]}" 2>/dev/null)
 }
 
-# Entry point used by Bash's programmable completion system.
-# Resolves the current argument position, including --host/--serial and
-# --key=value forms. Existing option values must not be treated as positionals.
-_complete-remote-scrcpy() {
-    local current previous word index host='' serial='' ssh_config='' remote_adb=''
+# Decide what the last of the given whole words completes to.
+# Args: the command line as whole words, command first, the word being
+# completed last. Sets COMPREPLY to whole-word candidates, so `--host=re`
+# yields `--host=remote-host`. Resolves the argument position, including
+# --host/--serial and --key=value forms; an option's value is never a positional.
+_remote-scrcpy-complete-words() {
+    local -a words=("$@")
+    local last=$(( $# - 1 ))
+    local current=${words[last]} previous='' word index host='' serial='' ssh_config='' remote_adb=''
     local value complete_host=0 complete_serial=0 explicit_host=0
-    local command=${COMP_WORDS[0]}
+    local command=${words[0]}
     local -a positions=()
     local options='--help --version --host --serial --list-hosts --list-devices --list --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion'
-    current=${COMP_WORDS[COMP_CWORD]:-}
-    previous=${COMP_WORDS[COMP_CWORD-1]:-}
+    if (( last >= 1 )); then previous=${words[last-1]}; fi
     ssh_config=${REMOTE_SCRCPY_SSH_CONFIG:-}
     remote_adb=${REMOTE_SCRCPY_REMOTE_ADB:-${REMOTE_ADB:-adb}}
     host=${REMOTE_SCRCPY_HOST:-}
 
     # Parse only completed words. No evaluation of SSH alias or shell text.
-    for ((index=1; index<COMP_CWORD; index++)); do
-        word=${COMP_WORDS[index]}
+    for ((index=1; index<last; index++)); do
+        word=${words[index]}
         [[ $word == -- ]] && return 0  # Everything after -- belongs to scrcpy.
         case $word in
             --host|--serial|--ssh-config|--adb|--remote-adb|--adb-port|--color|--completion)
-                value=${COMP_WORDS[index+1]:-}
+                value=${words[index+1]:-}
                 case $word in
                     --host) host=$value; explicit_host=1 ;;
                     --serial) serial=$value ;;
@@ -1317,7 +1320,9 @@ _complete-remote-scrcpy() {
             *) positions+=("$word") ;;
         esac
     done
-    [[ -n $host ]] || host=${positions[0]:-}
+    # A positional host replaces REMOTE_SCRCPY_HOST, as it does in the
+    # launcher's parser; only --host takes the first positional's place.
+    if (( ! explicit_host && ${#positions[@]} )); then host=${positions[0]}; fi
 
     case $previous in
         --host) complete_host=1 ;;
@@ -1329,8 +1334,8 @@ _complete-remote-scrcpy() {
         --adb-port) return ;;
     esac
 
-    # Support `--host=...`, `--serial=...` and `--color=...` without
-    # replacing the option prefix when Bash inserts a completion candidate.
+    # `--host=...`, `--serial=...` and `--color=...`: complete the value and
+    # keep the option in front of each candidate.
     case $current in
         --host=*) current=${current#*=}; complete_host=2 ;;
         --serial=*) current=${current#*=}; complete_serial=2 ;;
@@ -1343,11 +1348,10 @@ _complete-remote-scrcpy() {
     esac
 
     if (( complete_host == 0 && complete_serial == 0 )); then
-        # The first positional is the SSH host unless a --host flag already
-        # supplied one. An environment-host similarly makes it a serial.
-        if (( explicit_host )) || [[ -n ${REMOTE_SCRCPY_HOST:-} ]]; then
-            complete_serial=1
-        elif (( ${#positions[@]} )); then
+        # Same rule as the launcher's parser: the first positional is the SSH
+        # host unless --host supplied one. REMOTE_SCRCPY_HOST does not change
+        # what a position means; it only fills in a host that was not given.
+        if (( explicit_host || ${#positions[@]} )); then
             complete_serial=1
         else
             complete_host=1
@@ -1373,6 +1377,49 @@ _complete-remote-scrcpy() {
             else COMPREPLY+=("$value"); fi
         done < <(_remote-scrcpy-query-device-serials "$host" "$ssh_config" "$remote_adb" "$limit")
     fi
+}
+
+# Entry point used by Bash's programmable completion system.
+# Bash hands a completion function the line already split at the characters in
+# COMP_WORDBREAKS, which by default include '=', '@' and ':'. `--serial=D`
+# arrives as `--serial`, `=`, `D`, and `myuser@192.0.2.10` as three words too.
+# Read piecewise, a serial, a port or a user name would be taken for the host
+# and contacted. So the pieces are joined back into the words that were typed
+# before they are interpreted, and each candidate is then cut down to what
+# Bash replaces: the text after the last '=' or ':', or from the last '@' on,
+# since Bash keeps a leading '@' in the text it replaces.
+#
+# COMP_WORDS does not say whether two pieces were adjacent. A word that begins
+# with one of these characters (the host `::1`), or one typed apart from its
+# neighbours (`--host = z`), is therefore joined to the word before it.
+_complete-remote-scrcpy() {
+    local -a words=()
+    local word index glue=0 current char
+    COMPREPLY=()
+    for ((index = 0; index <= COMP_CWORD; index++)); do
+        word=${COMP_WORDS[index]:-}
+        # A piece made only of break characters belongs to the word before it,
+        # and so does the piece that follows.
+        if (( index > 0 )) && { (( glue )) || [[ $word =~ ^[=@:]+$ ]]; }; then
+            words[${#words[@]}-1]+=$word
+        else
+            words+=("$word")
+        fi
+        if [[ $word =~ ^[=@:]+$ ]]; then glue=1; else glue=0; fi
+    done
+    _remote-scrcpy-complete-words "${words[@]}"
+    (( ${#COMPREPLY[@]} )) || return 0
+    # Only characters still in COMP_WORDBREAKS split words; where one was
+    # removed, Bash replaces the whole word and the candidate stays whole.
+    current=${words[${#words[@]}-1]}
+    for ((index = ${#current} - 1; index >= 0; index--)); do
+        char=${current:index:1}
+        if [[ $char == [=@:] && ${COMP_WORDBREAKS-} == *"$char"* ]]; then
+            [[ $char == @ ]] || ((index += 1))
+            COMPREPLY=("${COMPREPLY[@]#"${current:0:index}"}")
+            break
+        fi
+    done
 }
 complete -F _complete-remote-scrcpy remote-scrcpy remote-scrcpy.sh
 COMPLETION
