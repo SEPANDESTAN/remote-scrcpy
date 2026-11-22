@@ -13,6 +13,9 @@ __pycache__/
 *~
 .DS_Store
 
+# One git worktree per change, see docs/workflow.md.
+.worktrees/
+
 # AI coding agents: shared config is tracked (.claude/settings.json,
 # .claude/skills -> ../.agents/skills, .agents/). Per-machine files stay local.
 .claude/settings.local.json

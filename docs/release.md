@@ -1,9 +1,10 @@
 # Releasing
 
 The project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). A new
-user-visible option or variable is a minor release; a fix or a docs-only
-change is a patch.
+and [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Which part of
+the version moves is decided by the commit types since the last release, as
+described under Versioning in [`workflow.md`](workflow.md). The release
+commit reaches `main` like every other change: through a pull request.
 
 ## The version lives in four places
 
@@ -19,16 +20,18 @@ old string.
 
 ## Steps
 
-1. Make sure `main` is green and the working tree is clean.
+1. Make sure `main` is green, then start a `release/X.Y.Z` branch in a
+   worktree as in [`workflow.md`](workflow.md).
 2. Edit the three files above, then `bash src/build.sh`.
 3. Run everything in `testing.md`; expected counts unchanged.
 4. One commit:
    `release: bump to X.Y.Z and finalize CHANGELOG` with a body that lists the
    four files and summarizes the release (see `git show f623525` for the
    worked example).
-5. `git push origin main` and wait for the `tests` workflow to pass
-   (`gh run list --limit 1`).
-6. Create the tag and release on GitHub in one step:
+5. Take it through the pull request, review and squash merge of
+   `workflow.md`, then `git pull --ff-only` in the main checkout so that
+   `main` is the release commit.
+6. Create the tag and release on GitHub in one step, from the main checkout:
 
    ```bash
    gh release create vX.Y.Z --title "vX.Y.Z — <one-line summary>" --notes-file notes.md

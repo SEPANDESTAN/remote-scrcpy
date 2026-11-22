@@ -66,9 +66,10 @@ Completion output is ordinary Bash, with no special runtime UI. If the executabl
 
 Only `remote-scrcpy.sh` is needed at runtime; it is generated from the modules under `src/` by `bash src/build.sh` and committed. Edit the modules, rebuild, run the four fast suites, and commit the regenerated bundle together with the change. The details live in `docs/`:
 
-- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): prerequisites, first build, layout, conventions, commit style.
+- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): prerequisites, first build, layout, conventions.
 - [`docs/architecture.md`](docs/architecture.md): internal naming, module responsibilities, lifecycle, transport invariants, exit codes.
 - [`docs/testing.md`](docs/testing.md): what each suite covers, what is not covered, the integration suite, shellcheck.
+- [`docs/workflow.md`](docs/workflow.md): how a change gets from a branch to `main`.
 - [`docs/release.md`](docs/release.md): how to cut a version.
 - [`docs/decisions.md`](docs/decisions.md) and [`docs/history.md`](docs/history.md): why things are the way they are, and what happened when.
 - [`docs/review-2026-11-06.md`](docs/review-2026-11-06.md): the last full review and its open items, tracked in the [issues](https://github.com/SEPANDESTAN/remote-scrcpy/issues).

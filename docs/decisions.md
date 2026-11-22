@@ -106,3 +106,19 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
 - **A shared `.claude/settings.json` allowlists read-only and build/test
   commands only.** Anything that writes (commits, pushes, GitHub edits) still
   prompts. Per-machine overrides stay in the ignored `settings.local.json`.
+
+## 2026-11-22
+
+- **Every change reaches `main` through a reviewed, squash-merged pull
+  request.** Until now commits went straight to `main`, which left nobody
+  but the author to catch a mistake. Each change gets a worktree branch, a
+  draft pull request, a self-review, a review by someone who did not write
+  it (for agent-written changes, an agent with a fresh context), and a
+  squash merge whose message is written as documentation. History is never
+  rewritten. The procedure is `workflow.md`.
+- **"Small commits ordered leaf to root" becomes "pull requests ordered leaf
+  to root".** A squash merge leaves one commit per pull request on `main`,
+  so the order of commits inside a branch no longer reaches the history.
+  The ordering rule now applies to the pull requests of a series.
+- **Releases go through a pull request too.** The release commit used to be
+  pushed to `main`; `release.md` now puts it on a `release/X.Y.Z` branch.
