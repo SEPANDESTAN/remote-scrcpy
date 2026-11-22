@@ -94,7 +94,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the new installer suite, before it was merged, started a shell with a
   socket on standard input and a stripped `PATH`; that shell took itself
   for a remote shell, read the user's startup files, and forked without
-  end. The suites of earlier releases never ran under a stripped `PATH`.
+  end.
 - The maintenance suite fails, naming the file, when a module under `src/`
   is missing from the bundle. The rebuild comparison in CI cannot show such
   a loss, and the fast suites noticed it only for modules they happen to
