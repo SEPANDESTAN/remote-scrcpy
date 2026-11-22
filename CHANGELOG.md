@@ -15,10 +15,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   else is installed. Covered by a fifth fast suite, `tests/test-install.sh`.
 - `--completion=bash` is accepted next to `--completion bash`, like the `=`
   form of every other option that takes a value; Tab completes it (#7).
-- `AGENTS.md` as the entry point for AI coding agents, with `CLAUDE.md` as a
-  symlink to it; shared skills under `.agents/skills/` (`build-and-test`,
-  `add-cli-option`, `release`) linked from `.claude/skills`; a tracked
-  `.claude/settings.json` that allowlists read-only and build/test commands.
+- `AGENTS.md` as the entry point for AI coding agents: an index into `docs/`
+  with three rules repeated. `.agents/rules.md` holds what applies to agents
+  only. Shared skills under `.agents/skills/` (`build-and-test`,
+  `add-cli-option`, `pull-request`, `release`), each a pointer to its
+  document, linked from `.claude/skills`; a tracked `.claude/settings.json`
+  that allowlists read-only and build/test commands.
 - `docs/`: `CONTRIBUTING.md`, `architecture.md`, `testing.md`, `release.md`,
   `decisions.md`, and `review-2026-11-06.md` recording the adversarial
   review of 3.0.2 and its tracking issues (#2 to #8).

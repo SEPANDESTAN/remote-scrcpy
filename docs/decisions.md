@@ -234,3 +234,15 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   completion function runs that word as Bash handed it over. It is deferred
   to issue #22, which collects the cases of completion taking Bash's word
   pieces at face value.
+- **`AGENTS.md` is an index, and the `CLAUDE.md` symlink is gone.** The
+  second half of the entry above on `docs/` as the single source.
+  `AGENTS.md` went from a copy of the rules to a page that says what the
+  project is, repeats three rules whose breach a review cannot undo, and
+  routes every other need to a document. What concerns agents and their
+  tools alone is in `.agents/rules.md`, which replaces `.agents/README.md`.
+  The symlink dates from when Claude Code read only `CLAUDE.md`; since
+  version 2.1.277 it reads `AGENTS.md` when no `CLAUDE.md` exists, so the
+  link was one more thing to break on Windows for nothing. The skills stay
+  under `.agents/skills` for other tools, and `.claude/skills` stays a
+  symlink to them, because Claude Code looks for skills nowhere else. A
+  `pull-request` skill points to `workflow.md`.
