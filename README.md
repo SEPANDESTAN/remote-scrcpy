@@ -4,28 +4,34 @@ A single [Bash](https://www.gnu.org/software/bash/) executable for viewing and c
 
 ## Install
 
-Only `remote-scrcpy.sh` is needed at runtime — everything under `src/` is for development.
+```bash
+curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash
+```
 
-The examples below install into `$HOME/.local/bin`, which is on `PATH` by default in most modern distributions. Any directory on your `PATH` works equally well; common alternatives include `/usr/local/bin` (needs `sudo`) or a project-specific `bin/` directory you source into `PATH` yourself. The file name is up to you: it is referenced here as `remote-scrcpy`, but if you install it under a different name, re-register Bash completion with `complete -F _complete-remote-scrcpy your-command-name`.
-
-### Option 1 — download the single-file script
+`install.sh` downloads one file with [curl](https://curl.se/), checks that it runs, and puts it at `~/.local/bin/remote-scrcpy`. It never uses `sudo` and installs nothing else: `ssh`, `adb` and `scrcpy` are yours to provide, and it tells you which of them it did not find. Options go after `bash -s --`:
 
 ```bash
-install_dir="$HOME/.local/bin"            # or /usr/local/bin, or anywhere on PATH
-mkdir -p "$install_dir"
-curl -fsSL -o "$install_dir/remote-scrcpy" \
+curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash -s -- --completion
+```
+
+| Option | Effect |
+|---|---|
+| `--completion` | also add Bash completion to `~/.bashrc`: one marked line, added once |
+| `--dir DIR` | install into `DIR` instead of `~/.local/bin` |
+| `--ref REF` | download a tag or branch, such as `vX.Y.Z`, instead of `main` |
+
+From a checkout, `bash install.sh` installs that checkout's `remote-scrcpy.sh` and uses no network.
+
+To install by hand instead: only `remote-scrcpy.sh` is needed at runtime, and everything under `src/` is for development. Put it in any directory on your `PATH` under any name:
+
+```bash
+mkdir -p "$HOME/.local/bin"
+curl -fsSL -o "$HOME/.local/bin/remote-scrcpy" \
     https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/remote-scrcpy.sh
-chmod +x "$install_dir/remote-scrcpy"
+chmod +x "$HOME/.local/bin/remote-scrcpy"
 ```
 
-### Option 2 — clone and install from a checkout
-
-```bash
-git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
-install -D -m 755 remote-scrcpy/remote-scrcpy.sh "$HOME/.local/bin/remote-scrcpy"   # -D creates the directory
-```
-
-Ensure the chosen install directory is on your `PATH`, then verify:
+Then verify:
 
 ```bash
 remote-scrcpy --version
@@ -64,7 +70,7 @@ Completion output is ordinary Bash, with no special runtime UI. If the executabl
 
 ## Developing
 
-Only `remote-scrcpy.sh` is needed at runtime; it is generated from the modules under `src/` by `bash src/build.sh` and committed. Edit the modules, rebuild, run the four fast suites, and commit the regenerated bundle together with the change. The details live in `docs/`:
+Only `remote-scrcpy.sh` is needed at runtime; it is generated from the modules under `src/` by `bash src/build.sh` and committed. Edit the modules, rebuild, run the fast suites, and commit the regenerated bundle together with the change. The details live in `docs/`:
 
 - [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): prerequisites, first build, layout, conventions.
 - [`docs/architecture.md`](docs/architecture.md): internal naming, module responsibilities, lifecycle, transport invariants, exit codes.
@@ -90,6 +96,7 @@ bash tests/test-maintenance.sh
 bash tests/test-completion.sh
 bash tests/test-cli-ui-review.sh
 bash tests/test-ssh-config.sh
+bash tests/test-install.sh
 ```
 
 These run without a network, a phone or root, and ignore any `REMOTE_SCRCPY_*` configuration in your shell. An integration fixture exercises real OpenSSH and ADB with simulated devices; it needs root, so CI runs it for you, and it is not required to install, build or run the launcher. See [`docs/testing.md`](docs/testing.md) for what each suite covers and what is not covered.

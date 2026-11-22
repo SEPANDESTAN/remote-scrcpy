@@ -35,6 +35,9 @@ jobs:
       - name: SSH config parser checks
         run: bash tests/test-ssh-config.sh
 
+      - name: Installer checks
+        run: bash tests/test-install.sh
+
   # The only end-to-end test of src/transport.sh: the real launcher against a
   # real OpenSSH server and adb client on loopback, with a simulated ADB
   # server and scrcpy. It needs root for its private sshd.

@@ -56,5 +56,6 @@ old string.
    prints the new version.
 
 Tags are `vX.Y.Z`, unsigned, created by `gh release create`. Releases are
-not drafts and not pre-releases. The README's `curl` recipe points at `main`
-on purpose, so users who follow it get the latest bundle.
+not drafts and not pre-releases. The README's install command points at
+`main` on purpose, so users who follow it get the latest bundle; `--ref
+vX.Y.Z` on the installer pins a release.

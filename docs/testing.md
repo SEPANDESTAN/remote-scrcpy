@@ -4,10 +4,11 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 60 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
+bash tests/test-install.sh           # expects: Install checks: 48 passed.
 ```
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
@@ -26,6 +27,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
 | `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether the explicit color modes color with and without `NO_COLOR` |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
+| `test-install.sh` | `install.sh` and the bundle | the installer in a scratch `HOME` with a `PATH` of chosen tools and a fake `curl`: usage errors, install from a checkout without network, `--dir`, `--completion` (one line, once, and it registers the completion), the download URL for `main` and `--ref`, and that a failed, unparsable or foreign download installs nothing and leaves the old launcher in place. The real download is not exercised |
 
 Two suites run the bundle and two source the modules, so **always rebuild
 before testing** a `src/` change, or half the suites test stale code.
@@ -62,6 +64,19 @@ launcher is meant to be configured, therefore cannot make a test contact
 that host. The maintenance suite fails unless that line is the first command
 after `set -euo pipefail` in every `tests/test-*.sh`, so a new suite has to
 start with it too.
+
+A suite that runs a program under `env -i` must also close its standard
+input, with `exec < /dev/null` as its next command; the maintenance suite
+checks that too. The reason is a startup rule of Bash: started with `-c`,
+without an inherited `SHLVL`, and with a socket on standard input, it takes
+itself for a remote shell and reads `/etc/bashrc` and `~/.bashrc`. An
+agent's command runner and a remote command both provide such a socket,
+some of the time. The first version of `test-install.sh` did this with a
+`PATH` holding only the installer's tools: a command-not-found handler
+defined by the system startup files called a missing program from inside
+itself, and the forks that followed exhausted the machine's memory. Give
+child shells a sandbox `HOME` as well, and run a script file with
+`bash --norc` in preference to `bash -c`.
 
 ## The integration suite
 

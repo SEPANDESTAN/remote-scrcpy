@@ -24,11 +24,12 @@ git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
 cd remote-scrcpy
 bash src/build.sh                # regenerates remote-scrcpy.sh (should be a no-op)
 bash tests/test-maintenance.sh && bash tests/test-completion.sh \
-  && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh
+  && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh \
+  && bash tests/test-install.sh
 ```
 
-Expected: 59, 34 and 31 passed checks and "SSH config discovery checks
-passed." Details, the CI parity check and the integration suite are in
+Expected: 60, 34 and 31 passed checks, "SSH config discovery checks
+passed." and 48 install checks. Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 
 ## Layout
@@ -36,12 +37,13 @@ passed." Details, the CI parity check and the integration suite are in
 | Path | Role |
 |---|---|
 | `remote-scrcpy.sh` | the only runtime file; **generated**, never edit by hand |
+| `install.sh` | the installer users pipe from curl; copies or downloads the bundle into a directory on `PATH`; not part of the bundle |
 | `src/*.sh` | nine modules concatenated by `src/build.sh` in the order core, cli, ssh-config, presentation, ui, transport, prerequisites, completion, main |
-| `tests/test-*.sh` | four fast suites, no network |
+| `tests/test-*.sh` | five fast suites, no network |
 | `tests/*.py` | integration fixture: real OpenSSH and adb, simulated devices; needs root; run by CI in its own job |
 | `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [release](release.md), [decisions](decisions.md), [history](history.md), the [2026-11-06 review](review-2026-11-06.md) |
 | `AGENTS.md`, `.agents/`, `.claude/` | instructions and skills for AI coding agents |
-| `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the four suites, and the integration suite in a second job |
+| `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the five suites, and the integration suite in a second job |
 
 ## Making a change
 
@@ -78,7 +80,8 @@ in `tests/test-completion.sh`).
   environment variables and the CLI only.
 - `local` for everything inside helpers; no `eval`; never execute anything
   from an SSH config; no new runtime dependencies and no bootstrap code that
-  downloads or installs tools.
+  downloads or installs tools. `install.sh` is the one exception and a
+  narrow one: it downloads the bundle itself and installs nothing else.
 - stdout is data (listings, completion text); every message, prompt and
   banner goes to stderr.
 - Example values in help and docs are synthetic: `remote-host`, `192.0.2.10`,

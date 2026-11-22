@@ -150,3 +150,16 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   the suites and the stand-in option parsing, and one-line helpers such as
   `fail` a comment, would add text that tells a reader nothing. The
   doc-comment rule stays for `src/`.
+- **An installer, `install.sh`, that does one thing.** Installing was four
+  shell lines in the README, and completion a fifth to add by hand. The
+  maintainer asked for a script that can be piped from
+  `raw.githubusercontent.com` and also sets up completion. It copies or
+  downloads the bundle, checks that the file parses and answers `--version`
+  before it replaces anything, and with `--completion` appends one marked
+  line to `~/.bashrc`, once. Kept out on purpose: `sudo`, installing `ssh`,
+  `adb` or `scrcpy`, editing `PATH`, shells other than Bash, an uninstall
+  command (delete one file and one line), and self-update. It is a separate
+  file and not part of the bundle, so the rule that the launcher never
+  downloads anything stands; the installer downloads the launcher and
+  nothing else. Its work sits in a function called on the last line, so a
+  download cut short runs nothing.

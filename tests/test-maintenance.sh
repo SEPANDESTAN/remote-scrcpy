@@ -134,6 +134,17 @@ for suite in "$project"/tests/test-*.sh; do
         || fail "$(basename -- "$suite") does not clear the launcher environment first"
 done
 passed=$((passed+1))
+# Regression guard: a suite that starts programs in an emptied environment
+# closes its standard input right after that. Bash started with -c in such an
+# environment, with a socket on standard input, reads the system and user
+# startup files; under a stripped PATH that once ended in a
+# command-not-found handler forking without end.
+for suite in "$project"/tests/test-*.sh; do
+    grep -Eq 'env[[:space:]]+-i' "$suite" || continue
+    [[ $(grep -vE '^[[:space:]]*(#|$)' "$suite" | sed -n 3p) == 'exec < /dev/null' ]] \
+        || fail "$(basename -- "$suite") empties the environment of a child without closing standard input first"
+done
+passed=$((passed+1))
 
 # Regression guard: reject prior approaches that were deliberately rejected —
 # a TUI framework dependency (gum), a --ui flag, and any base64-encoded

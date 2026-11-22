@@ -16,8 +16,8 @@ bash src/build.sh
 This regenerates `remote-scrcpy.sh` at the repository root from the nine
 modules in `src/` in the order core, cli, ssh-config, presentation, ui,
 transport, prerequisites, completion, main, and runs `bash -n` on the result.
-The bundle is committed; CI rebuilds it and fails on any difference. Two of
-the four suites test the bundle, two source the modules, so skipping this
+The bundle is committed; CI rebuilds it and fails on any difference. Three
+of the five suites run the bundle, two source the modules, so skipping this
 step tests stale code.
 
 ## 2. Run the checks
@@ -29,15 +29,17 @@ bash tests/test-maintenance.sh
 bash tests/test-completion.sh
 bash tests/test-cli-ui-review.sh
 bash tests/test-ssh-config.sh
+bash tests/test-install.sh
 ```
 
 Expected last lines:
 
 ```
-Maintenance checks: 59 passed.
+Maintenance checks: 60 passed.
 Completion checks: 34 passed.
 CLI/menu review checks: 31 passed, 0 failed.
 SSH config discovery checks passed.
+Install checks: 48 passed.
 ```
 
 Counts grow when tests are added; they never shrink without a reason stated
