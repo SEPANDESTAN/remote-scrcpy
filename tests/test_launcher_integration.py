@@ -580,6 +580,14 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         # arithmetic, with an interpreter error instead of the probe's verdict.
         self.assert_probe_rejects(b"OKAY00x40029", "truncated or invalid response length")
 
+    def test_probe_rejects_a_reply_that_ends_inside_its_status(self):
+        # A port that answers at all is not an absent daemon: nothing may be
+        # started on the remote because a reply was cut short.
+        self.assert_probe_rejects(b"OK", "ended before its status was complete")
+
+    def test_probe_rejects_a_payload_shorter_than_its_length(self):
+        self.assert_probe_rejects(b"OKAY000400", "incomplete version payload")
+
     def test_probe_rejects_a_reply_with_an_unknown_status(self):
         # Everything after the status is a well-formed answer for protocol 41.
         self.assert_probe_rejects(b"XXXX00040029", "invalid protocol status")
@@ -598,9 +606,11 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         # the conversion is all that keeps a reply like this one from running a
         # command on the viewing computer. The subscripted name has to be a set
         # variable: under `set -u` an unset one aborts before the substitution.
+        # The payload starts and ends with a hex digit, so a check that lost
+        # either of its anchors lets it through as well.
         sentinel = self.work / "PAYLOAD_MUST_NOT_RUN"
         sentinel.unlink(missing_ok=True)
-        payload = f"0+BASH_VERSINFO[$(touch {sentinel})]".encode()
+        payload = f"0+BASH_VERSINFO[$(touch {sentinel})]+0".encode()
         reply = b"OKAY" + f"{len(payload):04x}".encode() + payload
         self.assert_probe_rejects(reply, "invalid protocol version", sentinel=sentinel)
 
