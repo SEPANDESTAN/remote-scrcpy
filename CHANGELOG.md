@@ -47,10 +47,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   direction, `-V` used to print the version and stop; it now goes on with
   the run, which is a connection when a host and serial are given or
   exported: write `--version` or `-v`.
-- The new letters used to be refused before the `--` as unknown options.
-  Four of them mean something else to scrcpy (`-n` no control, `-p` port,
-  `-v` and `-V`), so a command line that forgets the `--` in front of one is
-  no longer an error: it gets the launcher's meaning.
+- `-n` before the `--` used to be refused as an unknown option. It is also
+  scrcpy's no-control option, so `remote-host DEVICE1234567890 -n`, typed
+  without the `--`, is no longer an error: it is the launcher's
+  `--non-interactive`, with control on. Write `-- -n` for scrcpy's. A
+  forgotten `--` in front of scrcpy's `-p PORT` is still refused.
 - `--prerequisites` and `--completion` no longer accept a host or serial
   next to them; `--list-hosts` already refused one. A second mode option is
   always an error, also the same one twice. The refusal of scrcpy options

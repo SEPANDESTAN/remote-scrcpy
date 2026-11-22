@@ -35,9 +35,9 @@ In the tests it joins three lists: `short_forms` in
 `tests/test-cli-ui-review.sh`, which checks that the letter sets what its
 long name sets and nothing else; the `pair` list in
 `tests/test-maintenance.sh`, which checks the help; and `all_options` in
-`tests/test-completion.sh`. Compare the bundle's output for the letter and
-the long name there as well only when the option ends the run without
-connecting, like `--help` or `--prerequisites`.
+`tests/test-completion.sh`. `tests/test-maintenance.sh` also compares the
+bundle's output for the letter and the long name, but only for an option
+that ends the run without connecting, like `--help` or `--prerequisites`.
 
 Before choosing a letter, look at what it means to scrcpy: someone who
 forgets the `--` gets the launcher's meaning.
