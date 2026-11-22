@@ -6,6 +6,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- `docs/workflow.md` says how an issue and a pull request end: an issue may
+  be closed as not planned with its reason recorded, and a pull request may
+  be an experiment that is closed unmerged. The merge conditions are stated
+  once, the page warns that a closing keyword works anywhere in a body, and
+  the section on stacked pull requests is rewritten from what a real pair
+  showed: retarget the upper one before deleting the lower branch (#10).
+
 ### Tests
 - Every check in the fast suites says what failed, and so do the discovery
   and completion calls that run before a check. Eleven checks in

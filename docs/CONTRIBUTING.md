@@ -113,6 +113,10 @@ what each one covers, the check CI adds, and the integration suite.
   one public function, how helpers are called, the prefixes of the globals,
   and what counts as the supported interface.
 - `local` for every variable inside a helper.
+- Every option has a long name. The ones used every day also have a
+  one-letter form, and an older name may stay as an alias. `--help` lists
+  every form. Documents show the long form first and the short one after
+  it.
 - Exit statuses follow the table in [`architecture.md`](architecture.md),
   which `--help` repeats for users.
 

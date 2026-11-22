@@ -248,3 +248,33 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   under `.agents/skills` for other tools, and `.claude/skills` stays a
   symlink to them, because Claude Code looks for skills nowhere else. A
   `pull-request` skill points to `workflow.md`.
+- **An issue may be declined and a pull request may be an experiment.** The
+  maintainer, asking for the open issues to be cleared: resolution can be a
+  pull request or closing an issue "outright as not planned or
+  irrelevant/deprecated", and a pull request "can experiment with something"
+  and "end up not being merged into main and that is fine too". Until then
+  closing an issue by hand needed the maintainer's request each time. The
+  conditions that keep such an ending useful to a later reader are in
+  `workflow.md`, "How issues and pull requests end"; whoever does the work
+  decides technical questions, and the maintainer is asked about what only
+  the maintainer knows or owns.
+- **Aliases and short options are welcome.** This replaces "one name per
+  thing" from the entry on `--list` and `--requirements` above. The
+  maintainer: "multiple names is fine for verbose commands to make them
+  clearer, we can always have aliases and shorthands", with the documents
+  teaching the long form first and `--help` listing every form. The
+  difference from the two aliases that were removed is that these are
+  documented; those two stay removed.
+- **Declined: narrowing the shared allowlist (issue #40).**
+  `.claude/settings.json` allows `bash tests/*`, so an agent can run a test
+  script it has just written without a prompt. The maintainer chose to leave
+  the file as it is: the rule in `.agents/rules.md` to contain a first run,
+  and the closed standard input that every suite now starts with, are judged
+  enough.
+- **Declined: making completion refuse what the launcher refuses (issue
+  #21).** Tab still offers candidates on a few lines the launcher would
+  reject, such as a second serial or a host after `--list-hosts`. Completion
+  is advice and the launcher has the last word; teaching the completion
+  function the parser's rules for a valid line would mean two copies of
+  those rules to keep in step, for lines nobody types on purpose.
+
