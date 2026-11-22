@@ -26,7 +26,7 @@ for module in "$project"/src/*.sh; do
     grep -Fqx "# ===== ${module##*/} =====" "$script" || fail "${module##*/} is not in the bundle"
 done
 passed=$((passed+1))
-check contains "$("$script" --version)" '3.0.2'
+check contains "$("$script" --version)" '3.1.0'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
@@ -99,7 +99,7 @@ trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
 # None of the local modes needs HOME.
-check contains "$(env -u HOME "$script" --version)" '3.0.2'
+check contains "$(env -u HOME "$script" --version)" '3.1.0'
 check contains "$(env -u HOME "$script" --help)" 'USAGE'
 check contains "$(env -u HOME "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env -u HOME "$script" --completion bash)" '_complete-remote-scrcpy()'

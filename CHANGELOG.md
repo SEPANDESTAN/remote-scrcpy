@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] — 2026-11-22
 
 ### Added
 - `install.sh`: `curl -fsSL .../install.sh | bash` puts the launcher in
@@ -13,6 +13,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Bash completion to `~/.bashrc` as one marked line. From a checkout it
   installs that checkout's bundle without network. No `sudo`, and nothing
   else is installed. Covered by a fifth fast suite, `tests/test-install.sh`.
+  The README's Install section leads with it and keeps the steps to install
+  by hand.
 - `--completion=bash` is accepted next to `--completion bash`, like the `=`
   form of every other option that takes a value; Tab completes it (#7).
 - `AGENTS.md` as the entry point for AI coding agents: an index into `docs/`
@@ -71,8 +73,6 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - README: the "Internal naming" and "Architecture for maintainers" sections
   moved to `docs/architecture.md`; a "Developing" section points to the
   contributing guide.
-- README install Option 2 uses `install -D` so the target directory is
-  created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only
   per-machine files (`.claude/settings.local.json`, `*.local.*`).
 
@@ -85,10 +85,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### CI
 - The integration suite (real OpenSSH and adb, simulated phone) runs on every
   pull request and on every push to `main` in a second job, so
-  `src/transport.sh` is exercised end to end before a change is merged. `actions/checkout` moves from v4 to
-  v7.
+  `src/transport.sh` is exercised end to end before a change is merged.
+  `actions/checkout` moves from v4 to v7.
 
 ### Tests
+- Every fast suite closes its standard input as well as clearing the
+  launcher's environment, and the maintenance suite checks both. A draft of
+  the new installer suite, before it was merged, started a shell with a
+  socket on standard input and a stripped `PATH`; that shell took itself
+  for a remote shell, read the user's startup files, and forked without
+  end.
 - The maintenance suite fails, naming the file, when a module under `src/`
   is missing from the bundle. The rebuild comparison in CI cannot show such
   a loss, and the fast suites noticed it only for modules they happen to
@@ -122,7 +128,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is then taken from the password database, where OpenSSH looks too, so the
   alias list is the same as with `HOME` set. With an empty `HOME` there is
   no default SSH config, and an `Include` that needs a home directory is
-  skipped with a message.
+  skipped with a message. A `HOME` that is not an absolute path now counts
+  as no home directory, where 3.0.2 used it as given.
 - Closing the terminal no longer kills scrcpy outright. The launcher passed
   the hangup signal on unchanged, and scrcpy, which handles only interrupt
   and terminate, died before its own shutdown, for example without finishing
@@ -142,14 +149,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No documented option or `REMOTE_SCRCPY_*` variable was removed or renamed;
-  the two aliases removed above were never documented. Two behaviours
-  changed:
+- No documented option or `REMOTE_SCRCPY_*` variable was removed or
+  renamed. Three behaviours changed:
+- `--list` and `--requirements` are gone; use `--list-devices` and
+  `--prerequisites`. Neither alias was in `--help` or the README, but Tab
+  completion offered `--list` up to 3.0.2.
 - Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
   now completes as a host, as the launcher reads it. To complete a serial on
   the environment host, use `--serial <Tab>` or `--serial=<Tab>`.
 - `NO_COLOR` together with an explicit `--color=always` or
-  `REMOTE_SCRCPY_COLOR=always`: the output is now colored.
+  `REMOTE_SCRCPY_COLOR=always`: the output is now colored. The help text of
+  3.0.2 said that `NO_COLOR` disables color unconditionally; it now decides
+  only while the color mode is `auto`.
 
 ## [3.0.2] — 2026-11-05
 
