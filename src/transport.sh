@@ -1,16 +1,15 @@
-# SSH/ADB/scrcpy connection lifetime and resource ownership.
-# SESSION_* variables belong exclusively to this module, including SSH mux
-# socket, forwarding ports, ADB reservation, and scrcpy PID. The EXIT trap
-# must run _cleanup-remote-connection on every post-connect failure.
-
-# SSH/ADB transport. Sourced by the launcher; no work happens at source time.
-# Configuration: SETTINGS_SSH_HOST, SETTINGS_DEVICE_SERIAL, SETTINGS_SSH_CONFIG_FILE, SETTINGS_LOCAL_ADB_EXECUTABLE, SETTINGS_REMOTE_ADB_EXECUTABLE,
-# SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE, SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
-# Common helpers: _exit-with-error/log/debug.
-# Owned session state is always prefixed SESSION_. All are initialized to
-# empty/inactive, then assigned by _open-remote-connection and
-# _reserve-device-forwarding-port. _cleanup-remote-connection may run after
-# partial setup, so it MUST tolerate unset/incomplete resources.
+# SSH/ADB/scrcpy connection lifetime and resource ownership. No work happens
+# when the module is loaded.
+# Reads: SETTINGS_SSH_HOST, SETTINGS_DEVICE_SERIAL, SETTINGS_SSH_CONFIG_FILE,
+# SETTINGS_LOCAL_ADB_EXECUTABLE, SETTINGS_REMOTE_ADB_EXECUTABLE,
+# SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE,
+# SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
+# Owns: the SESSION_* variables below, which no other module touches. They
+# start empty or inactive and are assigned by _open-remote-connection and
+# _reserve-device-forwarding-port. The EXIT trap must run
+# _cleanup-remote-connection on every failure after connecting, and that
+# function may run after partial setup, so it MUST tolerate unset or
+# incomplete resources.
 #
 #   SESSION_WORK_DIRECTORY       Private temporary directory for socket/errors.
 #   SESSION_SSH_CONTROL_SOCKET   Private SSH master control socket path.
@@ -297,8 +296,11 @@ _cleanup-remote-connection() {
             while read -r serial endpoint target extra; do
                 if [[ $serial == "$SETTINGS_DEVICE_SERIAL" && $target == "$SESSION_ADB_PORT_RESERVATION" \
                     && $endpoint =~ ^tcp:[0-9]+$ && -z $extra ]]; then
-                    # Do not remove scrcpy's replacement, or a port now reused
-                    # by another session. Only an unused unique token matches.
+                    # Only this session's own, still unused reservation
+                    # matches. A forward that scrcpy has rebound to its own
+                    # socket is deliberately left alone, even if scrcpy died
+                    # before removing it: by then the port may belong to
+                    # another session, and the two cannot be told apart.
                     _run-remote-adb-client -s "$serial" forward --remove "$endpoint" > /dev/null 2>&1 || true
                 fi
             done <<< "$listing"

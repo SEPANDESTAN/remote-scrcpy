@@ -1,11 +1,9 @@
-# CLI contract: only parse/validate arguments; never open network connections.
-# Positional HOST and SERIAL fill the same state as --host and --serial.
-# A standalone -- is the boundary: subsequent arguments go unchanged to scrcpy.
+# CLI contract: only parse and validate arguments; never open a connection or
+# a menu. Positional HOST and SERIAL fill the same state as --host and
+# --serial. A standalone -- is the boundary: what follows goes to scrcpy.
 
-# Command-line parsing is independent of connection setup and menus.
-
-# Print a standalone contract; the long setup procedure is --prerequisites.
-# Show CLI syntax, examples, options, precedence and basic setup.
+# Print the syntax, examples, options, precedence and basic setup; the long
+# setup procedure is --prerequisites.
 # Prints static text to stdout; must work with no optional binaries.
 _print-help() {
     local line
@@ -102,8 +100,8 @@ EXIT STATUS
 END_HELP_TEXT
 }
 
-# Apply a named argument exactly once; initial environment defaults are allowed.
-# Assign one explicit host or serial while detecting duplicates.
+# Assign a host or serial given on the command line, once: a second one is an
+# error, while a value that only came from the environment may be replaced.
 # Args: state variable name, value and label; tracks CLI-set flags.
 _assign-unique-argument() {
     local name=$1 value=$2 label=$3

@@ -22,6 +22,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates under `.github/` and carry a type label.
 
 ### Changed
+- Source comments: every module has one header and every function one doc
+  comment. A pass before 3.0.1 had stacked new comments on top of the old
+  ones, leaving two or three overlapping blocks in most places. No code
+  line changes (#6).
 - `bash src/build.sh --help` prints its usage. Before, any option was taken
   for the output path and failed inside `mktemp`; unknown options and extra
   arguments are now refused with status 2 (#5).

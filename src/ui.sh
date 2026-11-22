@@ -1,9 +1,8 @@
 # Numbered interactive menus and remote ADB device enumeration.
-# Menus modify SETTINGS_SSH_HOST and SETTINGS_DEVICE_SERIAL only after valid user selection.
-# Device inventory consists of parallel DISCOVERED_DEVICE_* arrays (same indexes).
-
-# Interactive selection and presentation. Menus write to stderr; machine-readable
-# listing modes write to stdout. Remote data is parsed once into parallel arrays.
+# Menus write to stderr and change SETTINGS_SSH_HOST and SETTINGS_DEVICE_SERIAL
+# only after a valid selection; the listing modes write plain data to stdout.
+# Remote data is parsed once into the parallel DISCOVERED_DEVICE_* arrays,
+# where one index describes one device.
 
 # Choose a literal SSH alias or manually entered destination.
 # Writes SETTINGS_SSH_HOST; q cancels; does not connect.

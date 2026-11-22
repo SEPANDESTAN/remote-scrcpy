@@ -1,7 +1,6 @@
 # Application controller. remote-scrcpy is the only public function.
-# CLI parsing, selection, transport, GUI and cleanup share one linear lifecycle.
-
-# Entry point: each step fills missing input, without duplicating connection logic.
+# CLI parsing, selection, transport, GUI and cleanup share one linear
+# lifecycle, in which each step fills in what the previous ones left open.
 
 # Preserve exit status while performing idempotent cleanup.
 # Invoked via EXIT trap; never returns.
