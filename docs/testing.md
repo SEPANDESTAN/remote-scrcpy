@@ -5,7 +5,7 @@
 ```bash
 bash -n remote-scrcpy.sh
 bash tests/test-maintenance.sh       # expects: Maintenance checks: 32 passed.
-bash tests/test-completion.sh        # expects: Completion checks: 16 passed.
+bash tests/test-completion.sh        # expects: Completion checks: 28 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 23 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
 ```
@@ -23,7 +23,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 | Suite | Runs against | Covers |
 |---|---|---|
 | `test-maintenance.sh` | the bundle | version string, help/prerequisites/completion output, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
-| `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, `--host=`/`--serial=` forms, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
+| `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, serials with a colon, which host a lookup contacts, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
 | `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
 

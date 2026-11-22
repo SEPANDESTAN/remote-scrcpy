@@ -51,6 +51,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   now follows the launcher: the first positional is the host and replaces
   the environment host for device lookups; `--serial <Tab>` completes a
   serial for the environment host (#2).
+- Tab completion no longer misreads words that contain `=`, `@` or `:`. Bash
+  splits the line at those characters before calling a completion function,
+  so `--serial=D` was read as an option, its value `=` and a positional, and
+  a serial, a port number or a user name could end up as the host that
+  completion contacted. `--host=`, `--serial=` and `--color=` now complete
+  in an interactive shell, as do `user@host` destinations and serials that
+  contain a colon (#20).
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
   host and three of the four fast suites failed; every suite and the
