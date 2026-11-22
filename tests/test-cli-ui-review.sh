@@ -63,6 +63,13 @@ validate_configuration() (
     _validate-configuration
 )
 
+# The message printed when a scrcpy option after -- is refused.
+scrcpy_argument_error() {
+    ( _initialize-configuration
+      _parse-command-line remote-host PHONE_A -- "$@"
+      _validate-scrcpy-arguments ) 2>&1 || true
+}
+
 exit_status() (
     local result=0
     "$@" >/dev/null 2>&1 || result=$?
@@ -146,6 +153,13 @@ expect_output 'Color option retains host-only continuation' 'never|0|remote-host
     parse_presentation --color never remote-host
 expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \
     parse_presentation remote-host PHONE_A --color=always --ascii
+expect_output 'A dash-led value is refused with a way out' \
+    "x remote-scrcpy: Use separate short flags or full long options after --: -1920 (If it is an option's value, write --option=value.)" \
+    scrcpy_argument_error --window-x -1920
+expect_output 'A value that looks like a managed flag gets the same hint' \
+    "x remote-scrcpy: The launcher manages -demo. (If it is an option's value, write --option=value.)" \
+    scrcpy_argument_error --window-title -demo
+expect_output 'The same value is accepted in the = form' '' scrcpy_argument_error --window-x=-1920
 expect_output 'Removed UI option is rejected' '2' exit_status validate_configuration --ui gum
 expect_output 'Unknown interface is rejected' '2' exit_status validate_configuration --ui invalid
 expect_output 'Empty interface is rejected' '2' exit_status parse_destinations --ui=

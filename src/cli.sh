@@ -71,13 +71,29 @@ COMPLETION
   Add this to ~/.bashrc for persistent Bash tab completion. Host aliases
   are local; online device serials are queried by SSH on each Tab by default.
   REMOTE_SCRCPY_COMPLETE_DEVICES=0 disables remote device queries.
-  REMOTE_SCRCPY_COMPLETION_TIMEOUT=6 is the optional time bound (seconds).
+  REMOTE_SCRCPY_COMPLETION_TIMEOUT=6 bounds a lookup, in seconds from 1 to
+  99, where a `timeout` program is installed; other values mean 6.
 
 NOTES
   Host listing is a static SSH-config alias inventory; OpenSSH controls the
-  actual connection. The launcher owns scrcpy's device/tunnel flags. Do not
-  override --serial, --port or --tunnel-port after --. Use `scrcpy --help`
-  for supported display, audio, input, and recording options.
+  actual connection. The launcher owns scrcpy's device, tunnel and adb
+  lifecycle options and rejects them after --: --serial, --select-usb,
+  --select-tcpip, --tcpip, --otg, --port, --tunnel-host, --tunnel-port,
+  --force-adb-forward, --kill-adb-on-close and their abbreviations, the
+  short flags -s -d -e -p, and several short flags combined in one word.
+  Write an option's value as --option=value when it starts with a dash.
+  Use `scrcpy --help` for supported display, audio, input, and recording
+  options.
+
+EXIT STATUS
+  0    scrcpy exited normally, or a listing or help mode completed
+  1    runtime failure (SSH, ADB, forwarding, protocol mismatch)
+  2    usage or configuration error, before any connection
+  127  a required executable is missing
+  129  the terminal was closed (SIGHUP)
+  130  cancelled at a prompt, or interrupted (SIGINT)
+  143  terminated (SIGTERM)
+  Any other status is scrcpy's own.
 END_HELP_TEXT
 }
 
@@ -183,9 +199,9 @@ _validate-scrcpy-arguments() {
             done
         elif [[ $arg == -* && $arg != - ]]; then
             case $arg in
-                -[psde]*) _exit-with-error "The launcher manages $arg." 2 ;;
+                -[psde]*) _exit-with-error "The launcher manages $arg. (If it is an option's value, write --option=value.)" 2 ;;
                 -[mbr]*|-[[:alnum:]]) ;;
-                *) _exit-with-error "Use separate short flags or full long options after --: $arg" 2 ;;
+                *) _exit-with-error "Use separate short flags or full long options after --: $arg (If it is an option's value, write --option=value.)" 2 ;;
             esac
         fi
     done

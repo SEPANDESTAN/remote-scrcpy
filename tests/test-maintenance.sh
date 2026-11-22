@@ -19,6 +19,11 @@ check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
 check contains "$("$script" --help)" 'REMOTE_SCRCPY_HOST'
+check contains "$("$script" --help)" 'EXIT STATUS'
+# Errors name what the user typed or set, not an internal or secondary name.
+# Neither command names a host: both stop at validation.
+check contains "$(REMOTE_SCRCPY_ASCII=maybe "$script" --list-hosts 2>&1 || true)" 'REMOTE_SCRCPY_ASCII must be 0 or 1'
+check contains "$("$script" --non-interactive --adb-port 0 --list-devices 2>&1 || true)" '--adb-port / REMOTE_SCRCPY_ADB_PORT must be'
 check contains "$(head -n 45 "$script")" 'INSTALL ON THE VIEWING COMPUTER'
 check contains "$(head -n 45 "$script")" 'remote-scrcpy --help'
 check contains "$(head -n 45 "$script")" 'remote-scrcpy --prerequisites'

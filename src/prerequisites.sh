@@ -17,7 +17,13 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
      packages depend on or bundle adb; this launcher still invokes adb itself
      to enumerate devices and configure forwarding. Check `command -v adb`.
    - A graphical desktop with video support for the scrcpy window.
-   - Standard tools: awk, mktemp, rm, sleep. No extra terminal UI dependency.
+   - Standard tools: awk, cat, env, mktemp, rm, sleep. No extra terminal UI
+     dependency.
+   - A Bash built with network redirections (/dev/tcp), as every mainstream
+     distribution ships it: the launcher asks the remote ADB server for its
+     version itself, without an adb client.
+   - A writable /tmp. The session's SSH control socket is created there
+     whatever TMPDIR says, because socket paths are limited in length.
 
    Check:
      bash --version
@@ -78,7 +84,7 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
    - `remote-scrcpy --list-hosts` lists aliases locally, without SSH.
    - `remote-scrcpy --list-devices HOST` checks remote discovery without GUI.
    - `remote-scrcpy --verbose HOST SERIAL` prints SSH/ADB diagnostics.
-   - `ADB server mismatch`: align Android Platform Tools versions; the
+   - `ADB protocol mismatch`: align Android Platform Tools versions; the
      launcher does not forcibly restart an incompatible shared server.
    - scrcpy SDL/display errors: run on the viewer's graphical desktop,
      not from an ordinary SSH shell on the remote computer.
