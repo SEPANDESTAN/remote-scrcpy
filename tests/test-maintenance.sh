@@ -76,6 +76,12 @@ check status 2 "$script" --host a --host b --list-devices
 check status 2 "$script" --serial a --serial b --list-devices
 check status 2 "$script" --serial a --list-devices
 check status 2 "$script" --host host --serial serial --list-hosts
+# One mode per run, in the bundle too: two mode options are refused in either
+# order, and a mode that is not about a host refuses one.
+check status 2 "$script" --list-hosts --completion=bash
+check status 2 "$script" --completion=bash --list-hosts
+check contains "$("$script" --prerequisites --list-hosts 2>&1 || true)" 'Choose only one of --list-hosts, --list-devices, --prerequisites and --completion.'
+check contains "$("$script" remote-host --prerequisites 2>&1 || true)" '--prerequisites does not take a host or serial.'
 check status 2 "$script" --bogus
 # --completion takes its value like every other value option, and the two
 # aliases that were never documented are gone.

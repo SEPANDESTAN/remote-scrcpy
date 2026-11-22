@@ -366,6 +366,16 @@ _assign-unique-argument() {
     printf -v "$name" '%s' "$value"
 }
 
+# Choose the one thing a run does instead of connecting. A second mode
+# option is a usage error, whichever two they are and in whichever order.
+# Args: operation (hosts, devices, prerequisites or completion); sets
+# SETTINGS_OPERATION; exits with status 2 when a mode was already chosen.
+_select-operation() {
+    [[ $SETTINGS_OPERATION == connect ]] \
+        || _exit-with-error 'Choose only one of --list-hosts, --list-devices, --prerequisites and --completion.' 2
+    SETTINGS_OPERATION=$1
+}
+
 # Parse options, positional arguments and scrcpy passthrough.
 # Args: main argv; outputs SETTINGS_OPERATION/SETTINGS_*; no connection side effects.
 _parse-command-line() {
@@ -376,7 +386,7 @@ _parse-command-line() {
         case $arg in
             --) shift; SETTINGS_SCRCPY_EXTRA_ARGUMENTS=("$@"); break ;;
             -h|--help) _print-help; exit 0 ;;
-            --prerequisites) SETTINGS_OPERATION=prerequisites; shift ;;
+            --prerequisites) _select-operation prerequisites; shift ;;
             --completion|--completion=*)
                 if [[ $arg == *=* ]]; then
                     value=${arg#*=}; shift
@@ -385,16 +395,14 @@ _parse-command-line() {
                     value=$2; shift 2
                 fi
                 [[ $value == bash ]] || _exit-with-error 'Only Bash completion is supported.' 2
-                SETTINGS_OPERATION=completion ;;
+                _select-operation completion ;;
             -V|--version) printf 'remote-scrcpy %s\n' "$APPLICATION_VERSION"; exit 0 ;;
             -v|--verbose) SETTINGS_VERBOSE=1; shift ;;
             --quiet) SETTINGS_QUIET=1; shift ;;
             --ascii) SETTINGS_ASCII_ONLY=1; shift ;;
             --non-interactive) SETTINGS_NON_INTERACTIVE=1; shift ;;
-            --list-hosts|--list-devices)
-                [[ $SETTINGS_OPERATION == connect ]] || _exit-with-error 'Choose only one listing mode.' 2
-                if [[ $arg == --list-hosts ]]; then SETTINGS_OPERATION=hosts; else SETTINGS_OPERATION=devices; fi
-                shift ;;
+            --list-hosts) _select-operation hosts; shift ;;
+            --list-devices) _select-operation devices; shift ;;
             --host|--serial|--ssh-config|--adb|--remote-adb|--adb-port|--color|\
             --host=*|--serial=*|--ssh-config=*|--adb=*|--remote-adb=*|--adb-port=*|--color=*)
                 key=${arg%%=*}
@@ -428,8 +436,16 @@ _parse-command-line() {
                 shift ;;
         esac
     done
-    if [[ $SETTINGS_OPERATION == hosts ]] && (( CLI_HOST_EXPLICIT || CLI_SERIAL_EXPLICIT )); then
-        _exit-with-error '--list-hosts does not take a host or serial.' 2
+    # Only a connection and the device list are about a host; a host or
+    # serial next to another mode is a mistake, not something to ignore.
+    case $SETTINGS_OPERATION in
+        hosts) key=--list-hosts ;;
+        prerequisites) key=--prerequisites ;;
+        completion) key=--completion ;;
+        *) key= ;;
+    esac
+    if [[ -n $key ]] && (( CLI_HOST_EXPLICIT || CLI_SERIAL_EXPLICIT )); then
+        _exit-with-error "$key does not take a host or serial." 2
     fi
     if [[ $SETTINGS_OPERATION == devices ]] && (( CLI_SERIAL_EXPLICIT )); then
         _exit-with-error '--list-devices does not take a serial.' 2
