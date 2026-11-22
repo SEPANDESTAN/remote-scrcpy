@@ -56,10 +56,16 @@ complete_words() {
     done
     COMP_CWORD=$((${#COMP_WORDS[@]} - 1))
     COMPREPLY=()
+    calls_before=$(ssh_calls)
     _complete-remote-scrcpy
 }
 ssh_calls() { wc -l < "$SSH_COMPLETION_CALLS"; }
-queried_host() { tail -1 "$SSH_COMPLETION_CALLS" | sed -E 's/.* -- ([^ ]+) .*/\1/'; }
+# The host the last complete_words asked ssh for. A lookup left over from an
+# earlier check does not count.
+queried_host() {
+    if (( $(ssh_calls) == calls_before )); then printf '(no lookup)'; return; fi
+    tail -1 "$SSH_COMPLETION_CALLS" | sed -E 's/.* -- ([^ ]+) .*/\1/'
+}
 : > "$SSH_COMPLETION_CALLS"
 
 complete_words r
@@ -84,6 +90,13 @@ complete_words --color=a
 assert_eq 'color equals' 'auto always' "${COMPREPLY[*]}"
 complete_words remote-host 192.0.2.10:5
 assert_eq 'serial with a colon' '5555' "${COMPREPLY[*]}"
+# With two break characters in the word, the cut is at the last one.
+complete_words remote-host --serial=192.0.2.10:5
+assert_eq 'serial with a colon after --serial=' '5555' "${COMPREPLY[*]}"
+# Bash keeps a leading '@' in the text it replaces, so the candidate keeps it.
+mkdir "$sandbox/at@home"; : > "$sandbox/at@home/config-file"
+complete_words --ssh-config "$sandbox/at@home/con"
+assert_eq 'file name behind an @' '@home/config-file' "${COMPREPLY[*]}"
 
 # Pieces of one word must not be read as separate arguments: a serial, a port
 # or a user name would otherwise be taken for the host and contacted.
@@ -131,5 +144,7 @@ complete_words --host remote-host D
 assert_eq 'environment host: --host wins for the query' 'remote-host' "$(queried_host)"
 complete_words --host remote-host X D
 assert_eq 'environment host: a positional never replaces --host' 'remote-host' "$(queried_host)"
+complete_words --host=remote-host D
+assert_eq 'environment host: --host= wins for the query' 'remote-host' "$(queried_host)"
 unset REMOTE_SCRCPY_HOST
 printf 'Completion checks: %d passed.\n' "$passed"

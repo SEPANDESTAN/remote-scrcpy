@@ -56,8 +56,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   so `--serial=D` was read as an option, its value `=` and a positional, and
   a serial, a port number or a user name could end up as the host that
   completion contacted. `--host=`, `--serial=` and `--color=` now complete
-  in an interactive shell, as do `user@host` destinations and serials that
-  contain a colon (#20).
+  in an interactive shell, serials that contain a colon complete, and a
+  `user@host` destination is read as one host (#20).
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
   host and three of the four fast suites failed; every suite and the

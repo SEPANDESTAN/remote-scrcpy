@@ -153,7 +153,12 @@ _remote-scrcpy-complete-words() {
 # Read piecewise, a serial, a port or a user name would be taken for the host
 # and contacted. So the pieces are joined back into the words that were typed
 # before they are interpreted, and each candidate is then cut down to what
-# Bash replaces: the text after the last such character.
+# Bash replaces: the text after the last '=' or ':', or from the last '@' on,
+# since Bash keeps a leading '@' in the text it replaces.
+#
+# COMP_WORDS does not say whether two pieces were adjacent. A word that begins
+# with one of these characters (the host `::1`), or one typed apart from its
+# neighbours (`--host = z`), is therefore joined to the word before it.
 _complete-remote-scrcpy() {
     local -a words=()
     local word index glue=0 current char
@@ -177,7 +182,8 @@ _complete-remote-scrcpy() {
     for ((index = ${#current} - 1; index >= 0; index--)); do
         char=${current:index:1}
         if [[ $char == [=@:] && ${COMP_WORDBREAKS-} == *"$char"* ]]; then
-            COMPREPLY=("${COMPREPLY[@]#"${current:0:index+1}"}")
+            [[ $char == @ ]] || ((index += 1))
+            COMPREPLY=("${COMPREPLY[@]#"${current:0:index}"}")
             break
         fi
     done
