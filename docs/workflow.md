@@ -269,18 +269,25 @@ or `REQUEST_CHANGES` instead.
    Nothing contested is implemented before that.
 
    ```bash
-   gh api repos/<owner>/<repo>/pulls/<number>/comments      # comments and their ids
+   gh api --paginate repos/<owner>/<repo>/pulls/<number>/comments   # comments and ids
    gh api repos/<owner>/<repo>/pulls/<number>/comments/<id>/replies \
        -f body='**Author:** ...'
    ```
+
+   `<id>` is the first comment of the thread, the one without
+   `in_reply_to_id`; GitHub does not accept a reply to a reply. Findings in
+   the summary have no thread: the author answers them one by one in a
+   single ordinary comment (`gh pr comment <number> --body-file <file>`),
+   and they are discussed there.
 
 2. **Implement what was agreed** with new commits, push, and name the commit
    in each thread.
 
 3. **Final review.** The reviewer goes over the whole pull request again,
    not only the threads: it checks each agreed resolution against the files,
-   resolves the threads it accepts, runs the proof again, and submits a new
-   review with a verdict. Anything new it finds starts again at 1.
+   resolves the threads it accepts, says in its summary which summary
+   findings are settled, runs the proof again, and submits a new review with
+   a verdict. Anything new it finds starts again at 1.
 
    ```bash
    gh api graphql -f query='query { repository(owner:"<owner>", name:"<repo>") {
@@ -290,8 +297,9 @@ or `REQUEST_CHANGES` instead.
      input:{threadId:"<thread id>"}) { thread { isResolved } } }'
    ```
 
-4. **Merge** when the last verdict is an approval, every thread is resolved
-   and CI is green, as in step 7 of the procedure.
+4. **Merge** when the last verdict is an approval, every thread is resolved,
+   the reviewer's last summary calls the summary findings settled, and CI is
+   green, as in step 7 of the procedure.
 
 ## What still needs the maintainer
 
