@@ -58,6 +58,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   completion contacted. `--host=`, `--serial=` and `--color=` now complete
   in an interactive shell, serials that contain a colon complete, and a
   `user@host` destination is read as one host (#20).
+- A device lookup started by Tab no longer reads from the terminal. Keys
+  typed while it ran were taken by `ssh` and sent to the remote instead of
+  reaching the shell (#8).
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
   host and three of the four fast suites failed; every suite and the

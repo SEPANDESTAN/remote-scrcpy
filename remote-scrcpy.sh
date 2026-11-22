@@ -1277,7 +1277,9 @@ _remote-scrcpy-query-device-serials() {
         [[ -n $line && $line != 'List of devices attached'* && $line != \** ]] || continue
         read -r serial state _ <<< "$line"
         [[ $state == device && -n $serial ]] && printf '%s\n' "$serial"
-    done < <("${bounded_command[@]}" 2>/dev/null)
+    # The lookup must not read the terminal: keys typed while it runs belong
+    # to the shell, and ssh would swallow them and send them to the remote.
+    done < <("${bounded_command[@]}" 2>/dev/null </dev/null)
 }
 
 # Decide what the last of the given whole words completes to.

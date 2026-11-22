@@ -16,6 +16,9 @@ CONFIG
 cat > "$sandbox/bin/ssh" <<'SSH'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$SSH_COMPLETION_CALLS"
+# A real ssh reads its standard input and forwards it; record what this one
+# could have taken.
+if IFS= read -r -t 1 taken; then printf '%s\n' "$taken" >> "$SSH_COMPLETION_STDIN"; fi
 cat <<'DEVICES'
 List of devices attached
 DEVICE1234567890 device product:test model:Test_Phone_A
@@ -30,6 +33,7 @@ chmod +x "$sandbox/bin/ssh"
 # Where available, GNU timeout is allowed, and delegates to our fake ssh.
 export PATH="$sandbox/bin:$PATH"
 export SSH_COMPLETION_CALLS="$sandbox/calls"
+export SSH_COMPLETION_STDIN="$sandbox/stdin"
 export REMOTE_SCRCPY_SSH_CONFIG="$sandbox/config"
 source <("$script" --completion bash)
 passed=0
@@ -73,6 +77,10 @@ assert_eq 'SSH aliases' 'remote-host remote-backup' "${COMPREPLY[*]}"
 assert_eq 'host completion stays local' '0' "$(ssh_calls)"
 complete_words remote-host D
 assert_eq 'serial positional' 'DEVICE1234567890' "${COMPREPLY[*]}"
+# Keys typed while a lookup runs stay with the shell: ssh gets no input.
+: > "$SSH_COMPLETION_STDIN"
+complete_words remote-host D <<< 'typed ahead'
+assert_eq 'a lookup reads nothing from the terminal' '' "$(< "$SSH_COMPLETION_STDIN")"
 complete_words --host remote-host D
 assert_eq 'serial after named host' 'DEVICE1234567890' "${COMPREPLY[*]}"
 complete_words --host remote-host --serial Z
