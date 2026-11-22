@@ -1317,7 +1317,9 @@ _complete-remote-scrcpy() {
             *) positions+=("$word") ;;
         esac
     done
-    [[ -n $host ]] || host=${positions[0]:-}
+    # A positional host replaces REMOTE_SCRCPY_HOST, as it does in the
+    # launcher's parser; only --host takes the first positional's place.
+    if (( ! explicit_host && ${#positions[@]} )); then host=${positions[0]}; fi
 
     case $previous in
         --host) complete_host=1 ;;
@@ -1343,11 +1345,10 @@ _complete-remote-scrcpy() {
     esac
 
     if (( complete_host == 0 && complete_serial == 0 )); then
-        # The first positional is the SSH host unless a --host flag already
-        # supplied one. An environment-host similarly makes it a serial.
-        if (( explicit_host )) || [[ -n ${REMOTE_SCRCPY_HOST:-} ]]; then
-            complete_serial=1
-        elif (( ${#positions[@]} )); then
+        # Same rule as the launcher's parser: the first positional is the SSH
+        # host unless --host supplied one. REMOTE_SCRCPY_HOST does not change
+        # what a position means; it only fills in a host that was not given.
+        if (( explicit_host || ${#positions[@]} )); then
             complete_serial=1
         else
             complete_host=1

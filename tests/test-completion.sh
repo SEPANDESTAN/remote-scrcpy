@@ -66,4 +66,21 @@ assert_eq 'disabled network query count' "$count" "$(wc -l < "$SSH_COMPLETION_CA
 unset REMOTE_SCRCPY_COMPLETE_DEVICES
 # The chosen host must appear exactly once; do not introduce unsafe word splitting.
 [[ $(tail -1 "$SSH_COMPLETION_CALLS") == *remote-host* ]] || exit 1
+
+# With REMOTE_SCRCPY_HOST set, positions keep the meaning the launcher's parser
+# gives them: the first positional is still the host, and it replaces the
+# environment host for the device query. Only --serial and --host change that.
+queried_host() { tail -1 "$SSH_COMPLETION_CALLS" | sed -E 's/.* -- ([^ ]+) .*/\1/'; }
+export REMOTE_SCRCPY_HOST=remote-backup
+count=$(wc -l < "$SSH_COMPLETION_CALLS")
+complete_words r
+assert_eq 'environment host: first positional completes hosts' 'remote-host remote-backup' "${COMPREPLY[*]}"
+assert_eq 'environment host: host completion stays local' "$count" "$(wc -l < "$SSH_COMPLETION_CALLS")"
+complete_words remote-host D
+assert_eq 'environment host: serial after a positional host' 'DEVICE1234567890' "${COMPREPLY[*]}"
+assert_eq 'environment host: positional host is the one queried' 'remote-host' "$(queried_host)"
+complete_words --serial D
+assert_eq 'environment host: --serial completes without a positional' 'DEVICE1234567890' "${COMPREPLY[*]}"
+assert_eq 'environment host: --serial queries the environment host' 'remote-backup' "$(queried_host)"
+unset REMOTE_SCRCPY_HOST
 printf 'Completion checks: %d passed.\n' "$passed"

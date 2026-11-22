@@ -45,6 +45,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the device menu is tested to offer only ready devices (#15).
 
 ### Fixed
+- Tab completion no longer offers device serials for the first positional
+  when `REMOTE_SCRCPY_HOST` is set. The launcher reads that position as the
+  host, so an accepted suggestion was used as an SSH destination. Completion
+  now follows the launcher: the first positional is the host and replaces
+  the environment host for device lookups; `--serial <Tab>` completes a
+  serial for the environment host (#2).
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
   host and three of the four fast suites failed; every suite and the
