@@ -22,20 +22,21 @@ daily use come first; polish for strangers second.
 | Path | Role |
 |---|---|
 | `remote-scrcpy.sh` | the only runtime file. **Generated.** Never edit it directly. |
+| `install.sh` | installer a user pipes from curl: fetches or copies the bundle into a directory on `PATH`; not part of the bundle |
 | `src/build.sh` | concatenates the modules below into the bundle, in this order |
 | `src/core.sh` `cli.sh` `ssh-config.sh` `presentation.sh` `ui.sh` `transport.sh` `prerequisites.sh` `completion.sh` `main.sh` | the source. `main.sh` holds the lifecycle; `transport.sh` owns every SSH/ADB/scrcpy resource |
-| `tests/test-*.sh` | four fast suites, no network, run by CI |
+| `tests/test-*.sh` | five fast suites, no network, run by CI |
 | `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; run by CI in its own job |
 | `docs/` | architecture, testing, workflow, release, decisions, history, the last review |
 | `.agents/skills/` | step-by-step procedures: `build-and-test`, `add-cli-option`, `release` |
-| `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the four suites, and the integration suite in a second job |
+| `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the five suites, and the integration suite in a second job |
 
 ## Rules
 
 1. **Edit `src/`, run `bash src/build.sh`, commit the regenerated bundle in
    the same commit.** CI rebuilds and diffs `remote-scrcpy.sh`; a stale
-   bundle fails. Two suites test the bundle and two source the modules, so
-   an unrebuilt change passes half the tests.
+   bundle fails. Three suites run the bundle and two source the modules, so
+   an unrebuilt change passes some of the tests.
 2. **Never run the launcher against a real host or phone from a work
    session.** No `remote-scrcpy HOST`, no `--list-devices HOST`, no Tab
    completion with a real alias, unless `ssh`, `adb` and `scrcpy` on `PATH`
@@ -43,13 +44,16 @@ daily use come first; polish for strangers second.
    `docs/testing.md`). Safe anywhere: `--help`, `--version`,
    `--prerequisites`, `--completion bash`, `--list-hosts`.
 3. **Keep the suites deaf to your environment.** Each one starts by
-   clearing `REMOTE_SCRCPY_*` and the generic fallbacks, and a maintenance
-   check fails if a suite stops doing so; a new suite must do the same.
+   clearing `REMOTE_SCRCPY_*` and the generic fallbacks and then closing its
+   standard input with `exec < /dev/null` (why: `docs/testing.md`,
+   "Environment"). A maintenance check fails if a suite stops doing either;
+   a new suite must do the same.
 4. **No `eval`, no executing anything from an SSH config, no new runtime
    dependencies, no code that downloads or installs tools.** The bundle must
-   stay plain Bash 4.4 plus OpenSSH, adb and scrcpy. `tests/test-maintenance.sh`
-   greps for things that were removed on purpose (`gum`, `--ui=`, base64
-   payloads) and must keep failing if they return.
+   stay plain Bash 4.4 plus OpenSSH, adb and scrcpy. `install.sh` downloads
+   one thing, the bundle itself, and installs nothing else.
+   `tests/test-maintenance.sh` greps for things that were removed on purpose
+   (`gum`, `--ui=`, base64 payloads) and must keep failing if they return.
 5. **stdout is data, stderr is messages.** Listing and completion output is
    plain; prompts, banners and status go to stderr.
 6. **Never terminate or restart a shared remote ADB server.** The protocol
@@ -77,6 +81,7 @@ bash tests/test-maintenance.sh      # Maintenance checks: 59 passed.
 bash tests/test-completion.sh       # Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
+bash tests/test-install.sh          # Install checks: 74 passed.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```
 

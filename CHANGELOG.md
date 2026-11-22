@@ -7,6 +7,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- `install.sh`: `curl -fsSL .../install.sh | bash` puts the launcher in
+  `~/.local/bin`, after checking that the file parses and runs. `--dir`
+  chooses the directory, `--ref` a tag or branch, and `--completion` adds
+  Bash completion to `~/.bashrc` as one marked line. From a checkout it
+  installs that checkout's bundle without network. No `sudo`, and nothing
+  else is installed. Covered by a fifth fast suite, `tests/test-install.sh`.
 - `--completion=bash` is accepted next to `--completion bash`, like the `=`
   form of every other option that takes a value; Tab completes it (#7).
 - `AGENTS.md` as the entry point for AI coding agents, with `CLAUDE.md` as a
