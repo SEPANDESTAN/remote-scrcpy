@@ -186,22 +186,23 @@ _parse-command-line() {
                 shift ;;
         esac
     done
-    # Only a connection and the device list are about a host; a host or
-    # serial next to another mode is a mistake, not something to ignore.
+    # Only a connection and the device list are about a host, and only a
+    # connection starts scrcpy. A host, a serial or a scrcpy option next to
+    # a mode that has no use for it is a mistake, not something to ignore.
     case $SETTINGS_OPERATION in
         hosts) key=--list-hosts ;;
+        devices) key=--list-devices ;;
         prerequisites) key=--prerequisites ;;
         completion) key=--completion ;;
-        *) key= ;;
+        *) return 0 ;;
     esac
-    if [[ -n $key ]] && (( CLI_HOST_EXPLICIT || CLI_SERIAL_EXPLICIT )); then
+    if [[ $key == --list-devices ]]; then
+        (( ! CLI_SERIAL_EXPLICIT )) || _exit-with-error '--list-devices does not take a serial.' 2
+    elif (( CLI_HOST_EXPLICIT || CLI_SERIAL_EXPLICIT )); then
         _exit-with-error "$key does not take a host or serial." 2
     fi
-    if [[ $SETTINGS_OPERATION == devices ]] && (( CLI_SERIAL_EXPLICIT )); then
-        _exit-with-error '--list-devices does not take a serial.' 2
-    fi
-    if [[ $SETTINGS_OPERATION != connect ]] && (( ${#SETTINGS_SCRCPY_EXTRA_ARGUMENTS[@]} )); then
-        _exit-with-error 'Listing modes do not take scrcpy options.' 2
+    if (( ${#SETTINGS_SCRCPY_EXTRA_ARGUMENTS[@]} )); then
+        _exit-with-error "$key does not take scrcpy options." 2
     fi
 }
 
