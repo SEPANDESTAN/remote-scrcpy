@@ -1,16 +1,13 @@
-# SSH config alias inventory (not an SSH configuration interpreter).
-# Handles static Host declarations and Include paths, without executing Match
-# expressions. OpenSSH itself remains authoritative for actual connections.
+# SSH config alias inventory for the host menu and --list-hosts; not an SSH
+# configuration interpreter. It reads static Host declarations and Include
+# paths as data and never executes Match exec, shell substitutions or ssh -G.
+# OpenSSH itself remains authoritative for actual connections.
 
-# SSH alias discovery for the interactive menu.
-# This reads configuration as data: it never executes Match exec, shell
-# substitutions, or ssh -G. Actual connection settings remain SSH's job.
-
-# Split one directive's values into the caller's local `words` array.
+# Split one directive's values into words, without shell evaluation.
 # OpenSSH-style quoted values and comments are enough for Host and Include;
-# malformed quoted lines are rejected instead of inventing a partial alias.
-# Tokenize Host/Include directives without shell evaluation.
-# Args: directive contents; outputs caller-scope words array.
+# a malformed quoted line is rejected instead of yielding a partial alias.
+# Args: directive contents; sets the caller's local `words` array; status 1
+# for an unterminated quote.
 _split-ssh-configuration-words() {
     local text=$1 char next word= quote= index
     words=()
@@ -38,10 +35,10 @@ _split-ssh-configuration-words() {
     return 0
 }
 
-# Read each physical file once, including symlink aliases. `visited` and
-# home/directory values are local to _discover-ssh-host-aliases and shared by recursion.
-# Walk one SSH configuration file and its static Includes.
-# Args: path and depth; uses caller-scope visited/path state; prints aliases.
+# Walk one SSH configuration file and its static Includes, reading each
+# physical file once even when it is reached through a symlink.
+# Args: path and depth; prints aliases. `visited` and the home and directory
+# values are locals of _discover-ssh-host-aliases, shared by the recursion.
 _visit-ssh-configuration-file() {
     local file=$1 depth=$2 previous line key value included pattern
     local line_number=0
@@ -121,11 +118,10 @@ _visit-ssh-configuration-file() {
 # not evaluated. ${VARIABLE}, %-token, and ~otheruser Include paths are skipped
 # with a diagnostic, and so are ~ and relative ones when there is no home
 # directory; users can always pass a host explicitly.
-# The optional second argument injects the user's home directory for tests.
+# Args: optional config file and home directory (the latter for tests).
 # Without it the home is HOME or, with HOME unset, what ~ gives from the
-# password database; an empty HOME counts as none.
-# Enumerate unique literal Host aliases in declaration order.
-# Args: optional config/home; subshell isolates parser state and globs.
+# password database; an empty HOME counts as none. Runs in a subshell, which
+# keeps the parser state and glob settings away from the caller.
 _discover-ssh-host-aliases() (
     local ssh_user_home=${2:-${HOME-~}}
     [[ $ssh_user_home == /* ]] || ssh_user_home=''

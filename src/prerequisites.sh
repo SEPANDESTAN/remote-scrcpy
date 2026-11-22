@@ -1,9 +1,9 @@
-# Extended, self-contained setup guide. Intentionally contains only established
+# Extended, self-contained setup guide. It contains only established
 # prerequisites; site-specific policies are left as explicit placeholders until
 # the maintainer supplies exact remote-server and phone preparation steps.
-# No commands are executed in this mode.
-# Show detailed local/remote/phone preparation checklist.
-# Static stdout; includes TODOs awaiting user’s site-specific instructions.
+
+# Print the local, remote and phone preparation checklist.
+# Static text to stdout; no command is executed in this mode.
 _print-prerequisites() {
     local line
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'GUIDE'

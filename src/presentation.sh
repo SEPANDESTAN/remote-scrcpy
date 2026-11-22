@@ -1,11 +1,10 @@
-# Human-facing colors and Unicode symbols, limited to stderr in a TTY.
-# Never add terminal escapes to stdout; listing/completion modes need plain text.
-# An explicit "always" overrides NO_COLOR; NO_COLOR decides only in auto mode.
-# --ascii changes decoration independently.
-
-# Small terminal decorations for the numbered UI. No cursor movement, raw input
-# mode, external UI program, terminal database, or subprocess is needed for setup.
-# Only human-facing stderr is decorated; listing stdout is always plain data.
+# Colors and Unicode symbols for the numbered UI and the status messages.
+# They go to stderr only: stdout is plain data for the listing and completion
+# modes and never gets a terminal escape. In auto mode colors need a terminal
+# and no NO_COLOR; an explicit "always" colors regardless. Unicode symbols
+# need a terminal and a UTF-8 locale, whatever the color mode; --ascii turns
+# them off. No cursor movement, raw input mode, external UI program or
+# terminal database is involved.
 
 # Set safe color and decoration variables for human stderr.
 # Uses terminal, locale, SETTINGS_COLOR_MODE, SETTINGS_ASCII_ONLY and NO_COLOR.

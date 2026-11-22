@@ -248,14 +248,12 @@ _print-introduction() {
 }
 
 # ===== cli.sh =====
-# CLI contract: only parse/validate arguments; never open network connections.
-# Positional HOST and SERIAL fill the same state as --host and --serial.
-# A standalone -- is the boundary: subsequent arguments go unchanged to scrcpy.
+# CLI contract: only parse and validate arguments; never open a connection or
+# a menu. Positional HOST and SERIAL fill the same state as --host and
+# --serial. A standalone -- is the boundary: what follows goes to scrcpy.
 
-# Command-line parsing is independent of connection setup and menus.
-
-# Print a standalone contract; the long setup procedure is --prerequisites.
-# Show CLI syntax, examples, options, precedence and basic setup.
+# Print the syntax, examples, options, precedence and basic setup; the long
+# setup procedure is --prerequisites.
 # Prints static text to stdout; must work with no optional binaries.
 _print-help() {
     local line
@@ -352,8 +350,8 @@ EXIT STATUS
 END_HELP_TEXT
 }
 
-# Apply a named argument exactly once; initial environment defaults are allowed.
-# Assign one explicit host or serial while detecting duplicates.
+# Assign a host or serial given on the command line, once: a second one is an
+# error, while a value that only came from the environment may be replaced.
 # Args: state variable name, value and label; tracks CLI-set flags.
 _assign-unique-argument() {
     local name=$1 value=$2 label=$3
@@ -468,19 +466,16 @@ _validate-scrcpy-arguments() {
 }
 
 # ===== ssh-config.sh =====
-# SSH config alias inventory (not an SSH configuration interpreter).
-# Handles static Host declarations and Include paths, without executing Match
-# expressions. OpenSSH itself remains authoritative for actual connections.
+# SSH config alias inventory for the host menu and --list-hosts; not an SSH
+# configuration interpreter. It reads static Host declarations and Include
+# paths as data and never executes Match exec, shell substitutions or ssh -G.
+# OpenSSH itself remains authoritative for actual connections.
 
-# SSH alias discovery for the interactive menu.
-# This reads configuration as data: it never executes Match exec, shell
-# substitutions, or ssh -G. Actual connection settings remain SSH's job.
-
-# Split one directive's values into the caller's local `words` array.
+# Split one directive's values into words, without shell evaluation.
 # OpenSSH-style quoted values and comments are enough for Host and Include;
-# malformed quoted lines are rejected instead of inventing a partial alias.
-# Tokenize Host/Include directives without shell evaluation.
-# Args: directive contents; outputs caller-scope words array.
+# a malformed quoted line is rejected instead of yielding a partial alias.
+# Args: directive contents; sets the caller's local `words` array; status 1
+# for an unterminated quote.
 _split-ssh-configuration-words() {
     local text=$1 char next word= quote= index
     words=()
@@ -508,10 +503,10 @@ _split-ssh-configuration-words() {
     return 0
 }
 
-# Read each physical file once, including symlink aliases. `visited` and
-# home/directory values are local to _discover-ssh-host-aliases and shared by recursion.
-# Walk one SSH configuration file and its static Includes.
-# Args: path and depth; uses caller-scope visited/path state; prints aliases.
+# Walk one SSH configuration file and its static Includes, reading each
+# physical file once even when it is reached through a symlink.
+# Args: path and depth; prints aliases. `visited` and the home and directory
+# values are locals of _discover-ssh-host-aliases, shared by the recursion.
 _visit-ssh-configuration-file() {
     local file=$1 depth=$2 previous line key value included pattern
     local line_number=0
@@ -591,11 +586,10 @@ _visit-ssh-configuration-file() {
 # not evaluated. ${VARIABLE}, %-token, and ~otheruser Include paths are skipped
 # with a diagnostic, and so are ~ and relative ones when there is no home
 # directory; users can always pass a host explicitly.
-# The optional second argument injects the user's home directory for tests.
+# Args: optional config file and home directory (the latter for tests).
 # Without it the home is HOME or, with HOME unset, what ~ gives from the
-# password database; an empty HOME counts as none.
-# Enumerate unique literal Host aliases in declaration order.
-# Args: optional config/home; subshell isolates parser state and globs.
+# password database; an empty HOME counts as none. Runs in a subshell, which
+# keeps the parser state and glob settings away from the caller.
 _discover-ssh-host-aliases() (
     local ssh_user_home=${2:-${HOME-~}}
     [[ $ssh_user_home == /* ]] || ssh_user_home=''
@@ -611,14 +605,13 @@ _discover-ssh-host-aliases() (
 )
 
 # ===== presentation.sh =====
-# Human-facing colors and Unicode symbols, limited to stderr in a TTY.
-# Never add terminal escapes to stdout; listing/completion modes need plain text.
-# An explicit "always" overrides NO_COLOR; NO_COLOR decides only in auto mode.
-# --ascii changes decoration independently.
-
-# Small terminal decorations for the numbered UI. No cursor movement, raw input
-# mode, external UI program, terminal database, or subprocess is needed for setup.
-# Only human-facing stderr is decorated; listing stdout is always plain data.
+# Colors and Unicode symbols for the numbered UI and the status messages.
+# They go to stderr only: stdout is plain data for the listing and completion
+# modes and never gets a terminal escape. In auto mode colors need a terminal
+# and no NO_COLOR; an explicit "always" colors regardless. Unicode symbols
+# need a terminal and a UTF-8 locale, whatever the color mode; --ascii turns
+# them off. No cursor movement, raw input mode, external UI program or
+# terminal database is involved.
 
 # Set safe color and decoration variables for human stderr.
 # Uses terminal, locale, SETTINGS_COLOR_MODE, SETTINGS_ASCII_ONLY and NO_COLOR.
@@ -693,11 +686,10 @@ _print-muted-hint() {
 
 # ===== ui.sh =====
 # Numbered interactive menus and remote ADB device enumeration.
-# Menus modify SETTINGS_SSH_HOST and SETTINGS_DEVICE_SERIAL only after valid user selection.
-# Device inventory consists of parallel DISCOVERED_DEVICE_* arrays (same indexes).
-
-# Interactive selection and presentation. Menus write to stderr; machine-readable
-# listing modes write to stdout. Remote data is parsed once into parallel arrays.
+# Menus write to stderr and change SETTINGS_SSH_HOST and SETTINGS_DEVICE_SERIAL
+# only after a valid selection; the listing modes write plain data to stdout.
+# Remote data is parsed once into the parallel DISCOVERED_DEVICE_* arrays,
+# where one index describes one device.
 
 # Choose a literal SSH alias or manually entered destination.
 # Writes SETTINGS_SSH_HOST; q cancels; does not connect.
@@ -876,19 +868,17 @@ _prompt-for-device() {
 }
 
 # ===== transport.sh =====
-# SSH/ADB/scrcpy connection lifetime and resource ownership.
-# SESSION_* variables belong exclusively to this module, including SSH mux
-# socket, forwarding ports, ADB reservation, and scrcpy PID. The EXIT trap
-# must run _cleanup-remote-connection on every post-connect failure.
-
-# SSH/ADB transport. Sourced by the launcher; no work happens at source time.
-# Configuration: SETTINGS_SSH_HOST, SETTINGS_DEVICE_SERIAL, SETTINGS_SSH_CONFIG_FILE, SETTINGS_LOCAL_ADB_EXECUTABLE, SETTINGS_REMOTE_ADB_EXECUTABLE,
-# SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE, SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
-# Common helpers: _exit-with-error/log/debug.
-# Owned session state is always prefixed SESSION_. All are initialized to
-# empty/inactive, then assigned by _open-remote-connection and
-# _reserve-device-forwarding-port. _cleanup-remote-connection may run after
-# partial setup, so it MUST tolerate unset/incomplete resources.
+# SSH/ADB/scrcpy connection lifetime and resource ownership. No work happens
+# when the module is loaded.
+# Reads: SETTINGS_SSH_HOST, SETTINGS_DEVICE_SERIAL, SETTINGS_SSH_CONFIG_FILE,
+# SETTINGS_LOCAL_ADB_EXECUTABLE, SETTINGS_REMOTE_ADB_EXECUTABLE,
+# SETTINGS_REMOTE_ADB_SERVER_PORT, SETTINGS_LOCAL_SCRCPY_EXECUTABLE,
+# SETTINGS_SCRCPY_EXTRA_ARGUMENTS, SETTINGS_NON_INTERACTIVE, SETTINGS_VERBOSE.
+# Owns: the SESSION_* variables below, which no other module touches. They
+# start empty or inactive, and each is assigned by the function that creates
+# the resource it names. The EXIT trap must run _cleanup-remote-connection on
+# every failure after connecting, and that function may run after partial
+# setup, so it MUST tolerate unset or incomplete resources.
 #
 #   SESSION_WORK_DIRECTORY       Private temporary directory for socket/errors.
 #   SESSION_SSH_CONTROL_SOCKET   Private SSH master control socket path.
@@ -1175,8 +1165,11 @@ _cleanup-remote-connection() {
             while read -r serial endpoint target extra; do
                 if [[ $serial == "$SETTINGS_DEVICE_SERIAL" && $target == "$SESSION_ADB_PORT_RESERVATION" \
                     && $endpoint =~ ^tcp:[0-9]+$ && -z $extra ]]; then
-                    # Do not remove scrcpy's replacement, or a port now reused
-                    # by another session. Only an unused unique token matches.
+                    # Only this session's own, still unused reservation
+                    # matches. A forward that scrcpy has rebound to its own
+                    # socket is deliberately left alone, even if scrcpy died
+                    # before removing it: by then the port may belong to
+                    # another session, and the two cannot be told apart.
                     _run-remote-adb-client -s "$serial" forward --remove "$endpoint" > /dev/null 2>&1 || true
                 fi
             done <<< "$listing"
@@ -1192,12 +1185,12 @@ _cleanup-remote-connection() {
 }
 
 # ===== prerequisites.sh =====
-# Extended, self-contained setup guide. Intentionally contains only established
+# Extended, self-contained setup guide. It contains only established
 # prerequisites; site-specific policies are left as explicit placeholders until
 # the maintainer supplies exact remote-server and phone preparation steps.
-# No commands are executed in this mode.
-# Show detailed local/remote/phone preparation checklist.
-# Static stdout; includes TODOs awaiting user’s site-specific instructions.
+
+# Print the local, remote and phone preparation checklist.
+# Static text to stdout; no command is executed in this mode.
 _print-prerequisites() {
     local line
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'GUIDE'
@@ -1303,7 +1296,8 @@ GUIDE
 #   source <(remote-scrcpy --completion bash)
 # Users can add the same line to ~/.bashrc for persistent completion.
 
-# Emit standalone completion code. No network access occurs until Tab is pressed.
+# Print the Bash completion script for the user's shell to source.
+# Static text to stdout; nothing is contacted until Tab is pressed.
 _print-bash-completion() {
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'COMPLETION'
 # Bash completion for remote-scrcpy; source once per interactive Bash shell.
@@ -1491,9 +1485,8 @@ COMPLETION
 
 # ===== main.sh =====
 # Application controller. remote-scrcpy is the only public function.
-# CLI parsing, selection, transport, GUI and cleanup share one linear lifecycle.
-
-# Entry point: each step fills missing input, without duplicating connection logic.
+# CLI parsing, selection, transport, GUI and cleanup share one linear
+# lifecycle, in which each step fills in what the previous ones left open.
 
 # Preserve exit status while performing idempotent cleanup.
 # Invoked via EXIT trap; never returns.
