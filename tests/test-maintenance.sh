@@ -49,6 +49,7 @@ trap 'rm -rf "$tools"' EXIT
 # The build script explains itself and refuses what it does not understand,
 # instead of taking an option for the output path, and writes nothing then.
 check contains "$(bash "$project/src/build.sh" --help)" 'Usage: bash src/build.sh [OUTPUT]'
+check contains "$(bash "$project/src/build.sh" -h)" '  -h, --help   show this help'
 check status 2 bash "$project/src/build.sh" --bogus
 check status 2 bash "$project/src/build.sh" "$tools/one" "$tools/two"
 check equals "$(ls -A "$tools")" ''
@@ -104,6 +105,23 @@ config=$(mktemp)
 trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# The one-letter options that end the run without connecting print what
+# their long names print, and the help shows every letter beside its long
+# name. That each letter sets what its long name sets, including the ones
+# that go on to connect, is checked in tests/test-cli-ui-review.sh.
+check equals "$("$script" -v)" "$("$script" --version)"
+check equals "$("$script" -h)" "$("$script" --help)"
+check equals "$("$script" -p)" "$("$script" --prerequisites)"
+check equals "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" -L)" "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)"
+help=$("$script" --help)
+for pair in '-L, --list-hosts ' '-l, --list-devices ' '-n, --non-interactive ' '-q, --quiet ' \
+    '-V, --verbose ' '-p, --prerequisites ' '-h, --help ' '-v, --version '; do
+    check contains "$help" "  $pair"
+done
+# Short options are not bundled, and an unknown letter is refused.
+check contains "$("$script" -ql 2>&1 || true)" 'Unknown launcher option: -ql.'
+check status 2 "$script" -ql
+check status 2 "$script" -x
 # None of the local modes needs HOME.
 check contains "$(env -u HOME "$script" --version)" '3.1.0'
 check contains "$(env -u HOME "$script" --help)" 'USAGE'

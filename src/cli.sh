@@ -26,27 +26,29 @@ EXAMPLES
   remote-scrcpy remote-host DEVICE1234567890
   remote-scrcpy remote-host -- --max-size=1280 --max-fps=30
   remote-scrcpy --list-devices remote-host
+  remote-scrcpy -l remote-host                    (the same, in short)
   remote-scrcpy --non-interactive remote-host DEVICE1234567890
 
 OPTIONS
-  An option that takes a value also accepts it as --option=VALUE.
-  --host HOST           SSH alias, hostname, or user@hostname
-  --serial SERIAL       Exact device serial from `adb devices -l`
-  --list-hosts          List literal aliases from the SSH config (no network)
-  --list-devices        List remote devices without launching scrcpy
-  --ssh-config FILE     Alternate SSH config for discovery and connection
-  --adb PATH            Local adb executable
-  --remote-adb PATH     adb executable/path on remote computer
-  --adb-port PORT       Remote ADB server port (default 5037)
-  --color MODE          auto (default), always, never
-  --ascii               Replace decorative Unicode markers with ASCII
-  --non-interactive     Never prompt; use SSH BatchMode
-  --quiet               Hide banner and progress (errors and prompts remain)
-  -v, --verbose         Include SSH and transport details
-  --prerequisites       Detailed local, remote, and Android preparation guide
-  --completion bash     Output the optional Bash completion definition
-  -h, --help            Show this help
-  -V, --version         Show the launcher version
+  An option that takes a value also accepts it as --option=VALUE. A short
+  option stands alone, one per word: -q -l, not -ql.
+      --host HOST           SSH alias, hostname, or user@hostname
+      --serial SERIAL       Exact device serial from `adb devices -l`
+  -L, --list-hosts          List the aliases in the SSH config (no network)
+  -l, --list-devices        List remote devices without launching scrcpy
+      --ssh-config FILE     Alternate SSH config for discovery and connection
+      --adb PATH            Local adb executable
+      --remote-adb PATH     adb executable/path on remote computer
+      --adb-port PORT       Remote ADB server port (default 5037)
+      --color MODE          auto (default), always, never
+      --ascii               Replace decorative Unicode markers with ASCII
+  -n, --non-interactive     Never prompt; use SSH BatchMode
+  -q, --quiet               Hide banner and progress (errors and prompts remain)
+  -V, --verbose             Include SSH and transport details
+  -p, --prerequisites       Local, remote and Android preparation guide
+      --completion bash     Output the optional Bash completion definition
+  -h, --help                Show this help
+  -v, --version             Show the launcher version
 
 CONFIGURATION
   CLI flags override environment variables, which override defaults.
@@ -81,7 +83,8 @@ NOTES
   --force-adb-forward, --kill-adb-on-close and their abbreviations, and the
   short flags -s -d -e -p. Other short flags are passed on one per word;
   only -m, -b and -r may carry their value in the same word, so write
-  -V debug, not -Vdebug. A second -- is refused. Write an option's value as
+  -V debug, not -Vdebug. Letters after -- are scrcpy's, whatever they mean
+  to the launcher before it. A second -- is refused. Write an option's value as
   --option=value when it starts with a dash. Use `scrcpy --help` for
   supported display, audio, input, and recording options.
 
@@ -136,7 +139,7 @@ _parse-command-line() {
         case $arg in
             --) shift; SETTINGS_SCRCPY_EXTRA_ARGUMENTS=("$@"); break ;;
             -h|--help) _print-help; exit 0 ;;
-            --prerequisites) _select-operation prerequisites; shift ;;
+            -p|--prerequisites) _select-operation prerequisites; shift ;;
             --completion|--completion=*)
                 if [[ $arg == *=* ]]; then
                     value=${arg#*=}; shift
@@ -146,13 +149,13 @@ _parse-command-line() {
                 fi
                 [[ $value == bash ]] || _exit-with-error 'Only Bash completion is supported.' 2
                 _select-operation completion ;;
-            -V|--version) printf 'remote-scrcpy %s\n' "$APPLICATION_VERSION"; exit 0 ;;
-            -v|--verbose) SETTINGS_VERBOSE=1; shift ;;
-            --quiet) SETTINGS_QUIET=1; shift ;;
+            -v|--version) printf 'remote-scrcpy %s\n' "$APPLICATION_VERSION"; exit 0 ;;
+            -V|--verbose) SETTINGS_VERBOSE=1; shift ;;
+            -q|--quiet) SETTINGS_QUIET=1; shift ;;
             --ascii) SETTINGS_ASCII_ONLY=1; shift ;;
-            --non-interactive) SETTINGS_NON_INTERACTIVE=1; shift ;;
-            --list-hosts) _select-operation hosts; shift ;;
-            --list-devices) _select-operation devices; shift ;;
+            -n|--non-interactive) SETTINGS_NON_INTERACTIVE=1; shift ;;
+            -L|--list-hosts) _select-operation hosts; shift ;;
+            -l|--list-devices) _select-operation devices; shift ;;
             --host|--serial|--ssh-config|--adb|--remote-adb|--adb-port|--color|\
             --host=*|--serial=*|--ssh-config=*|--adb=*|--remote-adb=*|--adb-port=*|--color=*)
                 key=${arg%%=*}

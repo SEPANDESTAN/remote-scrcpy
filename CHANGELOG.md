@@ -6,6 +6,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- One-letter forms for the options used every day: `-l` for
+  `--list-devices`, `-L` for `--list-hosts`, `-p` for `--prerequisites`,
+  `-q` for `--quiet` and `-n` for `--non-interactive`, next to `-h`. `--help`
+  lists each beside its long name, and Tab on a word that starts with a
+  dash offers the options, short and long. Before, `remote-host -<Tab>`
+  fell through to a device lookup on the host.
+
 ### Changed
 - `docs/workflow.md` says how an issue and a pull request end: an issue may
   be closed as not planned with its reason recorded, and a pull request may
@@ -32,6 +40,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   lost depending on where it stood (#32).
 
 ### Compatibility
+- **`-v` and `-V` have swapped.** `-v` now prints the version and `-V` turns
+  on verbose output, as in scrcpy; until 3.1.0 it was the other way round.
+  A script that passes `-v` for verbose output gets the version and status
+  0 instead of a connection: write `--verbose` or `-V`. In the other
+  direction, `-V` used to print the version and stop; it now goes on with
+  the run, which is a connection when a host and serial are given or
+  exported: write `--version` or `-v`.
+- `-n` before the `--` used to be refused as an unknown option. It is also
+  scrcpy's no-control option, so `remote-host DEVICE1234567890 -n`, typed
+  without the `--`, is no longer an error: it is the launcher's
+  `--non-interactive`, with control on. Write `-- -n` for scrcpy's. A
+  forgotten `--` in front of scrcpy's `-p PORT` is still refused.
 - `--prerequisites` and `--completion` no longer accept a host or serial
   next to them; `--list-hosts` already refused one. A second mode option is
   always an error, also the same one twice. The refusal of scrcpy options

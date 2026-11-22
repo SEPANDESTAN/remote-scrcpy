@@ -41,6 +41,15 @@ parse_operation() (
     printf '%s' "$SETTINGS_OPERATION"
 )
 
+# Everything the options without a value can set:
+# operation|verbose|quiet|non-interactive|ascii|color mode.
+parse_flags() (
+    _initialize-configuration
+    _parse-command-line "$@"
+    printf '%s|%s|%s|%s|%s|%s' "$SETTINGS_OPERATION" "$SETTINGS_VERBOSE" "$SETTINGS_QUIET" \
+        "$SETTINGS_NON_INTERACTIVE" "$SETTINGS_ASCII_ONLY" "$SETTINGS_COLOR_MODE"
+)
+
 # The usage error a command line is refused with, or "accepted".
 parse_refusal() (
     _initialize-configuration
@@ -205,6 +214,30 @@ for index in "${!modes[@]}"; do
         parse_refusal "${modes[index]}" -- --max-size=1024
 done
 expect_output 'A connection takes scrcpy options' 'connect' parse_operation remote-host -- --max-size=1024
+expect_output 'Scrcpy options next to a mode exit with status 2' '2' exit_status parse_operation --prerequisites -- --max-size=1024
+# Each one-letter option does what its long name does, and nothing else.
+expect_output 'No option leaves every flag off' 'connect|0|0|0|0|auto' parse_flags
+short_forms=('-l --list-devices devices|0|0|0|0|auto' '-L --list-hosts hosts|0|0|0|0|auto'
+    '-p --prerequisites prerequisites|0|0|0|0|auto' '-q --quiet connect|0|1|0|0|auto'
+    '-n --non-interactive connect|0|0|1|0|auto' '-V --verbose connect|1|0|0|0|auto')
+for form in "${short_forms[@]}"; do
+    read -r short long flags <<< "$form"
+    expect_output "$long sets what it should" "$flags" parse_flags "$long"
+    expect_output "$short is $long" "$flags" parse_flags "$short"
+done
+# -v is the version and stops there; -V, which used to be the version, is not.
+expect_output '--version prints the version' "remote-scrcpy $(_initialize-configuration; printf '%s' "$APPLICATION_VERSION")" parse_flags --version
+expect_output '-v is --version' "$(parse_flags --version)" parse_flags -v
+expect_output '-v exits with status 0' '0' exit_status parse_flags -v
+# The mode rule and the host rule hold for the short forms too.
+expect_output '-l then -L is refused' "$one_mode" parse_refusal -l -L
+expect_output '-p then --completion bash is refused' "$one_mode" parse_refusal -p --completion bash
+expect_output '-p refuses a host' '--prerequisites does not take a host or serial.' parse_refusal remote-host -p 27183
+expect_output '-L refuses a host' '--list-hosts does not take a host or serial.' parse_refusal -L remote-host
+expect_output '-l takes a host' 'devices|0|0|0|0|auto' parse_flags -l remote-host
+# One letter per word: letters are not bundled.
+expect_output 'Bundled short options are refused' 'Unknown launcher option: -ql. Put scrcpy options after --.' parse_refusal -ql
+expect_output 'Separate short options combine' 'devices|0|1|1|0|auto' parse_flags -q -n -l remote-host
 expect_output 'Quoted scrcpy option values survive parsing' '<--record><phone capture.mkv><--max-size=1280>' \
     parse_scrcpy_values remote-host PHONE_A -- --record 'phone capture.mkv' --max-size=1280
 expect_output 'Manual numeric SSH destination is not a menu number' '1' choose_numeric_manual_host

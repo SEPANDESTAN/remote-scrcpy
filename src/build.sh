@@ -9,7 +9,9 @@ usage() {
         '' \
         'Concatenate the modules under src/ into the single-file launcher.' \
         'OUTPUT defaults to remote-scrcpy.sh at the repository root. The' \
-        'result is syntax-checked, and OUTPUT is replaced only if it passes.'
+        'result is syntax-checked, and OUTPUT is replaced only if it passes.' \
+        '' \
+        '  -h, --help   show this help'
 }
 
 case ${1:-} in
@@ -55,6 +57,7 @@ cat > "$build_tmp" <<'HEADER'
 #        remote-scrcpy remote-host SERIAL     # connect without prompts
 #        remote-scrcpy --list-hosts
 #        remote-scrcpy --list-devices remote-host
+#   The everyday options have one-letter forms (-h -v -l -L -p -q -n -V).
 #   Enable Bash completion in your interactive shell (optional):
 #        source <(remote-scrcpy --completion bash)
 #
