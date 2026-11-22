@@ -249,10 +249,11 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   symlink to them, because Claude Code looks for skills nowhere else. A
   `pull-request` skill points to `workflow.md`.
 - **An issue may be declined and a pull request may be an experiment.** The
-  maintainer, asking for the open issues to be cleared: resolution can be a
-  pull request or closing an issue "outright as not planned or
-  irrelevant/deprecated", and a pull request "can experiment with something"
-  and "end up not being merged into main and that is fine too". Until then
+  maintainer asked to "review the outstanding issues and see how many of
+  them can you resolve by your own": resolution can be a pull request or
+  closing an issue "outright as not planned or irrelevant/deprecated", and a
+  pull request "can experiment with something" and "end up not being merged
+  into main and that is fine too". Until then
   closing an issue by hand needed the maintainer's request each time. The
   conditions that keep such an ending useful to a later reader are in
   `workflow.md`, "How issues and pull requests end"; whoever does the work
@@ -273,8 +274,9 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   enough.
 - **Declined: making completion refuse what the launcher refuses (issue
   #21).** Tab still offers candidates on a few lines the launcher would
-  reject, such as a second serial or a host after `--list-hosts`. Completion
-  is advice and the launcher has the last word; teaching the completion
-  function the parser's rules for a valid line would mean two copies of
-  those rules to keep in step, for lines nobody types on purpose.
-
+  reject, such as a second serial or a host after `--list-hosts`, and on
+  some of them it queries a host for its devices first. Completion is advice
+  and the launcher has the last word; teaching the completion function the
+  parser's rules for a valid line would mean two copies of those rules to
+  keep in step, for lines nobody types on purpose. Decided by the author of
+  the change that recorded it, under the entry above on declining.

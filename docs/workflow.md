@@ -105,8 +105,12 @@ same content for the previous change. It only stays clean if the next
 branch merged the previous one's last commits before the squash.
 
 **Retarget before you delete.** The clean-up in step 7 deletes the merged
-branch, and for the lower half of a stack that has to wait. Observed on
-pull requests #42 and #43 on 2026-11-22:
+branch, and for the lower half of a stack that has to wait. GitHub
+[documents](https://docs.github.com/en/pull-requests/how-tos/commit-changes/managing-branches-within-your-repository#deleting-a-branch)
+that deleting a merged head branch moves the base of pull requests built on
+it; that was not what happened when the branch was deleted with `git push`,
+and deleting on the website was not tried. The order above works either
+way. Observed on pull requests #42 and #43 on 2026-11-22:
 
 - Squash-merging the lower pull request left the base of the upper one
   unchanged.
@@ -142,15 +146,20 @@ out of scope.
 Not every issue is fixed and not every pull request is merged, and both are
 proper outcomes when they are recorded.
 
-**An issue** ends in one of two ways:
+**An issue** ends in one of these ways:
 
-- *Resolved*: a pull request that names it with a closing keyword is merged.
-- *Not planned*: it is declined, or it no longer applies. Say why in a last
-  comment that a later reader can weigh: what it would take, why that is not
-  worth it or what replaced it, and what would change the answer. Add the
-  `wontfix` label, record the reason in [`decisions.md`](decisions.md) when
-  it is a decision about the project and not a mere duplicate or leftover,
-  and close it:
+- *Resolved by a pull request*: one that names it with a closing keyword is
+  merged.
+- *Completed without one*: the work is done, but no pull request closed it,
+  because the pull requests only referred to it or what remained was a
+  check. Say in a last comment what completed it, then
+  `gh issue close <number> --reason completed`.
+- *Declined*: say why in a last comment that a later reader can weigh: what
+  it would take, why that is not worth it, and what would change the answer.
+  When declining is a decision about the project, the reason also goes into
+  [`decisions.md`](decisions.md), through a pull request that only refers to
+  the issue (a closing keyword would close it as completed); close the issue
+  after that pull request is merged:
 
   ```bash
   gh issue comment <number> --body-file <reason-file>
@@ -158,7 +167,13 @@ proper outcomes when they are recorded.
   gh issue close <number> --reason "not planned"
   ```
 
-**A pull request** ends merged, or closed without a merge:
+- *No longer applies*: the code is gone or something replaced it. A last
+  comment says what, and the issue is closed as not planned without a label.
+  A duplicate is closed with `--reason duplicate` and a comment naming the
+  other issue.
+
+**A pull request** ends merged, or closed without a merge. One that is
+closed without a merge always gets a last comment that says why.
 
 - *An experiment is a legitimate pull request.* When it is unclear whether
   an idea works, try it in a draft pull request whose body says in its first
@@ -169,7 +184,7 @@ proper outcomes when they are recorded.
   summary, so the next person does not repeat the attempt. Then remove the
   branch and the worktree.
 - An issue may take several experiments. It is closed when one of them is
-  merged, or as not planned when the last one shows the idea is not worth
+  merged, or declined when the last one shows the idea is not worth
   pursuing.
 
 Whoever does the work decides, person or agent: a technical issue may be
@@ -203,9 +218,9 @@ file. The rules behind them:
   that is only partly resolved is referenced (`Refs #7`) with a note on what
   remains; the pull request that resolves the last part closes it. A closing
   keyword works wherever it stands in the body, in the collapsed block and
-  in a checkbox too, so never put "close", "fix" or "resolve" in front of
-  the number of an issue the pull request only mentions. Check what GitHub
-  linked: `gh pr view <number> --json closingIssuesReferences`.
+  in a checkbox too, so never put "close", "fix" or "resolve" in front of a
+  reference (`#7`) to an issue the pull request only mentions. Check what
+  GitHub linked: `gh pr view <number> --json closingIssuesReferences`.
 - **End every pull request body with proof.** The last section pairs each
   deliverable with the exact command that demonstrates it and the result
   that was observed, so that anyone can run it again from a clean checkout
@@ -363,17 +378,18 @@ or `REQUEST_CHANGES` instead.
    the reviewer's last summary calls the summary findings settled,
    CI is green on the head commit, and
    `gh pr view <number> --json closingIssuesReferences` lists exactly the
-   issues the pull request is meant to close. These conditions are stated
-   here and nowhere else.
+   issues the pull request is meant to close. That check does not see the
+   squash commit message, where a closing keyword acts as well: read the
+   message file for one before merging. These conditions are stated here
+   and nowhere else.
 
 ## What still needs the maintainer
 
 Pushing branches, opening issues and pull requests, and squash-merging after
 an approving review are the normal path and need no further permission.
-Neither does commenting on an issue, correcting its label, adding to it what
-a review found, closing it as not planned, or closing an experiment
-unmerged, each as described under
-[How issues and pull requests end](#how-issues-and-pull-requests-end).
-Starting or publishing a release happens only when the maintainer asked for
-it in the current task, and so does changing what an existing issue asks
-for.
+Neither does commenting on an issue or correcting its label. Closing an
+issue, or closing a pull request without a merge, needs no further
+permission either when it is done as
+[How issues and pull requests end](#how-issues-and-pull-requests-end)
+describes. Starting or publishing a release, and rewriting an existing
+issue, happen only when the maintainer asked for it in the current task.
