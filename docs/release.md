@@ -11,7 +11,7 @@ commit reaches `main` like every other change: through a pull request.
 | Location | What to change |
 |---|---|
 | `src/core.sh` | `APPLICATION_VERSION=X.Y.Z` |
-| `tests/test-maintenance.sh` | the `--version` assertion (`check contains "$("$script" --version)" 'X.Y.Z'`) |
+| `tests/test-maintenance.sh` | every `--version` assertion (`check contains "$(... --version)" 'X.Y.Z'`; find them with `grep -n -e --version tests/test-maintenance.sh`) |
 | `CHANGELOG.md` | promote `## [Unreleased]` to `## [X.Y.Z] — YYYY-MM-DD`; keep the `### Compatibility` subsection |
 | `remote-scrcpy.sh` | regenerate with `bash src/build.sh` so `--version` reports the new number |
 

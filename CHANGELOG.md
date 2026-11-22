@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] — 2026-11-22
 
 ### Added
 - `install.sh`: `curl -fsSL .../install.sh | bash` puts the launcher in
@@ -13,6 +13,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Bash completion to `~/.bashrc` as one marked line. From a checkout it
   installs that checkout's bundle without network. No `sudo`, and nothing
   else is installed. Covered by a fifth fast suite, `tests/test-install.sh`.
+  The README's Install section leads with it and keeps the steps to install
+  by hand.
 - `--completion=bash` is accepted next to `--completion bash`, like the `=`
   form of every other option that takes a value; Tab completes it (#7).
 - `AGENTS.md` as the entry point for AI coding agents: an index into `docs/`
@@ -71,8 +73,6 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - README: the "Internal naming" and "Architecture for maintainers" sections
   moved to `docs/architecture.md`; a "Developing" section points to the
   contributing guide.
-- README install Option 2 uses `install -D` so the target directory is
-  created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only
   per-machine files (`.claude/settings.local.json`, `*.local.*`).
 
@@ -85,10 +85,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### CI
 - The integration suite (real OpenSSH and adb, simulated phone) runs on every
   pull request and on every push to `main` in a second job, so
-  `src/transport.sh` is exercised end to end before a change is merged. `actions/checkout` moves from v4 to
-  v7.
+  `src/transport.sh` is exercised end to end before a change is merged.
+  `actions/checkout` moves from v4 to v7.
 
 ### Tests
+- Every fast suite closes its standard input as well as clearing the
+  launcher's environment, and the maintenance suite checks both. A shell
+  started by a test with a socket on standard input took itself for a
+  remote login, read the user's startup files under a stripped `PATH`, and
+  forked without end.
 - The maintenance suite fails, naming the file, when a module under `src/`
   is missing from the bundle. The rebuild comparison in CI cannot show such
   a loss, and the fast suites noticed it only for modules they happen to
