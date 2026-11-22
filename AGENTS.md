@@ -28,7 +28,7 @@ daily use come first; polish for strangers second.
 | `tests/test-*.sh` | five fast suites, no network, run by CI |
 | `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; run by CI in its own job |
 | `docs/` | contributing rules, architecture, testing, workflow, adding a CLI option, release, decisions, the last review |
-| `.agents/skills/` | step-by-step procedures: `build-and-test`, `add-cli-option`, `release` |
+| `.agents/skills/` | `build-and-test`, `add-cli-option`, `release`: each points to its procedure under `docs/` |
 | `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the five suites, and the integration suite in a second job |
 
 ## Rules

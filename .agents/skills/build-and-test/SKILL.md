@@ -9,5 +9,4 @@ Use this after any change under `src/`, `tests/` or to `install.sh`, and
 before every commit. The commands and what each suite covers are in
 [`docs/testing.md`](../../../docs/testing.md); the rules they enforce
 (generated bundle, never a real host, suites deaf to the environment) are in
-[`docs/CONTRIBUTING.md`](../../../docs/CONTRIBUTING.md). Rebuild first: some
-suites run the bundle, so skipping `bash src/build.sh` tests stale code.
+[`docs/CONTRIBUTING.md`](../../../docs/CONTRIBUTING.md). Rebuild first.

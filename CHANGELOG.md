@@ -20,8 +20,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `add-cli-option`, `release`) linked from `.claude/skills`; a tracked
   `.claude/settings.json` that allowlists read-only and build/test commands.
 - `docs/`: `CONTRIBUTING.md`, `architecture.md`, `testing.md`, `release.md`,
-  `decisions.md`, `history.md`, and `review-2026-11-06.md` recording the
-  adversarial review of 3.0.2 and its tracking issues (#2 to #8).
+  `decisions.md`, and `review-2026-11-06.md` recording the adversarial
+  review of 3.0.2 and its tracking issues (#2 to #8).
 - `docs/workflow.md`: every change reaches `main` through a worktree branch,
   a pull request, an independent review and a squash merge; out-of-scope
   findings become issues; issue and pull request bodies follow the new
@@ -68,8 +68,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the program itself overrides it. With the mode left at `auto`, `NO_COLOR`
   still disables color.
 - README: the "Internal naming" and "Architecture for maintainers" sections
-  moved to `docs/architecture.md`; a "Developing" section links every
-  document under `docs/`; "Tests and limits" reduced to the commands.
+  moved to `docs/architecture.md`; a "Developing" section points to the
+  contributing guide.
 - README install Option 2 uses `install -D` so the target directory is
   created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only

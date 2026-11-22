@@ -46,8 +46,8 @@ old string.
    ```
 
    followed by the CHANGELOG section for the version and a "Next" pointer to
-   open issues. Never quote removed example values (hostnames, serials,
-   models) in notes or changelog entries; describe the change instead.
+   open issues. Rule 7 in [`CONTRIBUTING.md`](CONTRIBUTING.md) applies to
+   the notes as well: describe a removed example value, never quote it.
 7. `git fetch --tags` so the local clone sees the tag `gh` created.
 8. Verify: the pinned install command, run with a scratch `HOME`, reports
    the new version.

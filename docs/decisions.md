@@ -109,7 +109,9 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   to that directory, so there is one copy of every instruction. Windows
   checkouts need `git config core.symlinks true`.
 - **Long-form context lives under `docs/`**, readable by humans and agents
-  alike; `AGENTS.md` and the README only point there.
+  alike; `AGENTS.md` and the README only point there. The occasion was the
+  maintainer moving to another machine: everything a later person or agent
+  needs had to be in the repository, not in chat sessions.
 - **A shared `.claude/settings.json` allowlists read-only and build/test
   commands only.** Anything that writes (commits, pushes, GitHub edits) still
   prompts. Per-machine overrides stay in the ignored `settings.local.json`.
@@ -184,9 +186,9 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   applies to agents alone. Consequences in `docs/`: no pass counts anywhere;
   the option checklist moved from a skill to `adding-a-cli-option.md`;
   `history.md` is gone, because it restated `git log` up to the twelfth
-  commit and the two facts only it held are now on this page (the
-  introduction and the entry on issue #1); the README's developer sections
-  shrank to pointers.
+  commit and the facts only it held are now on this page (the introduction,
+  the entry on issue #1, and the occasion for the 2026-11-19 files); the
+  README's developer sections shrank to pointers.
 - **The recipe for a transport test built on fake programs is removed.**
   `testing.md` described how to source the modules and drive single
   transport functions against fake `ssh`, `adb` and `scrcpy` programs. No
@@ -226,5 +228,9 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   - *`_resolve-executable-path` trusts `command -v`.* It needs an exported
     shell function named `adb` and a file of that name in the working
     directory.
-  - *A literal `~` in the command word gives no host completions.* Tracked
-    with the other completion quoting cases in issue #22.
+
+  One item of issue #8 is neither fixed nor declined: a `~` in the command
+  word (`~/bin/remote-scrcpy r<Tab>`) gives no host completions, because the
+  completion function runs that word as Bash handed it over. It is deferred
+  to issue #22, which collects the cases of completion taking Bash's word
+  pieces at face value.

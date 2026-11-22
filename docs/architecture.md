@@ -19,7 +19,7 @@ nine modules under `src/`, in this order:
 | `ui.sh` | numbered host and device menus, device listing |
 | `transport.sh` | SSH master, port forwards, ADB protocol probe, scrcpy launch and cleanup; owns every `SESSION_*` variable |
 | `prerequisites.sh` | the static setup guide, with marked placeholders for site-specific steps |
-| `completion.sh` | prints the Bash completion script; that script never opens the tunnel or a window, and its device lookup is one bounded, read-only SSH query |
+| `completion.sh` | prints the Bash completion script; that script never opens the tunnel or a window, and its device lookup is one read-only SSH query, bounded where `timeout` is installed |
 | `main.sh` | `remote-scrcpy`, the single public function: lifecycle and traps |
 
 The header that `src/build.sh` writes carries the usage summary a reader of
@@ -46,7 +46,7 @@ kebab-case names that say what they do.
 
 ## Lifecycle walk-through
 
-`remote-scrcpy()` in `src/main.sh` is the whole program in forty lines:
+`remote-scrcpy()` in `src/main.sh` is the whole program:
 
 1. `_initialize-configuration` (environment defaults), `_parse-command-line`,
    `_validate-configuration`, `_validate-scrcpy-arguments`,
@@ -163,8 +163,10 @@ What the invariants above rely on, and where each is stated.
 | Fact | Source |
 |---|---|
 | scrcpy's `--force-adb-forward`, `--tunnel-host`, `--tunnel-port` and `--port`, and running it through an SSH tunnel | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
-| SDL, which scrcpy is built on, installs handlers for SIGINT and SIGTERM and turns them into a quit event; it lists none for SIGHUP, which is why a received HUP is forwarded as TERM | [SDL: `SDL_HINT_NO_SIGNAL_HANDLERS`](https://wiki.libsdl.org/SDL2/SDL_HINT_NO_SIGNAL_HANDLERS) |
-| `adb forward` accepts `tcp:0` and prints the port it picked; `adb -L SOCKET` names the server to talk to | [adb manual page](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md) |
+| scrcpy is built on SDL, which installs handlers for SIGINT and SIGTERM and turns them into a quit event; it lists none for SIGHUP, which is why a received HUP is forwarded as TERM | [scrcpy: build](https://github.com/Genymobile/scrcpy/blob/master/doc/build.md) for the dependency, [SDL: `SDL_HINT_NO_SIGNAL_HANDLERS`](https://wiki.libsdl.org/SDL2/SDL_HINT_NO_SIGNAL_HANDLERS) for the handlers |
+| `ADB_SERVER_SOCKET` tells the adb client, and scrcpy through it, which server to talk to | [scrcpy: tunnels](https://github.com/Genymobile/scrcpy/blob/master/doc/tunnels.md) |
+| `adb forward` accepts `tcp:0` to pick any open port | [adb manual page](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md) |
+| it then prints the port it picked | observed, not documented there: the launcher reads that line, and the integration suite exercises it with a real adb |
 | `host:version` is the request that returns the server's protocol version | [adb: services](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/dev/services.md) |
 | a host-less `tcp:PORT` counts as a local server, which the client may start; a server whose version differs from the client's is killed and restarted by the client ("doesn't match this client; killing...") | adb source: [`socket_spec.cpp`](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/socket_spec.cpp) (`is_local_socket_spec`) and [`client/adb_client.cpp`](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/client/adb_client.cpp) |
 | `ControlMaster`, `ControlPath`, `-O check`, `-O forward` and `-O exit` | [ssh(1)](https://man.openbsd.org/ssh) and [ssh_config(5)](https://man.openbsd.org/ssh_config) |

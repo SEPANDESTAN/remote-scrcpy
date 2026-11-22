@@ -11,11 +11,11 @@ bash tests/test-ssh-config.sh
 bash tests/test-install.sh
 ```
 
-They need no network, no phone and no root. Each stops at its first failing
-check with a `FAIL:` line and a non-zero status; a suite that passes ends
-with one line saying so, most of them with the number of checks. That number
-grows when tests are added; a check is not removed without the reason in the
-commit body.
+They need no network, no phone and no root. A suite that fails exits
+non-zero and says which check failed; one that passes ends with a line
+saying so, most of them with the number of checks. That number grows when
+tests are added; a check is not removed without the reason in the commit
+body.
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
 it against the committed `remote-scrcpy.sh`; a stale bundle fails the build.
@@ -106,7 +106,9 @@ sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
 
 Without root or `sshd` it skips itself. CI runs it on every pull request and
 on every push to `main` in a job of its own, `integration`, next to the fast
-suites; that job fails if the suite skips.
+suites; that job fails if the suite skips. If you changed
+`src/transport.sh`, run it yourself first where you can, and say in the
+commit body that the transport changed.
 
 Without root on your machine, a rootless [Podman](https://podman.io/)
 container gives it a root of its own and keeps everything on the container's
@@ -132,7 +134,7 @@ the tests. Expected false positives: SC1007 (deliberate `A= B=` chained
 empty assignments), SC1003 (quoted backslash), SC2088 (literal `'~/'` case
 pattern), SC2030/SC2031 (`LC_ALL` export scoped to a subshell on purpose),
 SC2034 (cross-module variables when a module is checked alone), SC2015 (an
-`A && B || die` chain where `B` is an assignment), SC1090/SC1091/SC2329 in
+`A && B || die` chain meant as written), SC1090/SC1091/SC2329 in
 the tests (dynamic `source`, helpers invoked indirectly). Fix anything else,
 or justify it with a `# shellcheck disable=` comment that says why. Static
 binaries: https://github.com/koalaman/shellcheck/releases

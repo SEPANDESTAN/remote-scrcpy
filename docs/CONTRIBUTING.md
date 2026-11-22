@@ -4,8 +4,8 @@ This is a personal project with a public mirror. Issues and pull requests
 are welcome, but the maintainer's own use case decides what gets merged.
 
 This page is the home of the project's rules, for people and for AI coding
-agents alike. [`AGENTS.md`](../AGENTS.md) is an index for agents that points
-here; it adds nothing a person needs.
+agents alike. [`AGENTS.md`](../AGENTS.md) is the entry point for agents and
+points here; it adds nothing a person needs.
 
 ## What you need
 
@@ -25,13 +25,11 @@ here; it adds nothing a person needs.
 git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
 cd remote-scrcpy
 bash src/build.sh                # regenerates remote-scrcpy.sh (should be a no-op)
-for suite in tests/test-*.sh; do bash "$suite" || break; done
+(for suite in tests/test-*.sh; do bash "$suite" || exit; done)
 ```
 
-Each suite stops at its first failing check with a `FAIL:` line and a
-non-zero status, and ends with a line that says its checks passed.
-[`testing.md`](testing.md) has what each suite covers, the check CI adds, and
-the integration suite.
+[`testing.md`](testing.md) has what a passing and a failing suite look like,
+what each one covers, the check CI adds, and the integration suite.
 
 ## Layout
 
@@ -43,7 +41,7 @@ the integration suite.
 | `tests/test-*.sh` | the fast suites: no network, no phone, no root |
 | `tests/*.py` | the integration suite and its fixtures: real OpenSSH and adb, simulated devices; needs root; CI runs it in its own job |
 | `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [adding a CLI option](adding-a-cli-option.md), [release](release.md), [decisions](decisions.md), the [2026-11-06 review](review-2026-11-06.md) |
-| `AGENTS.md`, `.agents/`, `.claude/` | index and skills for AI coding agents |
+| `AGENTS.md`, `.agents/`, `.claude/` | entry point and skills for AI coding agents |
 | `.github/` | CI (`workflows/test.yml`) and the issue and pull request templates |
 
 ## Making a change
@@ -64,8 +62,8 @@ the integration suite.
 
 1. **The bundle is generated.** Edit `src/`, run `bash src/build.sh`, and
    commit the regenerated `remote-scrcpy.sh` in the same commit. CI rebuilds
-   it and fails on any difference. Some suites run the bundle and others
-   source the modules, so an unrebuilt change passes only some of them.
+   it and fails on any difference, and an unrebuilt change is only half
+   tested ([`testing.md`](testing.md)).
 2. **Never run the launcher against a real host or phone from a development
    session**, whether you are a person trying a change or an agent: no
    `remote-scrcpy HOST`, no `--list-devices HOST`, no Tab completion with a
@@ -111,10 +109,9 @@ the integration suite.
 
 ## Conventions
 
-- One public function, `remote-scrcpy`; helpers are `_kebab-case`. Globals
-  are namespaced by prefix; the table is in
-  [`architecture.md`](architecture.md). The public interface is the command
-  line and the `REMOTE_SCRCPY_*` environment variables, nothing else.
+- Names follow [`architecture.md`](architecture.md), "Internal naming": the
+  one public function, how helpers are called, the prefixes of the globals,
+  and what counts as the supported interface.
 - `local` for every variable inside a helper.
 - Exit statuses follow the table in [`architecture.md`](architecture.md),
   which `--help` repeats for users.
@@ -132,8 +129,9 @@ the integration suite.
 - **No numbers that every change moves.** Do not write how many checks a
   suite has or how many lines a file has; say what the output looks like.
 - **Dated records are not edited.** `review-2026-11-06.md` describes the
-  repository on that day. Decisions are appended to `decisions.md`, not
-  rewritten.
+  repository on that day. Decisions are appended to `decisions.md`; an
+  existing entry is changed only to correct a fact or a reference that has
+  gone stale.
 - `README.md` is for users: install, usage, limits. `CHANGELOG.md` records
   what changed for them.
 
