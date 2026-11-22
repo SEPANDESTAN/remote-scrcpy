@@ -12,6 +12,7 @@
 # Print the Bash completion script for the user's shell to source.
 # Static text to stdout; nothing is contacted until Tab is pressed.
 _print-bash-completion() {
+    local line
     while IFS= read -r line; do printf '%s\n' "$line"; done <<'COMPLETION'
 # Bash completion for remote-scrcpy; source once per interactive Bash shell.
 # Device serials are queried through SSH by default. Set
