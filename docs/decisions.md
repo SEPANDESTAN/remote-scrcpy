@@ -298,3 +298,13 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   scrcpy's version and verbosity, which after the swap is also what they
   mean to the launcher. `--help` and the README say which side of `--` each
   meaning lives on.
+- **The installer's options are named for what a person wants.** `--ref`
+  became `--version` (`-v`) and `--completion` became
+  `--with-tab-completion` (`-c`), at the maintainer's request, hours after
+  3.1.0 had published the first names; `--dir` gained `-d`. The first
+  names stay as documented aliases, under the policy above, so the commands
+  in the 3.1.0 release notes and anyone's notes keep working. `--version`
+  takes a release number with or without the `v` of its tag, or a branch.
+  In the launcher `--version` prints the version and takes no value; the
+  installer's takes one because there it answers "which version do you
+  want".

@@ -7,6 +7,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- `install.sh`: `--version VERSION` (`-v`) chooses what to download and
+  takes a release number with or without its `v` (`3.1.0`, `v3.1.0`) or a
+  branch; `--with-tab-completion` (`-c`) adds Bash completion; `-d` is short
+  for `--dir`. The names of 3.1.0, `--ref` and `--completion`, still work
+  and are listed in `--help`.
 - One-letter forms for the options used every day: `-l` for
   `--list-devices`, `-L` for `--list-hosts`, `-p` for `--prerequisites`,
   `-q` for `--quiet` and `-n` for `--non-interactive`, next to `-h`. `--help`

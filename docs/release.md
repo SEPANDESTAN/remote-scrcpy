@@ -47,7 +47,7 @@ old string.
 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/vX.Y.Z/install.sh \
-       | bash -s -- --ref vX.Y.Z
+       | bash -s -- --version X.Y.Z
    ```
 
    followed by the CHANGELOG section for the version and a "Next" pointer to
@@ -60,5 +60,5 @@ old string.
 
 Tags are `vX.Y.Z`, unsigned, created by `gh release create`. Releases are
 not drafts and not pre-releases. The README's install command points at
-`main` on purpose, so users who follow it get the latest bundle; `--ref
-vX.Y.Z` on the installer pins a release.
+`main` on purpose, so users who follow it get the latest bundle;
+`--version X.Y.Z` on the installer pins a release.

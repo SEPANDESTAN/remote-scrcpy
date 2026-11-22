@@ -2,7 +2,7 @@
 # Install remote-scrcpy: put the single-file launcher into a directory on PATH.
 #
 #   curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash -s -- --completion
+#   curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash -s -- --with-tab-completion
 #   bash install.sh --dir ~/bin      # in a checkout: installs its own bundle, no network
 #
 # It writes one file and, when asked, one line in ~/.bashrc. It never uses
@@ -16,17 +16,23 @@ INSTALL_TEMPORARY_FILE=''
 # Print the usage text to stdout.
 usage() {
     printf '%s\n' \
-        'Usage: install.sh [--dir DIR] [--ref REF] [--completion]' \
+        'Usage: install.sh [--dir DIR] [--version VERSION] [--with-tab-completion]' \
         '' \
         'Install remote-scrcpy, a single Bash file, as DIR/remote-scrcpy.' \
         '' \
-        '  --dir DIR      where to install (default: ~/.local/bin)' \
-        '  --ref REF      branch or tag to download (default: main)' \
-        '  --completion   also add Bash completion to ~/.bashrc: one marked' \
-        '                 line, added once' \
-        '  -h, --help     show this help' \
+        '  -d, --dir DIR              where to install (default: ~/.local/bin)' \
+        '  -v, --version VERSION      what to download: a release such as 3.1.0 or' \
+        '                             v3.1.0, or a branch (default: main).' \
+        '                             Also accepted as --ref.' \
+        '  -c, --with-tab-completion  also add Bash completion to ~/.bashrc: one' \
+        '                             marked line, added once. Also accepted as' \
+        '                             --completion.' \
+        '  -h, --help                 show this help' \
         '' \
-        'Run as a file in a checkout and without --ref, it installs the' \
+        'A long option takes its value as the next word or after "="; a short' \
+        'one as the next word.' \
+        '' \
+        'Run as a file in a checkout and without --version, it installs the' \
         "checkout's own remote-scrcpy.sh and uses no network. Otherwise it" \
         'downloads that file with curl. It never uses sudo and installs nothing' \
         'else: ssh, adb and scrcpy are yours to provide, see' \
@@ -39,6 +45,10 @@ say() { printf '%s\n' "$*" >&2; }
 # Print an error and exit. Args: message, optional status (default 1).
 die() { say "install.sh: $1"; exit "${2:-1}"; }
 
+# Refuse the command line: print an error and the usage text, exit with 2.
+# Args: message.
+refuse() { say "install.sh: $1"; usage >&2; exit 2; }
+
 # Install the launcher. Args: the path of this file ('' when it is read from
 # a pipe), then the command line. Exits 2 for usage errors, 127 when curl is
 # needed and missing, 1 when the launcher could not be installed or, after
@@ -46,24 +56,40 @@ die() { say "install.sh: $1"; exit "${2:-1}"; }
 main() {
     local self=$1; shift
     local dir='' ref='' completion=0 bundle='' target version tool missing='' line
+    local typed name value
     local url=https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy
     local marker='# remote-scrcpy completion (added by install.sh)'
     while (( $# )); do
+        # A short form or an older name is another spelling of the long
+        # name; refusals quote what was typed.
+        typed=$1 name=''
+        case $1 in
+            -d) set -- --dir "${@:2}" ;;
+            -v|--ref) set -- --version "${@:2}" ;;
+            --ref=*) set -- "--version=${1#*=}" "${@:2}" ;;
+            -c|--completion) set -- --with-tab-completion "${@:2}" ;;
+        esac
         case $1 in
             -h|--help) usage; return 0 ;;
-            --completion) completion=1 ;;
-            --dir|--ref)
-                (( $# > 1 )) || die "$1 needs a value" 2
-                set -- "$1=$2" "${@:3}"
-                continue ;;
-            --dir=?*) dir=${1#*=} ;;
-            --ref=?*) ref=${1#*=} ;;
-            *) say "install.sh: cannot use this argument: $1"; usage >&2; exit 2 ;;
+            --with-tab-completion) completion=1 ;;
+            --dir|--version)
+                (( $# > 1 )) || refuse "$typed needs a value"
+                name=$1 value=$2
+                shift ;;
+            --dir=*|--version=*) name=${1%%=*} value=${1#*=} ;;
+            *) refuse "cannot use this argument: $typed" ;;
         esac
+        if [[ -n $name ]]; then
+            [[ -n $value ]] || refuse "$typed needs a value that is not empty"
+            if [[ $name == --dir ]]; then dir=$value; else ref=$value; fi
+        fi
         shift
     done
+    # The version is a tag or a branch of the repository; a bare release
+    # number is the tag with a "v" in front.
+    [[ ! $ref =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ref=v$ref
     if [[ -n $ref ]] && { [[ ! $ref =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ $ref == *..* ]]; }; then
-        die "not a branch or tag name: $ref" 2
+        die "not a version, tag or branch name: $ref" 2
     fi
     # The shell expands ~ in "--dir ~/bin" but not in "--dir=~/bin".
     # shellcheck disable=SC2088  # a literal ~ is what is being matched
@@ -77,11 +103,11 @@ main() {
         dir=$HOME/.local/bin
     fi
     if (( completion )) && [[ -z ${HOME:-} ]]; then
-        die 'HOME is not set, so there is no ~/.bashrc for --completion' 2
+        die 'HOME is not set, so there is no ~/.bashrc for --with-tab-completion' 2
     fi
 
-    # A checkout carries the bundle next to this file. A --ref asks for a
-    # particular version, so it always downloads.
+    # A checkout carries the bundle next to this file. A --version asks for a
+    # particular one, so it always downloads.
     if [[ -z $ref && -n $self ]]; then
         bundle=./remote-scrcpy.sh
         [[ $self != */* ]] || bundle=${self%/*}/remote-scrcpy.sh
@@ -126,7 +152,7 @@ main() {
     line=$(printf '%q' "$target")
     line="if [[ -x $line ]]; then source <($line --completion bash); fi  $marker"
     if (( ! completion )); then
-        say 'For Tab completion, run this installer with --completion, or add to ~/.bashrc:'
+        say 'For Tab completion, run this installer with --with-tab-completion, or add to ~/.bashrc:'
         say '  source <(remote-scrcpy --completion bash)'
     elif grep -Fqsx -- "$line" "$HOME/.bashrc"; then
         say 'Tab completion is already set up in ~/.bashrc.'
