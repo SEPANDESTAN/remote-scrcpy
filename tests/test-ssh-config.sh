@@ -78,6 +78,27 @@ actual=$(cd -- "$fixture" && discover_fixture "$config" 2> "$fixture/warnings")
 # A missing config is a normal empty inventory.
 assert_discovery '' "$fixture/missing"
 
+# Without a home directory (an empty HOME here), an Include that needs one is
+# skipped with a diagnostic instead of being resolved against the root
+# directory; hosts and absolute Includes still work, and an Include the scan
+# cannot follow anyway keeps its own diagnostic.
+printf 'Host absolute-include\n' > "$fixture/elsewhere/absolute"
+# shellcheck disable=SC2016  # ${NOPE} is literal text of the config under test
+printf 'Host homeless\nInclude ~/parts/10.conf parts/20.conf %s "${NOPE}/x"\n' "$fixture/elsewhere/absolute" > "$config"
+actual=$(HOME=; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings")
+[[ $actual == $'homeless\nabsolute-include' ]]
+[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 2 ]]
+[[ $(grep -c 'Skipping dynamic SSH Include' "$fixture/warnings") == 1 ]]
+
+# With HOME unset the scan takes the home directory from the password
+# database, as the launcher does for the default config, so an Include under
+# ~ is followed, not skipped. The name is one that does not exist: nothing is
+# read from the home of whoever runs the suite.
+printf 'Host database-home\nInclude ~/.remote-scrcpy-test-no-such-file\n' > "$config"
+actual=$(unset HOME; _discover-ssh-host-aliases "$config" 2> "$fixture/warnings")
+[[ $actual == database-home ]]
+[[ $(grep -c 'needs a home directory' "$fixture/warnings") == 0 ]]
+
 # State and caller glob settings do not leak across separate discoveries.
 printf 'Host second-call\n' > "$config"
 shopt -s failglob dotglob nocaseglob

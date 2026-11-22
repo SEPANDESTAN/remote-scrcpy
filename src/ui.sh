@@ -12,7 +12,7 @@ _prompt-for-ssh-host() {
     local -a choices=()
     local choice index
     mapfile -t choices < <(_discover-ssh-host-aliases "$SETTINGS_SSH_DISCOVERY_CONFIG_FILE")
-    _print-section-heading "Remote hosts from $SETTINGS_SSH_DISCOVERY_CONFIG_FILE:"
+    _print-section-heading "Remote hosts from ${SETTINGS_SSH_DISCOVERY_CONFIG_FILE:-the SSH config (none: no home directory)}:"
     if (( ${#choices[@]} )); then
         for index in "${!choices[@]}"; do
             _print-numbered-choice "$((index + 1))" "${choices[index]}"

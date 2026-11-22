@@ -34,7 +34,13 @@ _initialize-configuration() {
     SETTINGS_SSH_HOST=${REMOTE_SCRCPY_HOST:-}
     SETTINGS_DEVICE_SERIAL=${REMOTE_SCRCPY_SERIAL:-}
     SETTINGS_SSH_CONFIG_FILE=${REMOTE_SCRCPY_SSH_CONFIG:-}
-    SETTINGS_SSH_DISCOVERY_CONFIG_FILE=${SETTINGS_SSH_CONFIG_FILE:-${HOME:?HOME is not set}/.ssh/config}
+    # The default SSH config sits in the home directory. With HOME unset, ~
+    # comes from the password database, which is where OpenSSH looks too. An
+    # empty HOME is no home: then there is no default config, and nothing
+    # else needs one.
+    local home=${HOME-~}
+    [[ $home == /* ]] || home=''
+    SETTINGS_SSH_DISCOVERY_CONFIG_FILE=${SETTINGS_SSH_CONFIG_FILE:-${home:+$home/.ssh/config}}
     SETTINGS_LOCAL_ADB_EXECUTABLE=${REMOTE_SCRCPY_ADB:-${ADB:-adb}}
     SETTINGS_REMOTE_ADB_EXECUTABLE=${REMOTE_SCRCPY_REMOTE_ADB:-${REMOTE_ADB:-adb}}
     SETTINGS_REMOTE_ADB_SERVER_PORT=${REMOTE_SCRCPY_ADB_PORT:-${ADB_PORT:-5037}}

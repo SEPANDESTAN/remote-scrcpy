@@ -63,6 +63,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   completion contacted. `--host=`, `--serial=` and `--color=` now complete
   in an interactive shell, serials that contain a colon complete, and a
   `user@host` destination is read as one host (#20).
+- `--help`, `--version`, `--prerequisites`, `--completion bash` and
+  `--list-hosts` no longer fail when `HOME` is not set. The home directory
+  is then taken from the password database, where OpenSSH looks too, so the
+  alias list is the same as with `HOME` set. With an empty `HOME` there is
+  no default SSH config, and an `Include` that needs a home directory is
+  skipped with a message.
 - Closing the terminal no longer kills scrcpy outright. The launcher passed
   the hangup signal on unchanged, and scrcpy, which handles only interrupt
   and terminate, died before its own shutdown, for example without finishing

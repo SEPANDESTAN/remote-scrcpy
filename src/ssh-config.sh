@@ -87,10 +87,19 @@ _visit-ssh-configuration-file() {
                 *'$'*|*'%'*|~[^/]*)
                     printf 'Skipping dynamic SSH Include in %s: %s\n' "$file" "$value" >&2
                     continue ;;
-                '~') pattern=$ssh_user_home ;;
-                '~/'*) pattern=$ssh_user_home/${value#\~/} ;;
                 /*) pattern=$value ;;
-                *) pattern=$ssh_directory/$value ;;
+                *)
+                    # ~ and relative paths are resolved against the home
+                    # directory; without one they would point at the root.
+                    if [[ -z $ssh_user_home ]]; then
+                        printf 'Skipping SSH Include that needs a home directory in %s: %s\n' "$file" "$value" >&2
+                        continue
+                    fi
+                    case $value in
+                        '~') pattern=$ssh_user_home ;;
+                        '~/'*) pattern=$ssh_user_home/${value#\~/} ;;
+                        *) pattern=$ssh_directory/$value ;;
+                    esac ;;
             esac
             # Empty IFS keeps quoted spaces intact. Deliberate unquoted
             # expansion performs pathname globbing only, never shell evaluation.
@@ -110,13 +119,17 @@ _visit-ssh-configuration-file() {
 #
 # This is a static candidate inventory: Host/Match conditions on Includes are
 # not evaluated. ${VARIABLE}, %-token, and ~otheruser Include paths are skipped
-# with a diagnostic; users can always pass a host explicitly.
+# with a diagnostic, and so are ~ and relative ones when there is no home
+# directory; users can always pass a host explicitly.
 # The optional second argument injects the user's home directory for tests.
+# Without it the home is HOME or, with HOME unset, what ~ gives from the
+# password database; an empty HOME counts as none.
 # Enumerate unique literal Host aliases in declaration order.
 # Args: optional config/home; subshell isolates parser state and globs.
 _discover-ssh-host-aliases() (
-    local config=${1:-$HOME/.ssh/config}
-    local ssh_user_home=${2:-$HOME}
+    local ssh_user_home=${2:-${HOME-~}}
+    [[ $ssh_user_home == /* ]] || ssh_user_home=''
+    local config=${1:-${ssh_user_home:+$ssh_user_home/.ssh/config}}
     local ssh_directory=$ssh_user_home/.ssh
     local -a visited=()
     export LC_ALL=C

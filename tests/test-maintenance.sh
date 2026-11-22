@@ -49,6 +49,24 @@ config=$(mktemp)
 trap 'rm -f "$config"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# None of the local modes needs HOME.
+check contains "$(env -u HOME "$script" --version)" '3.0.2'
+check contains "$(env -u HOME "$script" --help)" 'USAGE'
+check contains "$(env -u HOME "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
+check contains "$(env -u HOME "$script" --completion bash)" '_complete-remote-scrcpy()'
+check contains "$(env -u HOME "$script" --list-hosts --ssh-config "$config")" 'gamma'
+# With HOME unset the default SSH config is found through the password
+# database, as OpenSSH finds it. A home directory of "/" is a home like any
+# other. Only an empty HOME leaves no default: listing hosts then prints
+# nothing and succeeds. The resolved path is inspected instead of listed, so
+# the suite never reads the configuration of whoever runs it.
+# shellcheck disable=SC2016  # a script for another shell; it must expand there, not here
+print_discovery_path='source "$1"; _initialize-configuration; printf "[%s]" "$SETTINGS_SSH_DISCOVERY_CONFIG_FILE"'
+database_home=$(env -u HOME bash -c 'printf %s ~')
+check equals "$(env -u HOME bash -c "$print_discovery_path" -- "$script")" "[$database_home/.ssh/config]"
+check equals "$(env HOME=/ bash -c "$print_discovery_path" -- "$script")" '[//.ssh/config]'
+check equals "$(env HOME= bash -c "$print_discovery_path" -- "$script")" '[]'
+check equals "$(env HOME= "$script" --list-hosts; echo "rc=$?")" 'rc=0'
 check bash -n <("$script" --completion bash)
 # Explicitly exercise the emitted completion function with a prefixed SSH alias.
 source <("$script" --completion bash)
