@@ -59,6 +59,14 @@ check status 2 "$script" --serial a --serial b --list-devices
 check status 2 "$script" --serial a --list-devices
 check status 2 "$script" --host host --serial serial --list-hosts
 check status 2 "$script" --bogus
+# --completion takes its value like every other value option, and the two
+# aliases that were never documented are gone.
+check contains "$("$script" --completion=bash)" '_complete-remote-scrcpy()'
+check status 2 "$script" --completion=zsh
+# Status 2 alone would not show it: as an alias --list also ended with 2,
+# through the host that --list-devices was missing.
+check contains "$("$script" --list 2>&1 || true)" 'Unknown launcher option: --list.'
+check contains "$("$script" --requirements 2>&1 || true)" 'Unknown launcher option: --requirements.'
 
 # Source into isolated subshells; public application entry remains unused.
 check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" remote-host PHONE)" 'remote-host|PHONE'

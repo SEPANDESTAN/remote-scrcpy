@@ -130,3 +130,8 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   other two got tests of their own instead of a second infrastructure.
 - **Releases go through a pull request too.** The release commit used to be
   pushed to `main`; `release.md` now puts it on a `release/X.Y.Z` branch.
+- **The undocumented aliases `--list` and `--requirements` are dropped, not
+  documented.** Issue #7 offered both ways out. Decided with the maintainer
+  while approving the review plan: one name per thing, and nothing had ever
+  documented them, so removing them breaks no stated interface. If either
+  turns out to be in use, it comes back as a documented option.

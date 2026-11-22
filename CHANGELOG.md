@@ -7,6 +7,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
+- `--completion=bash` is accepted next to `--completion bash`, like the `=`
+  form of every other option that takes a value; Tab completes it (#7).
 - `AGENTS.md` as the entry point for AI coding agents, with `CLAUDE.md` as a
   symlink to it; shared skills under `.agents/skills/` (`build-and-test`,
   `add-cli-option`, `release`) linked from `.claude/skills`; a tracked
@@ -47,6 +49,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   created when missing.
 - `.gitignore` tracks the shared agent configuration and ignores only
   per-machine files (`.claude/settings.local.json`, `*.local.*`).
+
+### Removed
+- The aliases `--list` (for `--list-devices`) and `--requirements` (for
+  `--prerequisites`). They were accepted but never documented, although Tab
+  completion offered `--list` up to 3.0.2, where it did not say which list;
+  both now fail as unknown options (#7).
 
 ### CI
 - The integration suite (real OpenSSH and adb, simulated phone) runs on every
@@ -103,8 +111,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No option or `REMOTE_SCRCPY_*` variable was added, removed or renamed. Two
-  behaviours changed:
+- No documented option or `REMOTE_SCRCPY_*` variable was removed or renamed;
+  the two aliases removed above were never documented. Two behaviours
+  changed:
 - Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
   now completes as a host, as the launcher reads it. To complete a serial on
   the environment host, use `--serial <Tab>` or `--serial=<Tab>`.

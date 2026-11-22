@@ -31,6 +31,7 @@ EXAMPLES
   remote-scrcpy --non-interactive remote-host DEVICE1234567890
 
 OPTIONS
+  An option that takes a value also accepts it as --option=VALUE.
   --host HOST           SSH alias, hostname, or user@hostname
   --serial SERIAL       Exact device serial from `adb devices -l`
   --list-hosts          List literal aliases from the SSH config (no network)
@@ -127,17 +128,22 @@ _parse-command-line() {
         case $arg in
             --) shift; SETTINGS_SCRCPY_EXTRA_ARGUMENTS=("$@"); break ;;
             -h|--help) _print-help; exit 0 ;;
-            --prerequisites|--requirements) SETTINGS_OPERATION=prerequisites; shift ;;
-            --completion)
-                (( $# >= 2 )) || _exit-with-error '--completion requires bash.' 2
-                [[ $2 == bash ]] || _exit-with-error 'Only Bash completion is supported.' 2
-                SETTINGS_OPERATION=completion; shift 2 ;;
+            --prerequisites) SETTINGS_OPERATION=prerequisites; shift ;;
+            --completion|--completion=*)
+                if [[ $arg == *=* ]]; then
+                    value=${arg#*=}; shift
+                else
+                    (( $# >= 2 )) || _exit-with-error '--completion requires bash.' 2
+                    value=$2; shift 2
+                fi
+                [[ $value == bash ]] || _exit-with-error 'Only Bash completion is supported.' 2
+                SETTINGS_OPERATION=completion ;;
             -V|--version) printf 'remote-scrcpy %s\n' "$APPLICATION_VERSION"; exit 0 ;;
             -v|--verbose) SETTINGS_VERBOSE=1; shift ;;
             --quiet) SETTINGS_QUIET=1; shift ;;
             --ascii) SETTINGS_ASCII_ONLY=1; shift ;;
             --non-interactive) SETTINGS_NON_INTERACTIVE=1; shift ;;
-            --list-hosts|--list-devices|--list)
+            --list-hosts|--list-devices)
                 [[ $SETTINGS_OPERATION == connect ]] || _exit-with-error 'Choose only one listing mode.' 2
                 if [[ $arg == --list-hosts ]]; then SETTINGS_OPERATION=hosts; else SETTINGS_OPERATION=devices; fi
                 shift ;;

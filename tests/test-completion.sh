@@ -96,6 +96,10 @@ complete_words remote-host --serial=
 assert_eq 'serial equals, nothing typed' 'DEVICE1234567890 Z99999 192.0.2.10:5555' "${COMPREPLY[*]}"
 complete_words --color=a
 assert_eq 'color equals' 'auto always' "${COMPREPLY[*]}"
+complete_words --completion=
+assert_eq 'completion equals' 'bash' "${COMPREPLY[*]}"
+complete_words --list
+assert_eq 'only the documented listing options are offered' '--list-hosts --list-devices' "${COMPREPLY[*]}"
 complete_words remote-host 192.0.2.10:5
 assert_eq 'serial with a colon' '5555' "${COMPREPLY[*]}"
 # With two break characters in the word, the cut is at the last one.

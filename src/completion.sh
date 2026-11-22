@@ -61,7 +61,7 @@ _remote-scrcpy-complete-words() {
     local value complete_host=0 complete_serial=0 explicit_host=0
     local command=${words[0]}
     local -a positions=()
-    local options='--help --version --host --serial --list-hosts --list-devices --list --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion'
+    local options='--help --version --host --serial --list-hosts --list-devices --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion'
     if (( last >= 1 )); then previous=${words[last-1]}; fi
     ssh_config=${REMOTE_SCRCPY_SSH_CONFIG:-}
     remote_adb=${REMOTE_SCRCPY_REMOTE_ADB:-${REMOTE_ADB:-adb}}
@@ -103,8 +103,8 @@ _remote-scrcpy-complete-words() {
         --adb-port) return ;;
     esac
 
-    # `--host=...`, `--serial=...` and `--color=...`: complete the value and
-    # keep the option in front of each candidate.
+    # `--host=...`, `--serial=...`, `--color=...` and `--completion=...`:
+    # complete the value and keep the option in front of each candidate.
     case $current in
         --host=*) current=${current#*=}; complete_host=2 ;;
         --serial=*) current=${current#*=}; complete_serial=2 ;;
@@ -113,6 +113,7 @@ _remote-scrcpy-complete-words() {
             while IFS= read -r value; do COMPREPLY+=("--color=$value"); done \
                 < <(compgen -W 'auto always never' -- "$current")
             return ;;
+        --completion=*) COMPREPLY=( $(compgen -W '--completion=bash' -- "$current") ); return ;;
         --*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
     esac
 
