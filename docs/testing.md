@@ -41,9 +41,13 @@ The 2026-11-06 review proved it by mutation (table in
 transport, and CI runs it. It catches each of the seven mutations listed in
 issue #3 when they are planted one at a time, and each half of the
 socket-form mutation alone. Dropping a module from the build list is caught
-only where a test happens to need that module. Five neighbouring checks,
-four of them in the protocol probe, can still be removed unnoticed; they are
-listed in issue #15.
+only where a test happens to need that module. Each check the protocol probe
+makes on the content of a reply has a test of its own, including the hex
+check on the version payload: that payload comes from the remote and is
+converted with shell arithmetic, and the check is what keeps anything but
+hex digits away from the conversion. The probe's read timeouts are not
+exercised. The suite also covers the device menu offering only devices that
+are ready.
 
 ### Environment
 
