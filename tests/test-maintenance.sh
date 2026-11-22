@@ -33,6 +33,7 @@ check contains "$(REMOTE_ADB=$'two\nlines' "$script" --non-interactive --list-de
 # the check only asks whether each name resolves, and stand-ins keep the test
 # independent of which real tools this machine has.
 tools=$(mktemp -d)
+trap 'rm -rf "$tools"' EXIT
 for missing in cat env; do
     mkdir "$tools/without-$missing"
     for tool in ssh awk cat env mktemp rm sleep; do
@@ -68,7 +69,7 @@ check equals "$(REMOTE_SCRCPY_COLOR=never bash -c 'source "$1"; shift; _initiali
 
 # Host completion is local; device completion queries SSH unless disabled.
 config=$(mktemp)
-trap 'rm -f "$config"; rm -rf "${tools:-}"' EXIT
+trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
 # None of the local modes needs HOME.
