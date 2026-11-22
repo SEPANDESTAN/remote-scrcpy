@@ -635,6 +635,35 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         # to the check alone. A protocol version does not need more than 32 bits.
         self.assert_probe_rejects(b"OKAY0009000000029", "invalid protocol version")
 
+    def assert_reserved_port_refused(self, reported, sentinel=None):
+        """Make the server report `reported` for the allocated port.
+
+        The launcher must stop before scrcpy with its own verdict, release what
+        it held, and not create `sentinel`.
+        """
+        self.server.forward_port_response = reported
+        result = self.run_cli()
+        if sentinel is not None:
+            self.assertFalse(sentinel.exists(),
+                             "the launcher executed text taken from the ADB forward reply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ADB did not return a valid allocated TCP port", result.stderr)
+        self.assertFalse(self.events("scrcpy_started"))
+        self.assert_closed()
+
+    def test_reserved_port_must_be_a_port_number(self):
+        for reported in ("0", "65536", "123456", "12a", "", "-1", "0x50"):
+            with self.subTest(reported=reported):
+                self.assert_reserved_port_refused(reported)
+
+    def test_reserved_port_is_never_evaluated(self):
+        # The same hazard as in the version probe: the text that names the
+        # port comes from the remote server, and shell arithmetic would run
+        # the command in it. The check and the printf conversion each stop it.
+        sentinel = self.work / "PORT_MUST_NOT_RUN"
+        sentinel.unlink(missing_ok=True)
+        self.assert_reserved_port_refused(f"1+BASH_VERSINFO[$(touch {sentinel})]+1", sentinel=sentinel)
+
     def test_failed_remote_startup_cleans_transport(self):
         self.fail_start_marker.touch()
         port = unused_port()

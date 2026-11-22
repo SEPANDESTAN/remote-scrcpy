@@ -79,6 +79,7 @@ class NativeADBServer(socketserver.ThreadingTCPServer):
         self.lock = threading.RLock()
         self.protocol = 41
         self.version_response = None
+        self.forward_port_response = None
         self.devices = []
         self.forwards = {}
         self.requests = []
@@ -95,6 +96,7 @@ class NativeADBServer(socketserver.ThreadingTCPServer):
             self.media_connections.clear()
             self.protocol = 41
             self.version_response = None
+            self.forward_port_response = None
             self.devices = [("SERIAL_A", "device", "Alpha_Phone"),
                             ("SERIAL_B", "device", "Beta_Phone")]
 
@@ -143,7 +145,11 @@ class NativeADBServer(socketserver.ThreadingTCPServer):
                     forwarding = MediaForward(self, serial, target, port)
                     port = forwarding.port
                     self.forwards[port] = forwarding
-                return b"OKAYOKAY" + payload(str(port)), serial, False
+                # A test may make the server report something else than the
+                # port it allocated; the forward itself exists either way.
+                reported = (self.forward_port_response if self.forward_port_response is not None
+                            else str(port))
+                return b"OKAYOKAY" + payload(reported), serial, False
             if command.startswith("host:killforward:tcp:"):
                 port = int(command.removeprefix("host:killforward:tcp:"))
                 forwarding = self.forwards.pop(port, None)

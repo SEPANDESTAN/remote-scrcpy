@@ -107,8 +107,10 @@ _read-adb-server-protocol() (
     # The two hex fields come from the remote. printf converts them without
     # evaluating anything: handed something that is not a number it fails,
     # where shell arithmetic would run a command substitution inside it. The
-    # checks in front say which field was wrong; the conversion does not
-    # depend on them for its safety.
+    # checks in front bound the fields, four digits and at most eight, which
+    # also keeps the numbers far below where the printf of older Bash
+    # versions saturates with a warning; the conversion does not depend on
+    # them for its safety.
     if ! IFS= read -r -N 4 -t 5 size <&"$fd" || [[ ! $size =~ ^[[:xdigit:]]{4}$ ]] \
         || ! printf -v length '%d' "0x$size" 2>/dev/null; then
         printf '%s\n' 'The remote ADB server returned a truncated or invalid response length.' >&2
@@ -211,16 +213,22 @@ _run-remote-adb-client() {
 # Atomically allocate remote scrcpy TCP port via adb tcp:0.
 # Sets reservation token and SESSION_REMOTE_MEDIA_PORT/SESSION_LOCAL_MEDIA_TUNNEL_PORT.
 _reserve-device-forwarding-port() {
-    local port
+    local port number
     SESSION_ADB_PORT_RESERVATION="localabstract:remote_scrcpy_${SESSION_WORK_DIRECTORY##*/}_$RANDOM"
     # tcp:0 atomically chooses and holds an unused port on the remote host.
     # scrcpy will rebind this placeholder to its own device socket.
     port=$(_run-remote-adb-client -s "$SETTINGS_DEVICE_SERIAL" forward tcp:0 "$SESSION_ADB_PORT_RESERVATION") \
         || _exit-with-error 'Could not reserve a remote forwarding port for the selected device.'
-    if [[ ! $port =~ ^[0-9]{1,5}$ ]] || ((10#$port < 1 || 10#$port > 65535)); then
+    # The port is what the remote ADB server answered, printed by the adb
+    # client. Like the probe's fields it is converted with printf, which
+    # evaluates nothing, behind its check; leading zeros go first, because
+    # printf would read them as octal. Only the result reaches arithmetic.
+    number=${port#"${port%%[!0]*}"}
+    if [[ ! $port =~ ^[0-9]{1,5}$ ]] || ! printf -v number '%d' "${number:-0}" 2>/dev/null \
+        || ((number < 1 || number > 65535)); then
         _exit-with-error 'ADB did not return a valid allocated TCP port.'
     fi
-    SESSION_REMOTE_MEDIA_PORT=$((10#$port))
+    SESSION_REMOTE_MEDIA_PORT=$number
     _create-local-ssh-forward "$SESSION_REMOTE_MEDIA_PORT"
     SESSION_LOCAL_MEDIA_TUNNEL_PORT=$SESSION_NEW_FORWARD_PORT
 }
