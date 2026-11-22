@@ -8,7 +8,7 @@ bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
-bash tests/test-install.sh           # expects: Install checks: 67 passed.
+bash tests/test-install.sh           # expects: Install checks: 74 passed.
 ```
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
@@ -71,11 +71,13 @@ a suite that starts programs in an emptied environment, and it is required
 of all five so that nobody has to work out which ones those are. The reason
 is a startup rule of Bash: started with `-c`, without an inherited `SHLVL`,
 and with a socket on standard input, it takes itself for a remote shell and
-reads `/etc/bashrc` and `~/.bashrc`. An
+reads `~/.bashrc`, which commonly sources the system-wide file too (Fedora's
+does, and some builds of Bash read that file themselves). An
 agent's command runner and a remote command both provide such a socket,
 some of the time. The first version of `test-install.sh` did this with a
-`PATH` holding only the installer's tools: a command-not-found handler
-defined by the system startup files called a missing program from inside
+`PATH` holding only the installer's tools and without `HOME`, so that the
+developer's own file was the one read: a command-not-found handler defined
+by the system startup files called a missing program from inside
 itself, and the forks that followed exhausted the machine's memory. Give
 child shells a sandbox `HOME` as well, and run a script file with
 `bash --norc` in preference to `bash -c`.

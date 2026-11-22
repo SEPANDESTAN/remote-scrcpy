@@ -29,7 +29,7 @@ bash tests/test-maintenance.sh && bash tests/test-completion.sh \
 ```
 
 Expected: 59, 34 and 31 passed checks, "SSH config discovery checks
-passed." and 67 install checks. Details, the CI parity check and the integration suite are in
+passed." and 74 install checks. Details, the CI parity check and the integration suite are in
 [`testing.md`](testing.md).
 
 ## Layout

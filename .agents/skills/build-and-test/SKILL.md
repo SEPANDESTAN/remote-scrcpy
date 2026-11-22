@@ -39,7 +39,7 @@ Maintenance checks: 59 passed.
 Completion checks: 34 passed.
 CLI/menu review checks: 31 passed, 0 failed.
 SSH config discovery checks passed.
-Install checks: 67 passed.
+Install checks: 74 passed.
 ```
 
 Counts grow when tests are added; they never shrink without a reason stated

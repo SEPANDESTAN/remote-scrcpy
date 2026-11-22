@@ -7,10 +7,10 @@ set -euo pipefail
 unset "${!REMOTE_SCRCPY_@}" ADB REMOTE_ADB ADB_PORT SCRCPY NO_COLOR
 # No child may inherit the caller's standard input. Bash started with -c in a
 # cleared environment and with a socket there (an agent's tool, a remote
-# command) takes itself for a remote shell and reads /etc/bashrc and
-# ~/.bashrc. Under the bare PATH used below, a command-not-found handler
-# defined there called a missing command from inside itself and forked
-# without end.
+# command) takes itself for a remote shell and reads ~/.bashrc, which often
+# sources the system-wide file too. Under the bare PATH used below, a
+# command-not-found handler defined there called a missing command from
+# inside itself and forked without end.
 exec < /dev/null
 project=$(cd -- "$(dirname -- "$0")/.." && pwd)
 installer=$project/install.sh
@@ -59,10 +59,11 @@ printf 'bundle\n' > "$sandbox/curl-serves"
 # first argument is the PATH. Standard output lands in `output`, standard
 # error in `messages`, the status in `result`.
 where=$sandbox/work
+extra_environment=()
 run() {
     local path=$1; shift
     result=0
-    output=$(cd "$where" && env -i HOME="$home" PATH="$path" "$real_bash" "$@" 2> "$sandbox/stderr" < /dev/null) || result=$?
+    output=$(cd "$where" && env -i HOME="$home" PATH="$path" "${extra_environment[@]}" "$real_bash" "$@" 2> "$sandbox/stderr" < /dev/null) || result=$?
     messages=$(< "$sandbox/stderr")
 }
 # The same for an installer that arrives on standard input, as from curl; the
@@ -141,6 +142,19 @@ run "$bin" "$installer" '--dir=~/tilde bin'
 check equals "$result" 0
 check cmp -s "$bundle" "$home/tilde bin/remote-scrcpy"
 check test ! -e "$sandbox/work/~"
+# A relative name is that name here, whatever CDPATH offers, and "-" is a
+# directory, not the previous one.
+mkdir -p "$sandbox/elsewhere/sub"
+extra_environment=(CDPATH="$sandbox/elsewhere" OLDPWD="$sandbox/elsewhere")
+run "$bin" "$installer" --dir sub
+check cmp -s "$bundle" "$sandbox/work/sub/remote-scrcpy"
+run "$bin" "$installer" --dir -
+check cmp -s "$bundle" "$sandbox/work/-/remote-scrcpy"
+check equals "$(ls -A "$sandbox/elsewhere" "$sandbox/elsewhere/sub")" "$sandbox/elsewhere:
+sub
+
+$sandbox/elsewhere/sub:"
+extra_environment=()
 # A directory of that name is not overwritten.
 mkdir -p "$sandbox/blocked/remote-scrcpy"
 run "$bin" "$installer" --dir "$sandbox/blocked"
@@ -200,6 +214,17 @@ check equals "$result" 0
 check equals "$(try registered)" 'complete -F _complete-remote-scrcpy remote-scrcpy'
 run "$bin" "$installer" --dir "$sandbox/it's here" --completion
 check contains "$messages" 'Tab completion is already set up'
+check equals "$(grep -c '' "$home/.bashrc")" 1
+# So does a path that the shell can only write as $'...', and there only the
+# marker says that the line is a completion line when another place asks.
+home=$sandbox/tab-home
+mkdir "$home"
+run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --completion
+check equals "$(try registered)" 'complete -F _complete-remote-scrcpy remote-scrcpy'
+run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --completion
+check contains "$messages" 'Tab completion is already set up'
+run "$bin" "$installer" --dir "$sandbox/other" --completion
+check contains "$messages" 'was not written for'
 check equals "$(grep -c '' "$home/.bashrc")" 1
 home=$sandbox/home
 

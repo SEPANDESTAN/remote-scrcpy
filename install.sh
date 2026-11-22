@@ -41,7 +41,8 @@ die() { say "install.sh: $1"; exit "${2:-1}"; }
 
 # Install the launcher. Args: the path of this file ('' when it is read from
 # a pipe), then the command line. Exits 2 for usage errors, 127 when curl is
-# needed and missing, 1 when nothing could be installed.
+# needed and missing, 1 when the launcher could not be installed or, after
+# it was, ~/.bashrc could not be written.
 main() {
     local self=$1; shift
     local dir='' ref='' completion=0 bundle='' target version tool missing='' line
@@ -88,6 +89,9 @@ main() {
     fi
     url=$url/${ref:-main}/remote-scrcpy.sh
 
+    # A leading ./ keeps cd from reading "-" as the previous directory and
+    # from looking a relative name up in CDPATH.
+    [[ $dir == /* ]] || dir=./$dir
     mkdir -p -- "$dir" && dir=$(cd -- "$dir" && pwd) || die "cannot use the directory $dir"
     target=$dir/remote-scrcpy
     [[ ! -d $target ]] || die "$target is a directory"

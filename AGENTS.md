@@ -81,7 +81,7 @@ bash tests/test-maintenance.sh      # Maintenance checks: 59 passed.
 bash tests/test-completion.sh       # Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh    # CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh       # SSH config discovery checks passed.
-bash tests/test-install.sh          # Install checks: 67 passed.
+bash tests/test-install.sh          # Install checks: 74 passed.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v   # root + sshd; CI runs it too
 ```
 
