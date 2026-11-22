@@ -30,8 +30,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### CI
 - The integration suite (real OpenSSH and adb, simulated phone) runs on every
-  push and pull request in a second job, so `src/transport.sh` is exercised
-  end to end before a change is merged. `actions/checkout` moves from v4 to
+  pull request and on every push to `main` in a second job, so
+  `src/transport.sh` is exercised end to end before a change is merged. `actions/checkout` moves from v4 to
   v7.
 
 ### Fixed

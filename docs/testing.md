@@ -70,11 +70,13 @@ credentials, phones or servers are used.
 sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
 ```
 
-Without root or `sshd` it skips itself. CI runs it on every push and pull
-request in a job of its own, `integration`, next to the fast suites.
+Without root or `sshd` it skips itself. CI runs it on every pull request and
+on every push to `main` in a job of its own, `integration`, next to the fast
+suites; that job fails if the suite skips.
 
-Without root on your machine, a rootless container gives it a root of its
-own and keeps everything on the container's loopback interface:
+Without root on your machine, a rootless [Podman](https://podman.io/)
+container gives it a root of its own and keeps everything on the container's
+loopback interface:
 
 ```bash
 podman run --rm --security-opt label=disable -v "$PWD":/repo:ro \
@@ -85,6 +87,11 @@ podman run --rm --security-opt label=disable -v "$PWD":/repo:ro \
 ```
 
 ## Writing a hermetic transport test
+
+The project decided against building a full suite this way (see the
+2026-11-22 entry in `decisions.md`): the integration suite covers the
+transport. The recipe stays as the way to exercise a single transport
+function with fake programs when no `sshd` or root is at hand.
 
 No refactoring is required. Source `src/core.sh`, `presentation.sh`,
 `ui.sh`, `transport.sh` and `main.sh` (its entry point is guarded by

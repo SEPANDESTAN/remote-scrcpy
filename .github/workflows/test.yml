@@ -40,6 +40,7 @@ jobs:
   # server and scrcpy. It needs root for its private sshd.
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -48,5 +49,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openssh-server adb
 
+      # The suite skips itself, and unittest then reports success, when it is
+      # not root or cannot find adb or sshd. A skip must fail this job, or a
+      # green check could again mean that nothing ran.
       - name: Integration suite
-        run: sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v
+        shell: bash
+        run: |
+          sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v 2>&1 | tee "$RUNNER_TEMP/integration.log"
+          if grep -Eq '^(OK|FAILED) \(.*skipped=' "$RUNNER_TEMP/integration.log"; then
+            echo "::error::the integration suite skipped tests"; exit 1
+          fi

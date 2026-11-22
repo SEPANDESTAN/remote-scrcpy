@@ -1,6 +1,6 @@
 ---
 name: build-and-test
-description: Rebuild remote-scrcpy.sh from src/ and run every check the CI runs, with the expected results.
+description: Rebuild remote-scrcpy.sh from src/ and run the fast checks CI runs, with the expected results, and see how to run the integration suite CI also runs.
 ---
 
 # Build and test
