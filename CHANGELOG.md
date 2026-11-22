@@ -58,6 +58,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   completion contacted. `--host=`, `--serial=` and `--color=` now complete
   in an interactive shell, serials that contain a colon complete, and a
   `user@host` destination is read as one host (#20).
+- A device lookup started by Tab no longer reads from the terminal. Keys
+  typed while it ran were taken by `ssh` and sent to the remote instead of
+  reaching the shell; where a `timeout` program is installed, the lookup was
+  instead stopped by that read, and Tab hung until the time limit and
+  offered nothing (#8).
 - The test suites no longer inherit the launcher's environment. With
   `REMOTE_SCRCPY_HOST` exported, one check used to run `ssh` against that
   host and three of the four fast suites failed; every suite and the
@@ -67,8 +72,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quote the example values that the 3.0.2 cleanup removed.
 
 ### Compatibility
-- No change to the launcher, its CLI, the `REMOTE_SCRCPY_*` variables or the
-  bundle; `remote-scrcpy.sh` is byte-identical to 3.0.2.
+- No change to the launcher's command line or to the `REMOTE_SCRCPY_*`
+  variables.
+- Tab completion with `REMOTE_SCRCPY_HOST` exported: the first positional
+  now completes as a host, as the launcher reads it. To complete a serial on
+  the environment host, use `--serial <Tab>` or `--serial=<Tab>`.
 
 ## [3.0.2] — 2026-11-05
 
