@@ -59,6 +59,12 @@ check status 2 "$script" --serial a --serial b --list-devices
 check status 2 "$script" --serial a --list-devices
 check status 2 "$script" --host host --serial serial --list-hosts
 check status 2 "$script" --bogus
+# --completion takes its value like every other value option, and the two
+# aliases that were never documented are gone.
+check contains "$("$script" --completion=bash)" '_complete-remote-scrcpy()'
+check status 2 "$script" --completion=zsh
+check status 2 "$script" --list
+check status 2 "$script" --requirements
 
 # Source into isolated subshells; public application entry remains unused.
 check equals "$(bash -c 'source "$1"; shift; _initialize-configuration; _parse-command-line "$@"; printf "%s|%s" "$SETTINGS_SSH_HOST" "$SETTINGS_DEVICE_SERIAL"' -- "$script" remote-host PHONE)" 'remote-host|PHONE'

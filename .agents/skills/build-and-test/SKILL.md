@@ -34,8 +34,8 @@ bash tests/test-ssh-config.sh
 Expected last lines:
 
 ```
-Maintenance checks: 50 passed.
-Completion checks: 32 passed.
+Maintenance checks: 54 passed.
+Completion checks: 34 passed.
 CLI/menu review checks: 31 passed, 0 failed.
 SSH config discovery checks passed.
 ```
