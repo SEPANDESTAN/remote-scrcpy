@@ -11,14 +11,16 @@ curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/inst
 `install.sh` downloads one file with [curl](https://curl.se/), checks that it runs, and puts it at `~/.local/bin/remote-scrcpy`. It never uses `sudo` and installs nothing else: `ssh`, `adb` and `scrcpy` are yours to provide, and it tells you which of them it did not find. Options go after `bash -s --`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash -s -- --completion
+curl -fsSL https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/install.sh | bash -s -- --with-tab-completion
 ```
 
-| Option | Effect |
-|---|---|
-| `--completion` | also add Bash completion to `~/.bashrc`: one marked line, added once; an existing completion line is left alone |
-| `--dir DIR` | install into `DIR` instead of `~/.local/bin` |
-| `--ref REF` | download a tag or branch, such as `vX.Y.Z`, instead of `main` |
+| Option | Short | Effect |
+|---|---|---|
+| `--with-tab-completion` | `-c` | also add Bash completion to `~/.bashrc`: one marked line, added once; an existing completion line is left alone |
+| `--dir DIR` | `-d` | install into `DIR` instead of `~/.local/bin` |
+| `--version VERSION` | `-v` | download a release, such as `3.1.0` or `v3.1.0`, or a branch, instead of `main` |
+
+So `bash -s -- -c -d ~/bin` adds completion and installs into `~/bin`. The names of 3.1.0, `--completion` and `--ref`, still work.
 
 From a checkout, `bash install.sh` installs that checkout's `remote-scrcpy.sh` and uses no network.
 

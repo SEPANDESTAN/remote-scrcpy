@@ -81,16 +81,26 @@ main_url=https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/remote
 # --help explains the script and does nothing else.
 run "$bin" "$installer" --help
 check equals "$result" 0
-check contains "$output" 'Usage: install.sh [--dir DIR] [--ref REF] [--completion]'
+check contains "$output" 'Usage: install.sh [--dir DIR] [--version VERSION] [--with-tab-completion]'
+# The help lists every short form and both older names.
+for form in '  -d, --dir DIR ' '  -v, --version VERSION ' '  -c, --with-tab-completion ' '  -h, --help ' 'Also accepted as --ref.' '--completion.'; do
+    check contains "$output" "$form"
+done
 check equals "$messages" ''
 # What it cannot use is refused with status 2 before anything is written.
-for arguments in '--bogus' 'extra' '--dir' '--dir=' '--ref' '--ref=a b' '--ref=../main' '--ref=-x' '--ref=a..b'; do
+for arguments in '--bogus' 'extra' '--dir' '--dir=' '-d' '-d=x' '--version' '--version=' '-v' '--ref' '--ref=' \
+    '--version=a b' '--version=../main' '--version=-x' '--version=a..b' '--ref=../main' '-v ../main' '-x' '-cd'; do
     read -r -a words <<< "$arguments"
-    [[ $arguments != '--ref=a b' ]] || words=('--ref=a b')
+    [[ $arguments != '--version=a b' ]] || words=('--version=a b')
     run "$bin" "$installer" "${words[@]}"
     equals "$result" 2 || fail "status $result instead of 2 for: $arguments"
 done
 passed=$((passed+1))
+# The refusal names what was typed, also when it was a short form.
+run "$bin" "$installer" -d
+check contains "$messages" 'install.sh: -d needs a value'
+run "$bin" "$installer" --ref
+check contains "$messages" 'install.sh: --ref needs a value'
 check equals "$(ls -A "$home" "$sandbox/work")" "$home:
 
 $sandbox/work:"
@@ -161,15 +171,15 @@ run "$bin" "$installer" --dir "$sandbox/blocked"
 check equals "$result" 1
 check equals "$(ls -A "$sandbox/blocked")" 'remote-scrcpy'
 
-# --completion adds one marked line to ~/.bashrc, keeps what is there, and
+# --with-tab-completion adds one marked line to ~/.bashrc, keeps what is there, and
 # does not add it twice.
 printf 'export EXISTING=1' > "$home/.bashrc"
-run "$bin" "$installer" --completion
+run "$bin" "$installer" --with-tab-completion
 check equals "$result" 0
 check contains "$messages" 'Added Tab completion to ~/.bashrc'
 check equals "$(grep -c 'added by install.sh' "$home/.bashrc")" 1
 check equals "$(sed -n 1p "$home/.bashrc")" 'export EXISTING=1'
-run "$bin" "$installer" --completion
+run "$bin" "$installer" --with-tab-completion
 check contains "$messages" 'Tab completion is already set up'
 check equals "$(grep -c 'remote-scrcpy --completion bash' "$home/.bashrc")" 1
 # The line registers the completion although the launcher's directory is not
@@ -187,7 +197,7 @@ check equals "$(try silent)" 'status 0'
 mv "$sandbox/set-aside" "$home/.local/bin/remote-scrcpy"
 # Installed somewhere else afterwards, the existing line is not touched and
 # not called set up either: the message shows the line for the new place.
-run "$bin" "$installer" --dir "$sandbox/second place" --completion
+run "$bin" "$installer" --dir "$sandbox/second place" --with-tab-completion
 check equals "$result" 0
 check contains "$messages" 'was not written for'
 check contains "$messages" "  if [[ -x $(printf '%q' "$sandbox/second place/remote-scrcpy") ]]; then source <("
@@ -195,7 +205,7 @@ check equals "$(grep -c 'added by install.sh' "$home/.bashrc")" 1
 # A home without a ~/.bashrc gets one that holds just that line.
 home=$sandbox/fresh-home
 mkdir "$home"
-run "$bin" "$installer" --completion
+run "$bin" "$installer" --with-tab-completion
 check equals "$(grep -c '' "$home/.bashrc")" 1
 check contains "$(< "$home/.bashrc")" '--completion bash); fi  # remote-scrcpy completion (added by install.sh)'
 # A ~/.bashrc that already loads the completion, as the README shows, is
@@ -203,30 +213,46 @@ check contains "$(< "$home/.bashrc")" '--completion bash); fi  # remote-scrcpy c
 home=$sandbox/hand-home
 mkdir "$home"
 printf 'source <(remote-scrcpy --completion bash)\n' > "$home/.bashrc"
-run "$bin" "$installer" --completion
+run "$bin" "$installer" --with-tab-completion
 check contains "$messages" 'was not written for'
 check equals "$(< "$home/.bashrc")" 'source <(remote-scrcpy --completion bash)'
 # A path that needs quoting gives a line that still works.
 home=$sandbox/quoted-home
 mkdir "$home"
-run "$bin" "$installer" --dir "$sandbox/it's here" --completion
+run "$bin" "$installer" --dir "$sandbox/it's here" --with-tab-completion
 check equals "$result" 0
 check equals "$(try registered)" 'complete -F _complete-remote-scrcpy remote-scrcpy'
-run "$bin" "$installer" --dir "$sandbox/it's here" --completion
+run "$bin" "$installer" --dir "$sandbox/it's here" --with-tab-completion
 check contains "$messages" 'Tab completion is already set up'
 check equals "$(grep -c '' "$home/.bashrc")" 1
 # So does a path that the shell can only write as $'...', and there only the
 # marker says that the line is a completion line when another place asks.
 home=$sandbox/tab-home
 mkdir "$home"
-run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --completion
+run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --with-tab-completion
 check equals "$(try registered)" 'complete -F _complete-remote-scrcpy remote-scrcpy'
-run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --completion
+run "$bin" "$installer" --dir "$sandbox/with"$'\t'"tab" --with-tab-completion
 check contains "$messages" 'Tab completion is already set up'
-run "$bin" "$installer" --dir "$sandbox/other" --completion
+run "$bin" "$installer" --dir "$sandbox/other" --with-tab-completion
 check contains "$messages" 'was not written for'
 check equals "$(grep -c '' "$home/.bashrc")" 1
 home=$sandbox/home
+
+# The short forms and the older names do what the long names do.
+home=$sandbox/short-home
+mkdir "$home"
+run "$bin" "$installer" -c -d "$sandbox/short dir"
+check equals "$result" 0
+check cmp -s "$bundle" "$sandbox/short dir/remote-scrcpy"
+check equals "$(grep -c 'added by install.sh' "$home/.bashrc")" 1
+check test ! -e "$home/.local"
+home=$sandbox/alias-home
+mkdir "$home"
+run "$bin" "$installer" --completion
+check equals "$result" 0
+check equals "$(grep -c 'added by install.sh' "$home/.bashrc")" 1
+home=$sandbox/home
+check contains "$(run "$bin" "$installer" --dir "$sandbox/hint"; printf '%s' "$messages")" 'run this installer with --with-tab-completion'
 
 # Read from a pipe there is no checkout: it downloads the main branch.
 run-piped "$bin" --dir "$sandbox/piped"
@@ -245,11 +271,31 @@ cp "$installer" "$sandbox/lone/install.sh"
 run "$bin" "$sandbox/lone/install.sh" --dir "$sandbox/lone/bin"
 check contains "$(< "$sandbox/curl.log")" "$main_url"
 check cmp -s "$bundle" "$sandbox/lone/bin/remote-scrcpy"
-# --ref names the version and downloads even from a checkout.
+# --version names what to download, and downloads even from a checkout. A
+# bare release number is the tag with a "v" in front; a branch stays as it is.
 : > "$sandbox/curl.log"
-run "$bin" "$installer" --ref v3.0.2 --dir "$sandbox/piped"
+run "$bin" "$installer" --version v3.0.2 --dir "$sandbox/piped"
 check equals "$result" 0
 check contains "$(< "$sandbox/curl.log")" 'https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/v3.0.2/remote-scrcpy.sh'
+# The part of the download address that names the version, for the given
+# installer arguments.
+downloaded_version() {
+    : > "$sandbox/curl.log"
+    run "$bin" "$installer" --dir "$sandbox/piped" "$@"
+    local address
+    address=$(tail -n 1 "$sandbox/curl.log")
+    address=${address##* https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/}
+    printf '%s' "${address%/remote-scrcpy.sh}"
+}
+check equals "$(downloaded_version --version 3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version --version=3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version -v 3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version -v v3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version --ref v3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version --ref=3.0.2)" 'v3.0.2'
+check equals "$(downloaded_version --version main)" 'main'
+check equals "$(downloaded_version --version release/next)" 'release/next'
+check equals "$(downloaded_version --version 3.0)" '3.0'
 
 # A download that fails, is not Bash, or is not the launcher installs
 # nothing: the existing launcher stays and no temporary file is left.
