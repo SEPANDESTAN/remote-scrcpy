@@ -60,8 +60,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `user@host` destination is read as one host (#20).
 - Closing the terminal no longer kills scrcpy outright. The launcher passed
   the hangup signal on unchanged, and scrcpy, which handles only interrupt
-  and terminate, died before its own cleanup; it now receives a terminate
-  signal and shuts down, and the launcher still exits with status 129 (#6).
+  and terminate, died before its own shutdown, for example without finishing
+  a recording; it now receives a terminate signal and shuts down, and the
+  launcher still exits with status 129 (#6).
 - A device lookup started by Tab no longer reads from the terminal. Keys
   typed while it ran were taken by `ssh` and sent to the remote instead of
   reaching the shell; where a `timeout` program is installed, the lookup was
