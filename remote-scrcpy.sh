@@ -281,6 +281,7 @@ EXAMPLES
   remote-scrcpy --non-interactive remote-host DEVICE1234567890
 
 OPTIONS
+  An option that takes a value also accepts it as --option=VALUE.
   --host HOST           SSH alias, hostname, or user@hostname
   --serial SERIAL       Exact device serial from `adb devices -l`
   --list-hosts          List literal aliases from the SSH config (no network)
@@ -1396,8 +1397,8 @@ _remote-scrcpy-complete-words() {
         --adb-port) return ;;
     esac
 
-    # `--host=...`, `--serial=...` and `--color=...`: complete the value and
-    # keep the option in front of each candidate.
+    # `--host=...`, `--serial=...`, `--color=...` and `--completion=...`:
+    # complete the value and keep the option in front of each candidate.
     case $current in
         --host=*) current=${current#*=}; complete_host=2 ;;
         --serial=*) current=${current#*=}; complete_serial=2 ;;

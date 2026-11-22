@@ -52,8 +52,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Removed
 - The aliases `--list` (for `--list-devices`) and `--requirements` (for
-  `--prerequisites`). They were accepted but never documented, and `--list`
-  did not say which list; both now fail as unknown options (#7).
+  `--prerequisites`). They were accepted but never documented, although Tab
+  completion offered `--list` up to 3.0.2, where it did not say which list;
+  both now fail as unknown options (#7).
 
 ### CI
 - The integration suite (real OpenSSH and adb, simulated phone) runs on every

@@ -31,6 +31,7 @@ EXAMPLES
   remote-scrcpy --non-interactive remote-host DEVICE1234567890
 
 OPTIONS
+  An option that takes a value also accepts it as --option=VALUE.
   --host HOST           SSH alias, hostname, or user@hostname
   --serial SERIAL       Exact device serial from `adb devices -l`
   --list-hosts          List literal aliases from the SSH config (no network)
