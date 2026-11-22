@@ -63,8 +63,8 @@ for missing in cat env; do
 done
 # A missing adb or scrcpy is reported with every way to give its path, and
 # before any connection: the directories hold stand-ins for the utilities
-# and, for the second case, for adb. No host is contacted; the check stops
-# the run first.
+# and, for the second case, for adb. No command here names a host, so a run
+# that got past the check would stop at the missing host, not go on.
 mkdir "$tools/without-adb" "$tools/without-scrcpy"
 for tool in ssh awk cat env mktemp rm sleep; do
     for directory in without-adb without-scrcpy; do
@@ -75,9 +75,9 @@ done
 check contains "$(PATH=$tools/without-adb "$BASH" "$script" --non-interactive --list-devices 2>&1 || true)" \
     'Executable not found: adb. Install it, or give its path with --adb, REMOTE_SCRCPY_ADB, or the fallback ADB.'
 check status 127 env PATH="$tools/without-adb" "$BASH" "$script" --non-interactive --list-devices
-check contains "$(PATH=$tools/without-scrcpy "$BASH" "$script" --non-interactive remote-host DEVICE1234567890 2>&1 || true)" \
-    'Executable not found: scrcpy. Install it, or give its path with REMOTE_SCRCPY_SCRCPY, or the fallback SCRCPY.'
-check status 127 env PATH="$tools/without-scrcpy" "$BASH" "$script" --non-interactive remote-host DEVICE1234567890
+check contains "$(PATH=$tools/without-scrcpy "$BASH" "$script" --non-interactive 2>&1 || true)" \
+    'Executable not found: scrcpy. Install it, or give its path with REMOTE_SCRCPY_SCRCPY or the fallback SCRCPY.'
+check status 127 env PATH="$tools/without-scrcpy" "$BASH" "$script" --non-interactive
 # A path that was given and does not exist is named as given.
 check contains "$(PATH=$tools/without-adb "$BASH" "$script" --non-interactive --adb /nonexistent/adb --list-devices 2>&1 || true)" \
     'Executable not found: /nonexistent/adb.'

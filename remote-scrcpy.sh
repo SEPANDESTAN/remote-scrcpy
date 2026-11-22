@@ -236,7 +236,7 @@ _check-runtime-dependencies() {
         '--adb, REMOTE_SCRCPY_ADB, or the fallback ADB') || exit $?
     if [[ $SETTINGS_OPERATION == connect ]]; then
         SETTINGS_LOCAL_SCRCPY_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_SCRCPY_EXECUTABLE" \
-            'REMOTE_SCRCPY_SCRCPY, or the fallback SCRCPY') || exit $?
+            'REMOTE_SCRCPY_SCRCPY or the fallback SCRCPY') || exit $?
     fi
 }
 
