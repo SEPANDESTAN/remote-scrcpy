@@ -197,7 +197,7 @@ _validate-configuration() {
     done
     case $SETTINGS_COLOR_MODE in
         auto|always|never) ;;
-        *) _exit-with-error '--color must be auto, always, or never.' 2 ;;
+        *) _exit-with-error 'The color mode must be auto, always, or never (--color or REMOTE_SCRCPY_COLOR).' 2 ;;
     esac
     if [[ -n $SETTINGS_SSH_CONFIG_FILE && ( ! -f $SETTINGS_SSH_CONFIG_FILE || ! -r $SETTINGS_SSH_CONFIG_FILE ) ]]; then
         _exit-with-error "Cannot read SSH config: $SETTINGS_SSH_CONFIG_FILE" 2
@@ -211,14 +211,14 @@ _validate-configuration() {
         _exit-with-error 'A device serial cannot contain whitespace or control characters.' 2
     fi
     if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0-9]{1,5}$ ]]; then
-        _exit-with-error '--adb-port / REMOTE_SCRCPY_ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     SETTINGS_REMOTE_ADB_SERVER_PORT=$((10#$SETTINGS_REMOTE_ADB_SERVER_PORT))
     if (( SETTINGS_REMOTE_ADB_SERVER_PORT < 1 || SETTINGS_REMOTE_ADB_SERVER_PORT > 65535 )); then
-        _exit-with-error '--adb-port / REMOTE_SCRCPY_ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     if [[ -z $SETTINGS_REMOTE_ADB_EXECUTABLE || $SETTINGS_REMOTE_ADB_EXECUTABLE == *[[:cntrl:]]* ]]; then
-        _exit-with-error '--remote-adb must be an executable name or path, not a shell command.' 2
+        _exit-with-error 'The remote adb must be an executable name or path, not a shell command (--remote-adb, REMOTE_SCRCPY_REMOTE_ADB, or the fallback REMOTE_ADB).' 2
     fi
 }
 
@@ -329,21 +329,25 @@ NOTES
   actual connection. The launcher owns scrcpy's device, tunnel and adb
   lifecycle options and rejects them after --: --serial, --select-usb,
   --select-tcpip, --tcpip, --otg, --port, --tunnel-host, --tunnel-port,
-  --force-adb-forward, --kill-adb-on-close and their abbreviations, the
-  short flags -s -d -e -p, and several short flags combined in one word.
-  Write an option's value as --option=value when it starts with a dash.
-  Use `scrcpy --help` for supported display, audio, input, and recording
-  options.
+  --force-adb-forward, --kill-adb-on-close and their abbreviations, and the
+  short flags -s -d -e -p. Other short flags are passed on one per word;
+  only -m, -b and -r may carry their value in the same word, so write
+  -V debug, not -Vdebug. A second -- is refused. Write an option's value as
+  --option=value when it starts with a dash. Use `scrcpy --help` for
+  supported display, audio, input, and recording options.
 
 EXIT STATUS
-  0    scrcpy exited normally, or a listing or help mode completed
-  1    runtime failure (SSH, ADB, forwarding, protocol mismatch)
-  2    usage or configuration error, before any connection
-  127  a required executable is missing
-  129  the terminal was closed (SIGHUP)
-  130  cancelled at a prompt, or interrupted (SIGINT)
-  143  terminated (SIGTERM)
-  Any other status is scrcpy's own.
+  Listing and help modes exit 0. Otherwise, from the launcher itself,
+  before scrcpy is started:
+    1    runtime failure (SSH, ADB, forwarding, protocol mismatch)
+    2    usage or configuration error; nothing was connected
+    127  a required executable is missing
+  From a signal or a prompt, at any time:
+    129  the terminal was closed (SIGHUP)
+    130  cancelled at a prompt, or interrupted (SIGINT)
+    143  terminated (SIGTERM)
+  Once scrcpy runs, its own exit status is passed on unchanged: 0 when it
+  quits normally, and scrcpy uses 1 and 2 for failures of its own.
 END_HELP_TEXT
 }
 
@@ -1217,6 +1221,8 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 
 2. REMOTE COMPUTER (phone is attached here)
    - Reachable SSH server and credentials/key for the SSH user.
+   - `env`, which every Unix-like system has: the launcher uses it to start
+     the ADB server there when none is running.
    - `adb` accessible from that user's noninteractive SSH shell, or provide
      `--remote-adb /absolute/path/to/adb`.
    - Permit local TCP forwarding through SSH (sshd policy AllowTcpForwarding).

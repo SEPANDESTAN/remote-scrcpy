@@ -33,6 +33,8 @@ REMOTE SCRCPY — PREREQUISITES & PREPARATION
 
 2. REMOTE COMPUTER (phone is attached here)
    - Reachable SSH server and credentials/key for the SSH user.
+   - `env`, which every Unix-like system has: the launcher uses it to start
+     the ADB server there when none is running.
    - `adb` accessible from that user's noninteractive SSH shell, or provide
      `--remote-adb /absolute/path/to/adb`.
    - Permit local TCP forwarding through SSH (sshd policy AllowTcpForwarding).

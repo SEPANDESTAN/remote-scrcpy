@@ -150,7 +150,7 @@ _validate-configuration() {
     done
     case $SETTINGS_COLOR_MODE in
         auto|always|never) ;;
-        *) _exit-with-error '--color must be auto, always, or never.' 2 ;;
+        *) _exit-with-error 'The color mode must be auto, always, or never (--color or REMOTE_SCRCPY_COLOR).' 2 ;;
     esac
     if [[ -n $SETTINGS_SSH_CONFIG_FILE && ( ! -f $SETTINGS_SSH_CONFIG_FILE || ! -r $SETTINGS_SSH_CONFIG_FILE ) ]]; then
         _exit-with-error "Cannot read SSH config: $SETTINGS_SSH_CONFIG_FILE" 2
@@ -164,14 +164,14 @@ _validate-configuration() {
         _exit-with-error 'A device serial cannot contain whitespace or control characters.' 2
     fi
     if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0-9]{1,5}$ ]]; then
-        _exit-with-error '--adb-port / REMOTE_SCRCPY_ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     SETTINGS_REMOTE_ADB_SERVER_PORT=$((10#$SETTINGS_REMOTE_ADB_SERVER_PORT))
     if (( SETTINGS_REMOTE_ADB_SERVER_PORT < 1 || SETTINGS_REMOTE_ADB_SERVER_PORT > 65535 )); then
-        _exit-with-error '--adb-port / REMOTE_SCRCPY_ADB_PORT must be an integer from 1 to 65535.' 2
+        _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     if [[ -z $SETTINGS_REMOTE_ADB_EXECUTABLE || $SETTINGS_REMOTE_ADB_EXECUTABLE == *[[:cntrl:]]* ]]; then
-        _exit-with-error '--remote-adb must be an executable name or path, not a shell command.' 2
+        _exit-with-error 'The remote adb must be an executable name or path, not a shell command (--remote-adb, REMOTE_SCRCPY_REMOTE_ADB, or the fallback REMOTE_ADB).' 2
     fi
 }
 
