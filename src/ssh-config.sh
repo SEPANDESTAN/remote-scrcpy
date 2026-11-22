@@ -123,12 +123,12 @@ _visit-ssh-configuration-file() {
 # directory; users can always pass a host explicitly.
 # The optional second argument injects the user's home directory for tests.
 # Without it the home is HOME or, with HOME unset, what ~ gives from the
-# password database; an empty HOME or a bare "/" counts as none.
+# password database; an empty HOME counts as none.
 # Enumerate unique literal Host aliases in declaration order.
 # Args: optional config/home; subshell isolates parser state and globs.
 _discover-ssh-host-aliases() (
     local ssh_user_home=${2:-${HOME-~}}
-    [[ $ssh_user_home == /?* ]] || ssh_user_home=''
+    [[ $ssh_user_home == /* ]] || ssh_user_home=''
     local config=${1:-${ssh_user_home:+$ssh_user_home/.ssh/config}}
     local ssh_directory=$ssh_user_home/.ssh
     local -a visited=()

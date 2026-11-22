@@ -83,10 +83,10 @@ _initialize-configuration() {
     SETTINGS_SSH_CONFIG_FILE=${REMOTE_SCRCPY_SSH_CONFIG:-}
     # The default SSH config sits in the home directory. With HOME unset, ~
     # comes from the password database, which is where OpenSSH looks too. An
-    # empty HOME, or the "/" that ~ gives without a database entry, counts as
-    # no home: then there is no default config, and nothing else needs one.
+    # empty HOME is no home: then there is no default config, and nothing
+    # else needs one.
     local home=${HOME-~}
-    [[ $home == /?* ]] || home=''
+    [[ $home == /* ]] || home=''
     SETTINGS_SSH_DISCOVERY_CONFIG_FILE=${SETTINGS_SSH_CONFIG_FILE:-${home:+$home/.ssh/config}}
     SETTINGS_LOCAL_ADB_EXECUTABLE=${REMOTE_SCRCPY_ADB:-${ADB:-adb}}
     SETTINGS_REMOTE_ADB_EXECUTABLE=${REMOTE_SCRCPY_REMOTE_ADB:-${REMOTE_ADB:-adb}}
@@ -565,12 +565,12 @@ _visit-ssh-configuration-file() {
 # directory; users can always pass a host explicitly.
 # The optional second argument injects the user's home directory for tests.
 # Without it the home is HOME or, with HOME unset, what ~ gives from the
-# password database; an empty HOME or a bare "/" counts as none.
+# password database; an empty HOME counts as none.
 # Enumerate unique literal Host aliases in declaration order.
 # Args: optional config/home; subshell isolates parser state and globs.
 _discover-ssh-host-aliases() (
     local ssh_user_home=${2:-${HOME-~}}
-    [[ $ssh_user_home == /?* ]] || ssh_user_home=''
+    [[ $ssh_user_home == /* ]] || ssh_user_home=''
     local config=${1:-${ssh_user_home:+$ssh_user_home/.ssh/config}}
     local ssh_directory=$ssh_user_home/.ssh
     local -a visited=()
