@@ -54,9 +54,10 @@ issue #3 when they are planted one at a time, and each half of the
 socket-form mutation alone. A module dropped from the build list is caught
 by the maintenance suite, whichever module it is. Each check the protocol probe
 makes on the content of a reply has a test of its own, including the hex
-check on the version payload: that payload comes from the remote and is
-converted with shell arithmetic, and the check is what keeps anything but
-hex digits away from the conversion. The probe's read timeouts are not
+check on the version payload and its bound of eight digits. The two hex
+fields come from the remote and are converted with `printf`, which evaluates
+nothing, behind those checks; a reply crafted to run a command is stopped by
+either. The probe's read timeouts are not
 exercised. The suite also covers the device menu offering only devices that
 are ready.
 

@@ -980,7 +980,7 @@ _read-adb-server-protocol() (
     # A plain adb command may kill a server with a different protocol version.
     # This read-only request does not run an adb client. A subshell owns the FD
     # so EOF, errors and SIGPIPE cannot leak it into the interactive launcher.
-    local fd status='' size='' payload='' result length
+    local fd status='' size='' payload='' result length version
     if ! { exec {fd}<>"/dev/tcp/127.0.0.1/$SESSION_LOCAL_ADB_TUNNEL_PORT"; } 2>/dev/null; then
         return 2
     fi
@@ -999,11 +999,16 @@ _read-adb-server-protocol() (
         printf '%s\n' 'The remote ADB port returned an invalid protocol status.' >&2
         return 1
     fi
-    if ! IFS= read -r -N 4 -t 5 size <&"$fd" || [[ ! $size =~ ^[[:xdigit:]]{4}$ ]]; then
+    # The two hex fields come from the remote. printf converts them without
+    # evaluating anything: handed something that is not a number it fails,
+    # where shell arithmetic would run a command substitution inside it. The
+    # checks in front say which field was wrong; the conversion does not
+    # depend on them for its safety.
+    if ! IFS= read -r -N 4 -t 5 size <&"$fd" || [[ ! $size =~ ^[[:xdigit:]]{4}$ ]] \
+        || ! printf -v length '%d' "0x$size" 2>/dev/null; then
         printf '%s\n' 'The remote ADB server returned a truncated or invalid response length.' >&2
         return 1
     fi
-    length=$((16#$size))
     if ((length < 1 || length > 4096)); then
         printf '%s\n' 'The remote ADB server returned an invalid version payload length.' >&2
         return 1
@@ -1016,11 +1021,11 @@ _read-adb-server-protocol() (
         printf '%s\n' 'The remote ADB server rejected its version query.' >&2
         return 1
     fi
-    if [[ ! $payload =~ ^[[:xdigit:]]{1,8}$ ]]; then
+    if [[ ! $payload =~ ^[[:xdigit:]]{1,8}$ ]] || ! printf -v version '%d' "0x$payload" 2>/dev/null; then
         printf '%s\n' 'The remote ADB server returned an invalid protocol version.' >&2
         return 1
     fi
-    printf '%d\n' "$((16#$payload))"
+    printf '%s\n' "$version"
 )
 
 # Set SESSION_REMOTE_ADB_PROTOCOL without restarting shared ADB.

@@ -20,6 +20,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   fell through to a device lookup on the host.
 
 ### Changed
+- The ADB protocol probe converts the two hexadecimal fields of the remote
+  server's reply with `printf` where it used shell arithmetic. Arithmetic
+  can run a command hidden in what it is given, and one check on the line
+  before was all that kept remote data out of it; `printf` runs nothing, so
+  the conversion is safe by itself. A version field longer than eight hex
+  digits is now covered by a test (#16).
 - `docs/workflow.md` says how an issue and a pull request end: an issue may
   be closed as not planned with its reason recorded, and a pull request may
   be an experiment that is closed unmerged. The merge conditions are stated
