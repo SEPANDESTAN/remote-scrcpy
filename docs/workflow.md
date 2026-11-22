@@ -51,8 +51,9 @@ It needs [git](https://git-scm.com/) with
    An agent reviewer is resumed, so that it keeps the context of its own
    review.
 
-7. **Squash-merge** once the last review approves, every review thread is
-   resolved and CI is green, then clean up from the main checkout. The message file holds the squash commit body
+7. **Squash-merge** when the conditions in step 4 of
+   [From findings to merge](#from-findings-to-merge) hold, then clean up
+   from the main checkout. The message file holds the squash commit body
    described under [Commit and pull request messages](#commit-and-pull-request-messages),
    not the pull request body. The branch is deleted by hand because it is
    still checked out in the worktree when the merge happens.
@@ -87,22 +88,42 @@ gh pr create --draft --base <type>/<previous> ...
 git merge <type>/<previous>
 git push
 
-# after the previous pull request is squash-merged, in the next worktree
+# after the previous pull request is squash-merged, in the next worktree,
+# and before the previous branch is deleted on GitHub
 git fetch origin
 git merge origin/main
 git push
 gh pr edit <number> --base main
 gh pr view <number> --json closingIssuesReferences
+
+# only now, from the main checkout
+git push origin --delete <type>/<previous>
 ```
 
 Merging `origin/main` is clean at that point because both sides hold the
 same content for the previous change. It only stays clean if the next
 branch merged the previous one's last commits before the squash.
 
-Closing keywords take effect only on a pull request that targets the default
-branch. If the last command lists no issue although the body names one, save
-the body again (`gh pr edit <number> --body-file <body-file>`) and check
-once more.
+**Retarget before you delete.** The clean-up in step 7 deletes the merged
+branch, and for the lower half of a stack that has to wait. GitHub
+[documents](https://docs.github.com/en/pull-requests/how-tos/commit-changes/managing-branches-within-your-repository#deleting-a-branch)
+that deleting a merged head branch moves the base of pull requests built on
+it; that was not what happened when the branch was deleted with `git push`,
+and deleting on the website was not tried. The order above works either
+way. Observed on pull requests #42 and #43 on 2026-11-22:
+
+- Squash-merging the lower pull request left the base of the upper one
+  unchanged.
+- Deleting the merged branch with `git push origin --delete` while the upper
+  pull request still targeted it did not move its base to `main`: GitHub
+  closed the upper pull request.
+- Closed that way, it could be neither retargeted nor reopened. Pushing the
+  branch again at its old commit (`git push origin <commit>:refs/heads/<type>/<previous>`)
+  made `gh pr reopen <number>` work, and then the retarget.
+- Closing keywords take effect only on a pull request that targets the
+  default branch. The link appeared as soon as the base was `main`
+  (`closingIssuesReferences` went from empty to the issue); the body did not
+  have to be saved again.
 
 ## What does not belong to the change
 
@@ -119,6 +140,57 @@ to start immediately: what is wrong or wanted, where (files, functions,
 commands), the evidence or reproduction with exact output, why it matters, a
 proposed approach or the options, measurable acceptance criteria, and what is
 out of scope.
+
+## How issues and pull requests end
+
+Not every issue is fixed and not every pull request is merged, and both are
+proper outcomes when they are recorded.
+
+**An issue** ends in one of these ways:
+
+- *Resolved by a pull request*: one that names it with a closing keyword is
+  merged.
+- *Completed without one*: the work is done, but no pull request closed it,
+  because the pull requests only referred to it or what remained was a
+  check. Say in a last comment what completed it, then
+  `gh issue close <number> --reason completed`.
+- *Declined*: say why in a last comment that a later reader can weigh: what
+  it would take, why that is not worth it, and what would change the answer.
+  When declining is a decision about the project, the reason also goes into
+  [`decisions.md`](decisions.md), through a pull request that only refers to
+  the issue (a closing keyword would close it as completed); close the issue
+  after that pull request is merged:
+
+  ```bash
+  gh issue comment <number> --body-file <reason-file>
+  gh issue edit <number> --add-label wontfix
+  gh issue close <number> --reason "not planned"
+  ```
+
+- *No longer applies*: the code is gone or something replaced it. A last
+  comment says what, and the issue is closed as not planned without a label.
+  A duplicate is closed with `--reason duplicate` and a comment naming the
+  other issue.
+
+**A pull request** ends merged, or closed without a merge. One that is
+closed without a merge always gets a last comment that says why.
+
+- *An experiment is a legitimate pull request.* When it is unclear whether
+  an idea works, try it in a draft pull request whose body says in its first
+  line that it is an experiment and which question it is meant to answer. It
+  needs the independent review only if it is going to be merged.
+- When the answer is no, close it unmerged. Its last comment says what was
+  tried, what was found and why it stops there, and the issue gets the same
+  summary, so the next person does not repeat the attempt. Then remove the
+  branch and the worktree.
+- An issue may take several experiments. It is closed when one of them is
+  merged, or declined when the last one shows the idea is not worth
+  pursuing.
+
+Whoever does the work decides, person or agent: a technical issue may be
+resolved or declined on its own merits. Ask the maintainer about what only
+the maintainer knows or owns: their machines and phones, permission and
+settings files, version policy, the names users type.
 
 ## Issue and pull request bodies
 
@@ -144,7 +216,11 @@ file. The rules behind them:
   in the body, one per issue (`Fixes #2`), so the issue closes when the pull
   request merges and nothing stays open after its work is done. An issue
   that is only partly resolved is referenced (`Refs #7`) with a note on what
-  remains; the pull request that resolves the last part closes it.
+  remains; the pull request that resolves the last part closes it. A closing
+  keyword works wherever it stands in the body, in the collapsed block and
+  in a checkbox too, so never put "close", "fix" or "resolve" in front of a
+  reference (`#7`) to an issue the pull request only mentions. Check what
+  GitHub linked: `gh pr view <number> --json closingIssuesReferences`.
 - **End every pull request body with proof.** The last section pairs each
   deliverable with the exact command that demonstrates it and the result
   that was observed, so that anyone can run it again from a clean checkout
@@ -214,8 +290,9 @@ What to check:
 - New behaviour is tested, or the message says plainly why it is not.
 - Documentation states each fact in one place and every link resolves.
 - Commit messages, the pull request body and its label meet the sections
-  above, the issues it links are the ones it resolves, and the proof at the
-  end of the body gives the same results when you run it.
+  above, the issues it links are the ones it resolves
+  (`gh pr view <number> --json closingIssuesReferences`), and the proof at
+  the end of the body gives the same results when you run it.
 
 ### The review
 
@@ -298,14 +375,21 @@ or `REQUEST_CHANGES` instead.
    ```
 
 4. **Merge** when the last verdict is an approval, every thread is resolved,
-   the reviewer's last summary calls the summary findings settled, and CI is
-   green, as in step 7 of the procedure.
+   the reviewer's last summary calls the summary findings settled,
+   CI is green on the head commit, and
+   `gh pr view <number> --json closingIssuesReferences` lists exactly the
+   issues the pull request is meant to close. That check does not see the
+   squash commit message, where a closing keyword acts as well: read the
+   message file for one before merging. These conditions are stated here
+   and nowhere else.
 
 ## What still needs the maintainer
 
 Pushing branches, opening issues and pull requests, and squash-merging after
 an approving review are the normal path and need no further permission.
-Commenting on an issue or correcting its label is fine too. Starting or
-publishing a release, and closing or rewriting an existing issue by hand
-instead of through a closing keyword, happen only when the maintainer asked
-for it in the current task.
+Neither does commenting on an issue or correcting its label. Closing an
+issue, or closing a pull request without a merge, needs no further
+permission either when it is done as
+[How issues and pull requests end](#how-issues-and-pull-requests-end)
+describes. Starting or publishing a release, and rewriting an existing
+issue, happen only when the maintainer asked for it in the current task.
