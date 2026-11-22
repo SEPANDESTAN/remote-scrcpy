@@ -8,4 +8,4 @@ description: Take a change to main in remote-scrcpy - worktree branch, draft pul
 The procedure is [`docs/workflow.md`](../../../docs/workflow.md); follow it
 from "One change, one pull request" to the merge, and use the templates
 under `.github/` for bodies. What applies to agents only is in
-[`.agents/rules.md`](../../rules.md).
+`.agents/rules.md`.

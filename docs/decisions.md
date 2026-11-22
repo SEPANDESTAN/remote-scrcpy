@@ -237,12 +237,14 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
 - **`AGENTS.md` is an index, and the `CLAUDE.md` symlink is gone.** The
   second half of the entry above on `docs/` as the single source.
   `AGENTS.md` went from a copy of the rules to a page that says what the
-  project is, repeats three rules whose breach a review cannot undo, and
-  routes every other need to a document. What concerns agents and their
-  tools alone is in `.agents/rules.md`, which replaces `.agents/README.md`.
-  The symlink dates from when Claude Code read only `CLAUDE.md`; since
-  version 2.1.277 it reads `AGENTS.md` when no `CLAUDE.md` exists, so the
-  link was one more thing to break on Windows for nothing. The skills stay
+  project is, repeats three rules an agent must know before its first
+  command, and routes every other need to a document. What concerns agents
+  and their tools alone is in `.agents/rules.md`, which replaces
+  `.agents/README.md`.
+  The symlink was added on 2026-11-19 so that Claude Code would read the
+  file. Claude Code had been reading `AGENTS.md` by itself since version
+  2.1.277 (2026-09-18) wherever no `CLAUDE.md` exists, so the link was
+  never needed and was one more thing to break on Windows. The skills stay
   under `.agents/skills` for other tools, and `.claude/skills` stays a
   symlink to them, because Claude Code looks for skills nowhere else. A
   `pull-request` skill points to `workflow.md`.

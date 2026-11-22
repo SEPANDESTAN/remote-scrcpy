@@ -16,8 +16,9 @@ the maintainer's own daily use come first, polish for strangers second.
 
 ## Hard stops
 
-Three rules are repeated here because breaking one cannot be undone by a
-review. Each is explained in [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+Three rules are repeated here because an agent must know them before its
+first command. Each is explained in
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
 
 1. Never edit `remote-scrcpy.sh`. It is generated: edit `src/`, run
    `bash src/build.sh`, commit both together.
@@ -34,7 +35,7 @@ review. Each is explained in [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
 | the rules, the layout, how the documents are kept | [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) |
 | how the program works: modules, lifecycle, invariants, exit statuses | [`docs/architecture.md`](docs/architecture.md) |
 | to run or write tests | [`docs/testing.md`](docs/testing.md) |
-| to take a change to `main`: branch, pull request, review, merge, commit messages, versions | [`docs/workflow.md`](docs/workflow.md) |
+| to take a change to `main`: branch, pull request, review, merge, commit messages, versions, what needs the maintainer's request | [`docs/workflow.md`](docs/workflow.md) |
 | to add an option or environment variable | [`docs/adding-a-cli-option.md`](docs/adding-a-cli-option.md) |
 | to cut a release | [`docs/release.md`](docs/release.md) |
 | why something is the way it is | [`docs/decisions.md`](docs/decisions.md) |

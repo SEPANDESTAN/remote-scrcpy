@@ -11,8 +11,9 @@ This page holds only what concerns agents and their tools.
 - **No `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md`**, here or in a
   directory above a checkout. [Claude Code](https://code.claude.com/docs/en/memory)
   reads `AGENTS.md` itself from version 2.1.277 on, but only while none of
-  those three exists. It reads nothing under `.agents/` on its own; that is
-  why `AGENTS.md` links to this page.
+  those three exists (a personal `~/.claude/CLAUDE.md` does not count). It
+  reads nothing under `.agents/` on its own; that is why `AGENTS.md` links
+  to this page.
 - **`.claude/skills` is a symlink to `.agents/skills`.** Claude Code finds
   skills only under `.claude/skills`; other tools look in `.agents/skills`.
   On Windows, run `git config --global core.symlinks true` before cloning
