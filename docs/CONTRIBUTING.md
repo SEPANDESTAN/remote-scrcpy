@@ -40,7 +40,7 @@ passed." Details, the CI parity check and the integration suite are in
 | `src/*.sh` | nine modules concatenated by `src/build.sh` in the order core, cli, ssh-config, presentation, ui, transport, prerequisites, completion, main |
 | `tests/test-*.sh` | four fast suites, no network |
 | `tests/*.py` | integration fixture: real OpenSSH and adb, simulated devices; needs root |
-| `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [release](release.md), [decisions](decisions.md), [history](history.md), the [2026-11-06 review](review-2026-11-06.md) |
+| `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [release](release.md), [decisions](decisions.md), [history](history.md), the [2026-11-06 review](review-2026-11-06.md) |
 | `AGENTS.md`, `.agents/`, `.claude/` | instructions and skills for AI coding agents |
 | `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the four suites |
 
@@ -56,6 +56,8 @@ passed." Details, the CI parity check and the integration suite are in
    in `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
 5. Commit the regenerated `remote-scrcpy.sh` together with the `src/`
    change. CI diffs it against a fresh build.
+6. Take the change to `main` through a pull request, as described in
+   [`workflow.md`](workflow.md).
 
 Never test transport changes by pointing the launcher at a real host from a
 development shell; use fake `ssh`/`adb`/`scrcpy` programs on `PATH` (pattern
@@ -82,14 +84,11 @@ in `tests/test-completion.sh`).
 - Exit codes: 2 usage, 127 missing executable, 130 cancel, 143/129 signals,
   scrcpy's status otherwise (table in `architecture.md`).
 
-## Commits
+## Commits and pull requests
 
-Small, atomic commits ordered from leaf files toward the files that depend
-on them. Conventional prefixes (`docs:`, `docs(readme):`, `chore:`, `ci:`,
-`fix:`, `feat:`, `release:`), a body that explains the purpose, and the
-regenerated bundle in the same commit as any `src/` change. Stage files by
-name. Do not amend or force-push published history. Commits produced with an
-AI agent carry a `Co-Authored-By` trailer.
+[`workflow.md`](workflow.md) is the procedure: a worktree branch per change,
+a draft pull request, an independent review, a squash merge, and the rules
+for commit messages and version numbers.
 
 ## Static analysis
 

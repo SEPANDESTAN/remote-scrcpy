@@ -26,7 +26,7 @@ daily use come first; polish for strangers second.
 | `src/core.sh` `cli.sh` `ssh-config.sh` `presentation.sh` `ui.sh` `transport.sh` `prerequisites.sh` `completion.sh` `main.sh` | the source. `main.sh` holds the lifecycle; `transport.sh` owns every SSH/ADB/scrcpy resource |
 | `tests/test-*.sh` | four fast suites, no network, run by CI |
 | `tests/*.py` | integration fixture (real OpenSSH and adb, simulated phone); needs root and `sshd`; not in CI |
-| `docs/` | architecture, testing, release, decisions, history, the last review |
+| `docs/` | architecture, testing, workflow, release, decisions, history, the last review |
 | `.agents/skills/` | step-by-step procedures: `build-and-test`, `add-cli-option`, `release` |
 | `.github/workflows/test.yml` | CI: `bash -n`, rebuild-and-diff the bundle, the four suites |
 
@@ -97,11 +97,11 @@ sudo REAL_ADB="$(command -v adb)" python3 tests/test_launcher_integration.py -v 
 
 ## Git
 
-Small atomic commits ordered leaf → root, conventional prefix, a body that
-explains purpose, files staged by name (`git add -A` once leaked a local
-settings file). Never amend or force-push published history; fix with a new
-commit. Do not push, create releases, or edit issues unless the maintainer
-asked for it in the current task. Add this trailer to commits you author:
+Follow [`docs/workflow.md`](docs/workflow.md): one worktree branch and one
+pull request per change, an independent review, then a squash merge. Never
+push to `main` and never rewrite published history. Do not create releases
+or edit issues unless the maintainer asked for it in the current task. Add
+this trailer to commits you author:
 `Co-Authored-By: <agent name> <noreply@...>`.
 
 ## Where to read next
@@ -110,6 +110,7 @@ asked for it in the current task. Add this trailer to commits you author:
   behind them, Bash floor, exit codes.
 - `docs/testing.md`: what each suite covers, what is not covered, how to
   write a hermetic transport test.
+- `docs/workflow.md`: branch, pull request, review and merge procedure.
 - `docs/decisions.md` and `docs/history.md`: why things are this way.
 - `docs/review-2026-11-06.md`: the last full review; its open items are
   GitHub issues #2 to #8. Issue #1 is the maintainer's reminder to fill in
