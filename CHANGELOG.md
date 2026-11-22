@@ -28,6 +28,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates under `.github/` and carry a type label.
 
 ### Changed
+- Documentation has one home per fact under `docs/`. `CONTRIBUTING.md` holds
+  every rule and a section on how the documents are kept; the option
+  checklist moved from a skill to `docs/adding-a-cli-option.md`; the skills
+  point at the documents and no longer copy them; no document states how
+  many checks a suite has; `docs/history.md` is removed, and the two facts
+  only it held are now in `docs/decisions.md`; `docs/architecture.md` lists
+  the upstream sources its invariants rely on; the README's "Developing"
+  section is a pointer, and "Tests and limits" became "Limits" with a new
+  note on `stty tostop` (#13, #6).
 - Source comments: every module has one header and every function one doc
   comment. Most modules opened with two overlapping headers and a few
   functions carried two or three stacked comments. Comments that were wrong

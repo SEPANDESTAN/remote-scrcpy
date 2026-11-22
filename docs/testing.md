@@ -4,12 +4,18 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
-bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
-bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
-bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
-bash tests/test-install.sh           # expects: Install checks: 74 passed.
+bash tests/test-maintenance.sh
+bash tests/test-completion.sh
+bash tests/test-cli-ui-review.sh
+bash tests/test-ssh-config.sh
+bash tests/test-install.sh
 ```
+
+They need no network, no phone and no root. Each stops at its first failing
+check with a `FAIL:` line and a non-zero status; a suite that passes ends
+with one line saying so, most of them with the number of checks. That number
+grows when tests are added; a check is not removed without the reason in the
+commit body.
 
 CI (`.github/workflows/test.yml`) additionally rebuilds the bundle and diffs
 it against the committed `remote-scrcpy.sh`; a stale bundle fails the build.
@@ -29,8 +35,8 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
 | `test-install.sh` | `install.sh` and the bundle | the installer in a scratch `HOME` with a `PATH` of chosen tools and a fake `curl`: usage errors, which stream gets what, install from a checkout without network (by path and by bare name), `--dir` (relative, with a space, with `~` after `=`), `--completion` (one line, once, that registers the completion without `PATH`; an existing line for another place is left alone), the download URL for `main` and `--ref`, that a failed, unparsable or foreign download installs nothing and leaves the old launcher in place, and that an installer cut anywhere in its last line installs nothing. The real download is not exercised |
 
-Three suites run the bundle and two source the modules, so **always rebuild
-before testing** a `src/` change, or some of the suites test stale code.
+Some suites run the bundle and others source the modules, so **always
+rebuild before testing** a `src/` change, or the former test stale code.
 
 ### Not covered
 
@@ -70,7 +76,8 @@ its next command; the maintenance suite checks that line too. It matters to
 a suite that starts programs in an emptied environment, and it is required
 of all five so that nobody has to work out which ones those are. The reason
 is a startup rule of Bash: started with `-c`, without an inherited `SHLVL`,
-and with a socket on standard input, it takes itself for a remote shell and
+and with a socket on standard input, it takes itself for a remote shell
+([bash(1), INVOCATION](https://man7.org/linux/man-pages/man1/bash.1.html)) and
 reads `~/.bashrc`, which commonly sources the system-wide file too (Fedora's
 does, and some builds of Bash read that file themselves). An
 agent's command runner and a remote command both provide such a socket,
@@ -113,50 +120,19 @@ podman run --rm --security-opt label=disable -v "$PWD":/repo:ro \
         cd /repo && REAL_ADB="$(command -v adb)" python3 -B tests/test_launcher_integration.py -v'
 ```
 
-## Writing a hermetic transport test
-
-The project decided against building a full suite this way (see the
-2026-11-22 entry in `decisions.md`): the integration suite covers the
-transport. The recipe stays as the way to exercise a single transport
-function with fake programs when no `sshd` or root is at hand.
-
-No refactoring is required. Source `src/core.sh`, `presentation.sh`,
-`ui.sh`, `transport.sh` and `main.sh` (its entry point is guarded by
-`BASH_SOURCE == $0`), run each case in a `( … )` subshell because
-`_exit-with-error` calls `exit`, set the `SETTINGS_*`/`SESSION_*` globals
-directly, and put fake programs first on `PATH`:
-
-- `ssh`: `-fMNT … -- host` creates the `-S` socket path and exits 0; `-O check`
-  exits 0; `-O forward -L 127.0.0.1:C:127.0.0.1:R` starts a loopback relay
-  from `C` to the fake ADB port; `-O exit` stops it. Log every argv.
-- `adb`: prints `Android Debug Bridge version 1.0.41`; canned `devices -l`
-  output including `\r` endings, `no permissions (…)`, `model:A_B`, a
-  `host:5555` serial; `forward tcp:0 TOKEN` prints a port; `forward --list`
-  prints rows. Log argv and `ADB_SERVER_SOCKET`.
-- `scrcpy`: logs argv, environment and process group; sleeps or exits with a
-  chosen status; optionally ignores INT and TERM to exercise escalation.
-- Fake ADB server: reuse `NativeADBServer` from `tests/native_adb_fixture.py`
-  on a loopback port. `_read-adb-server-protocol` only needs
-  `SESSION_LOCAL_ADB_TUNNEL_PORT`, so no `sshd` is needed.
-
-Functions already callable in isolation: `_quote-remote-shell-argument`,
-`_validate-scrcpy-arguments`, `_read-adb-server-protocol`,
-`_probe-adb-server`, `_create-local-ssh-forward`,
-`_reserve-device-forwarding-port`, `_launch-scrcpy`, `_stop-scrcpy-process`,
-`_cleanup-remote-connection`, `_load-remote-device-list`,
-`_validate-selected-device`. Override `_probe-adb-server` by redefining it
-when a case does not need a server.
-
-Use the mutation table in `review-2026-11-06.md` as the acceptance list: a
-transport suite is good enough when every row that reads "none" is caught.
-
 ## Static analysis
 
-shellcheck is not in CI. Running 0.11.0 on the bundle, the modules and the
-tests reports no real defect. Expected false positives: SC1007 (deliberate
-`A= B=` chained empty assignments), SC1003 (quoted backslash), SC2088
-(literal `'~/'` case pattern), SC2030/SC2031 (`LC_ALL` export scoped to a
-subshell on purpose), SC2034 (cross-module variables when a module is
-checked alone), SC1090/SC1091/SC2329 in the tests (dynamic `source`, helpers
-invoked indirectly). Static binaries:
-https://github.com/koalaman/shellcheck/releases
+```bash
+shellcheck -s bash remote-scrcpy.sh install.sh src/*.sh tests/*.sh
+```
+
+[shellcheck](https://github.com/koalaman/shellcheck) is not in CI. Version
+0.11.0 reports no real defect on the bundle, the installer, the modules and
+the tests. Expected false positives: SC1007 (deliberate `A= B=` chained
+empty assignments), SC1003 (quoted backslash), SC2088 (literal `'~/'` case
+pattern), SC2030/SC2031 (`LC_ALL` export scoped to a subshell on purpose),
+SC2034 (cross-module variables when a module is checked alone), SC2015 (an
+`A && B || die` chain where `B` is an assignment), SC1090/SC1091/SC2329 in
+the tests (dynamic `source`, helpers invoked indirectly). Fix anything else,
+or justify it with a `# shellcheck disable=` comment that says why. Static
+binaries: https://github.com/koalaman/shellcheck/releases

@@ -2,8 +2,10 @@
 
 This is a personal project with a public mirror. Issues and pull requests
 are welcome, but the maintainer's own use case decides what gets merged.
-AI coding agents: start at [`AGENTS.md`](../AGENTS.md); everything below
-applies to you too.
+
+This page is the home of the project's rules, for people and for AI coding
+agents alike. [`AGENTS.md`](../AGENTS.md) is an index for agents that points
+here; it adds nothing a person needs.
 
 ## What you need
 
@@ -13,7 +15,7 @@ applies to you too.
   `adb`](https://developer.android.com/tools/releases/platform-tools) and
   [scrcpy](https://github.com/Genymobile/scrcpy) on `PATH`. The fast tests
   never contact a host or a phone, but a few checks resolve the executables.
-- Optional: Python 3 for the integration fixture, root and an `sshd` binary to
+- Optional: Python 3 for the integration suite, root and an `sshd` binary to
   run it, and [shellcheck](https://github.com/koalaman/shellcheck) for static
   analysis.
 
@@ -23,89 +25,120 @@ applies to you too.
 git clone https://github.com/SEPANDESTAN/remote-scrcpy.git
 cd remote-scrcpy
 bash src/build.sh                # regenerates remote-scrcpy.sh (should be a no-op)
-bash tests/test-maintenance.sh && bash tests/test-completion.sh \
-  && bash tests/test-cli-ui-review.sh && bash tests/test-ssh-config.sh \
-  && bash tests/test-install.sh
+for suite in tests/test-*.sh; do bash "$suite" || break; done
 ```
 
-Expected: 59, 34 and 31 passed checks, "SSH config discovery checks
-passed." and 74 install checks. Details, the CI parity check and the integration suite are in
-[`testing.md`](testing.md).
+Each suite stops at its first failing check with a `FAIL:` line and a
+non-zero status, and ends with a line that says its checks passed.
+[`testing.md`](testing.md) has what each suite covers, the check CI adds, and
+the integration suite.
 
 ## Layout
 
 | Path | Role |
 |---|---|
 | `remote-scrcpy.sh` | the only runtime file; **generated**, never edit by hand |
-| `install.sh` | the installer users pipe from curl; copies or downloads the bundle into a directory on `PATH`; not part of the bundle |
-| `src/*.sh` | nine modules concatenated by `src/build.sh` in the order core, cli, ssh-config, presentation, ui, transport, prerequisites, completion, main |
-| `tests/test-*.sh` | five fast suites, no network |
-| `tests/*.py` | integration fixture: real OpenSSH and adb, simulated devices; needs root; run by CI in its own job |
-| `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [release](release.md), [decisions](decisions.md), [history](history.md), the [2026-11-06 review](review-2026-11-06.md) |
-| `AGENTS.md`, `.agents/`, `.claude/` | instructions and skills for AI coding agents |
-| `.github/workflows/test.yml` | CI: syntax check, rebuild and diff the bundle, the five suites, and the integration suite in a second job |
+| `install.sh` | the installer users pipe from [curl](https://curl.se/); copies or downloads the bundle into a directory on `PATH`; not part of the bundle |
+| `src/build.sh`, `src/*.sh` | the build script and the modules it concatenates ([`architecture.md`](architecture.md) lists them) |
+| `tests/test-*.sh` | the fast suites: no network, no phone, no root |
+| `tests/*.py` | the integration suite and its fixtures: real OpenSSH and adb, simulated devices; needs root; CI runs it in its own job |
+| `docs/` | this guide, [architecture](architecture.md), [testing](testing.md), [workflow](workflow.md), [adding a CLI option](adding-a-cli-option.md), [release](release.md), [decisions](decisions.md), the [2026-11-06 review](review-2026-11-06.md) |
+| `AGENTS.md`, `.agents/`, `.claude/` | index and skills for AI coding agents |
+| `.github/` | CI (`workflows/test.yml`) and the issue and pull request templates |
 
 ## Making a change
 
 1. Edit the module under `src/`, not the bundle.
-2. `bash src/build.sh`, then run the suites. Three suites run the bundle and
-   two source the modules, so an unrebuilt change passes some of them.
-3. Add or adjust tests in the suite that already covers the area
-   (see the table in `testing.md`). Adding a CLI option touches more places
-   than you expect; follow `.agents/skills/add-cli-option/SKILL.md`.
-4. Update `README.md` if user-facing, and add a line under `## [Unreleased]`
-   in `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
-5. Commit the regenerated `remote-scrcpy.sh` together with the `src/`
-   change. CI diffs it against a fresh build.
-6. Take the change to `main` through a pull request, as described in
+2. `bash src/build.sh`, then run the suites.
+3. Add or adjust tests in the suite that already covers the area (table in
+   [`testing.md`](testing.md)). A new command-line option touches more
+   places than it seems to: follow
+   [`adding-a-cli-option.md`](adding-a-cli-option.md).
+4. Update `README.md` if the change is visible to users, and add a line
+   under `## [Unreleased]` in `CHANGELOG.md`
+   ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
+5. Take the change to `main` through a pull request, as described in
    [`workflow.md`](workflow.md).
 
-Never test transport changes by pointing the launcher at a real host from a
-development shell; use fake `ssh`/`adb`/`scrcpy` programs on `PATH` (pattern
-in `tests/test-completion.sh`).
+## Rules
+
+1. **The bundle is generated.** Edit `src/`, run `bash src/build.sh`, and
+   commit the regenerated `remote-scrcpy.sh` in the same commit. CI rebuilds
+   it and fails on any difference. Some suites run the bundle and others
+   source the modules, so an unrebuilt change passes only some of them.
+2. **Never run the launcher against a real host or phone from a development
+   session**, whether you are a person trying a change or an agent: no
+   `remote-scrcpy HOST`, no `--list-devices HOST`, no Tab completion with a
+   real alias. Put fake `ssh`, `adb` and `scrcpy` programs first on `PATH`
+   (pattern: `tests/test-completion.sh`) or use the integration suite. Safe
+   anywhere: `--help`, `--version`, `--prerequisites`, `--completion bash`,
+   `--list-hosts`.
+3. **The suites are deaf to your environment.** Each fast suite begins by
+   clearing the launcher's environment variables and closing its standard
+   input; a new suite must do the same. The reasons, one of them a machine
+   brought down by a test, are under "Environment" in
+   [`testing.md`](testing.md).
+4. **The launcher stays plain.** No `eval`, nothing executed from an SSH
+   configuration, no new runtime dependency beyond Bash, OpenSSH, adb and
+   scrcpy, and no code that downloads or installs tools. `install.sh` is
+   the one narrow exception: it downloads the bundle itself and installs
+   nothing else. `tests/test-maintenance.sh` searches the bundle for things
+   that were removed on purpose (`gum`, `--ui=`, base64 payloads) and must
+   keep failing if they return.
+5. **stdout is data, stderr is messages.** Listings and the completion
+   script are plain text on stdout; every prompt, banner, status line and
+   error goes to stderr.
+6. **Never terminate or restart a shared remote ADB server.** The protocol
+   probe in `src/transport.sh` exists for this; do not replace it with adb
+   client calls. `tcp:PORT` is used only to start the remote daemon, and
+   everything through the tunnel uses `tcp:127.0.0.1:PORT`.
+   [`architecture.md`](architecture.md) explains both.
+7. **Examples are synthetic:** `remote-host`, `192.0.2.10`, `myuser`,
+   `DEVICE1234567890`, `Test_Phone_A`. Never a real host name, address,
+   serial, device model or person, and never a quotation of an example value
+   that was removed, in a changelog, release note or issue either.
+8. **Every external tool or standard gets its URL on first mention** in a
+   markdown file.
+9. **A script that a person runs with arguments answers `--help`** and
+   refuses options it does not know: `remote-scrcpy.sh`, `install.sh`,
+   `src/build.sh`; the integration suite answers through unittest. The fast
+   suites take no arguments and say what they are in their header comment.
+10. **Every function in `src/` carries one doc comment:** a purpose line,
+    then arguments, side effects and failure behaviour.
+11. **Every change reaches `main` through a reviewed pull request**, and
+    published history is never rewritten. [`workflow.md`](workflow.md) is
+    the procedure, including commit messages and version numbers.
 
 ## Conventions
 
-- One public function, `remote-scrcpy`. Helpers are `_kebab-case` with
-  explanatory names and a two-line comment: purpose, then arguments, side
-  effects and failure behaviour.
-- A script that a person runs with arguments answers `--help` and refuses
-  options it does not know (`remote-scrcpy.sh`, `install.sh`, `src/build.sh`;
-  the integration suite answers it through unittest). The fast suites take no
-  arguments; their header comment says what they are.
-- Globals are namespaced: `SETTINGS_*` (resolved configuration), `SESSION_*`
-  (resources owned by the active connection, transport only),
-  `DISCOVERED_DEVICE_*`, `DISPLAY_*`, `CLI_*`, `INPUT_RESPONSE`,
-  `APPLICATION_VERSION`. The public interface is the `REMOTE_SCRCPY_*`
-  environment variables and the CLI only.
-- `local` for everything inside helpers; no `eval`; never execute anything
-  from an SSH config; no new runtime dependencies and no bootstrap code that
-  downloads or installs tools. `install.sh` is the one exception and a
-  narrow one: it downloads the bundle itself and installs nothing else.
-- stdout is data (listings, completion text); every message, prompt and
-  banner goes to stderr.
-- Example values in help and docs are synthetic: `remote-host`, `192.0.2.10`,
-  `myuser`, `DEVICE1234567890`. Never a real alias, address, serial or model.
-- Every external tool or standard gets its URL on first mention in markdown.
-- Exit codes: 2 usage, 127 missing executable, 130 cancel, 143/129 signals,
-  scrcpy's status otherwise (table in `architecture.md`).
+- One public function, `remote-scrcpy`; helpers are `_kebab-case`. Globals
+  are namespaced by prefix; the table is in
+  [`architecture.md`](architecture.md). The public interface is the command
+  line and the `REMOTE_SCRCPY_*` environment variables, nothing else.
+- `local` for every variable inside a helper.
+- Exit statuses follow the table in [`architecture.md`](architecture.md),
+  which `--help` repeats for users.
 
-## Commits and pull requests
+## Documentation rules
 
-[`workflow.md`](workflow.md) is the procedure: a worktree branch per change,
-a draft pull request, an independent review, a squash merge, and the rules
-for commit messages and version numbers.
+- **One home per fact.** Rules live on this page, procedures on the page
+  named after them (`workflow.md`, `testing.md`, `release.md`,
+  `adding-a-cli-option.md`), how the program works in `architecture.md`, and
+  why in `decisions.md`. Everything else links there and does not restate
+  it. If you find the same thing written twice, delete one copy.
+- **`docs/` is for people and agents alike.** `AGENTS.md`, `.agents/` and
+  the skills are indexes for agents: they route to these pages and add only
+  what applies to agents alone.
+- **No numbers that every change moves.** Do not write how many checks a
+  suite has or how many lines a file has; say what the output looks like.
+- **Dated records are not edited.** `review-2026-11-06.md` describes the
+  repository on that day. Decisions are appended to `decisions.md`, not
+  rewritten.
+- `README.md` is for users: install, usage, limits. `CHANGELOG.md` records
+  what changed for them.
 
-## Static analysis
+## Static analysis and releasing
 
-```bash
-shellcheck -s bash remote-scrcpy.sh install.sh src/*.sh tests/*.sh
-```
-
-Expected false positives and their reasons are listed in `testing.md`; fix
-anything else or justify it with a `# shellcheck disable=` comment.
-
-## Releasing
-
-See [`release.md`](release.md): the version lives in four places, and the
-GitHub release notes carry a tag-pinned install URL.
+shellcheck is not part of CI; how to run it and which findings are expected
+is in [`testing.md`](testing.md). Cutting a version is in
+[`release.md`](release.md).

@@ -70,17 +70,7 @@ Completion output is ordinary Bash, with no special runtime UI. If the executabl
 
 ## Developing
 
-Only `remote-scrcpy.sh` is needed at runtime; it is generated from the modules under `src/` by `bash src/build.sh` and committed. Edit the modules, rebuild, run the fast suites, and commit the regenerated bundle together with the change. The details live in `docs/`:
-
-- [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): prerequisites, first build, layout, conventions.
-- [`docs/architecture.md`](docs/architecture.md): internal naming, module responsibilities, lifecycle, transport invariants, exit codes.
-- [`docs/testing.md`](docs/testing.md): what each suite covers, what is not covered, the integration suite, shellcheck.
-- [`docs/workflow.md`](docs/workflow.md): how a change gets from a branch to `main`.
-- [`docs/release.md`](docs/release.md): how to cut a version.
-- [`docs/decisions.md`](docs/decisions.md) and [`docs/history.md`](docs/history.md): why things are the way they are, and what happened when.
-- [`docs/review-2026-11-06.md`](docs/review-2026-11-06.md): the last full review and its open items, tracked in the [issues](https://github.com/SEPANDESTAN/remote-scrcpy/issues).
-
-AI coding agents start at [`AGENTS.md`](AGENTS.md), which links the same material and the procedures under `.agents/skills/`.
+`remote-scrcpy.sh` is generated from the modules under `src/` and committed. Start at [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): what you need, the first build, the rules, and where everything else is written down. AI coding agents start at [`AGENTS.md`](AGENTS.md).
 
 ## Remote server and phone preparation
 
@@ -88,21 +78,12 @@ Use `remote-scrcpy --prerequisites` for the current generic checklist. That comm
 
 > **TODO** — the site-specific portion of the prerequisites is intentionally still a placeholder. Expansion is tracked in [issue #1](https://github.com/SEPANDESTAN/remote-scrcpy/issues/1), which contains a questionnaire covering remote OS, USB permissions, phone models, SSH policy, auth, and recovery. Fill those in before turning the `[TODO]` markers in `src/prerequisites.sh` into prescriptive instructions.
 
-## Tests and limits
-
-```bash
-bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh
-bash tests/test-completion.sh
-bash tests/test-cli-ui-review.sh
-bash tests/test-ssh-config.sh
-bash tests/test-install.sh
-```
-
-These run without a network, a phone or root, and ignore any `REMOTE_SCRCPY_*` configuration in your shell. An integration fixture exercises real OpenSSH and ADB with simulated devices; it needs root, so CI runs it for you, and it is not required to install, build or run the launcher. See [`docs/testing.md`](docs/testing.md) for what each suite covers and what is not covered.
+## Limits
 
 Supported expectations are intentionally explicit: this Bash implementation is verified primarily on Linux. It needs Bash 4.4+ built with `/dev/tcp` support (the default) and OpenSSH Unix-style control sockets; the session's socket is created under `/tmp` whatever `TMPDIR` says, because socket paths are limited in length. Do not assume every operating system/architecture is verified simply because the script contains no native embedded payload.
 
 The tunnels are plain TCP on the loopback interface, on the viewing computer and on the remote, for as long as a session lasts. Like adb's own port 5037 they have no per-user access control, so other accounts on either machine can connect to them. Use the launcher on machines whose other users you trust.
+
+scrcpy runs in a process group of its own so that Ctrl+C reaches the launcher first. On a terminal with `stty tostop` set, that group is stopped at scrcpy's first log line and no window appears; run `stty -tostop` first.
 
 Besides the `REMOTE_SCRCPY_*` variables, the launcher reads four generic ones as fallbacks: `ADB`, `REMOTE_ADB`, `ADB_PORT` and `SCRCPY`. An `ADB_PORT` inherited from another tool therefore changes which remote ADB server is used; set `REMOTE_SCRCPY_ADB_PORT` to override it. Exit statuses are listed by `--help`.
