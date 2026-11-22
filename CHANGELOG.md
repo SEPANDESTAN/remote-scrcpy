@@ -7,7 +7,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Tests
-- A failing fast suite always says what failed. Eleven checks in
+- Every check in the fast suites says what failed, and so do the discovery
+  and completion calls that run before a check. Eleven checks in
   `tests/test-ssh-config.sh` were bare tests that ended the suite with
   status 1 and no output, and so did a discovery or a completion call that
   returned non-zero before its check, in that suite and in two others. The

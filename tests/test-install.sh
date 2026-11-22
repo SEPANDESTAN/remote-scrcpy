@@ -75,7 +75,7 @@ run-piped() {
     output=$(cd "$where" && env -i HOME="$home" PATH="$path" "$real_bash" -s -- "$@" 2> "$sandbox/stderr" < "$piped_file") || result=$?
     messages=$(< "$sandbox/stderr")
 }
-version=$("$real_bash" "$bundle" --version)
+version=$("$real_bash" "$bundle" --version) || fail "the launcher's --version ended with status $?"
 main_url=https://raw.githubusercontent.com/SEPANDESTAN/remote-scrcpy/main/remote-scrcpy.sh
 
 # --help explains the script and does nothing else.

@@ -38,7 +38,7 @@ export PATH="$sandbox/bin:$PATH"
 export SSH_COMPLETION_CALLS="$sandbox/calls"
 export SSH_COMPLETION_STDIN="$sandbox/stdin"
 export REMOTE_SCRCPY_SSH_CONFIG="$sandbox/config"
-source <("$script" --completion bash)
+source <("$script" --completion bash) || { printf 'FAIL sourcing the completion script ended with status %s\n' "$?" >&2; exit 1; }
 passed=0
 assert_eq() {
     local label=$1 expected=$2 actual=$3
