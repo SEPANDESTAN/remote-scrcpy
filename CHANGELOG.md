@@ -38,6 +38,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   directly now (#38).
 
 ### Fixed
+- A missing `adb` or `scrcpy` is reported with every way to give its path:
+  `--adb`, `REMOTE_SCRCPY_ADB` or the fallback `ADB` for adb, and
+  `REMOTE_SCRCPY_SCRCPY` or the fallback `SCRCPY` for scrcpy, which has no
+  option. The message used to end in "Install it or specify its path."
+  without saying how (#30).
 - Two mode options on one command line are now refused whichever two they
   are and in whichever order. Before, `--completion=bash --list-hosts`
   failed while `--list-hosts --completion=bash` printed the completion

@@ -128,11 +128,13 @@ _read-user-response() {
 }
 
 # Resolve a command or path without executing it.
-# Args: executable; prints absolute path or exits with actionable error.
+# Args: executable, then the ways its path can be given, for the error;
+# prints the absolute path, or exits with status 127 and a message that
+# says how to point at the program.
 _resolve-executable-path() {
     local result
     if ! result=$(command -v -- "$1") || [[ ! -f $result || ! -x $result ]]; then
-        _exit-with-error "Executable not found: $1. Install it or specify its path." 127
+        _exit-with-error "Executable not found: $1. Install it, or give its path with $2." 127
     fi
     # An explicit relative path must remain usable by scrcpy and its adb children.
     if [[ $result != /* ]]; then result=$PWD/$result; fi
@@ -182,9 +184,11 @@ _check-runtime-dependencies() {
     for tool in ssh awk cat env mktemp rm sleep; do
         command -v "$tool" >/dev/null || _exit-with-error "Missing prerequisite: $tool" 127
     done
-    SETTINGS_LOCAL_ADB_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_ADB_EXECUTABLE") || exit $?
+    SETTINGS_LOCAL_ADB_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_ADB_EXECUTABLE" \
+        '--adb, REMOTE_SCRCPY_ADB, or the fallback ADB') || exit $?
     if [[ $SETTINGS_OPERATION == connect ]]; then
-        SETTINGS_LOCAL_SCRCPY_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_SCRCPY_EXECUTABLE") || exit $?
+        SETTINGS_LOCAL_SCRCPY_EXECUTABLE=$(_resolve-executable-path "$SETTINGS_LOCAL_SCRCPY_EXECUTABLE" \
+            'REMOTE_SCRCPY_SCRCPY, or the fallback SCRCPY') || exit $?
     fi
 }
 
