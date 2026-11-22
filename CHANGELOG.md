@@ -22,6 +22,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   templates under `.github/` and carry a type label.
 
 ### Changed
+- `bash src/build.sh --help` prints its usage. Before, any option was taken
+  for the output path and failed inside `mktemp`; unknown options and extra
+  arguments are now refused with status 2 (#5).
 - `--help` describes what the launcher refuses after `--`, gives the range
   of `REMOTE_SCRCPY_COMPLETION_TIMEOUT`, and has an EXIT STATUS section that
   separates the launcher's statuses from scrcpy's. `--prerequisites` and the
@@ -63,6 +66,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   v7.
 
 ### Tests
+- The maintenance suite fails, naming the file, when a module under `src/`
+  is missing from the bundle. The rebuild comparison in CI cannot show such
+  a loss, and the fast suites noticed it only for modules they happen to
+  call: without `ui.sh` or `transport.sh` all four passed, and only the
+  integration suite failed (#6).
 - The integration suite now fails for each transport mutation listed in
   issue #3, including a removed hex check on the length of the ADB version
   reply, an offline device accepted by serial, and the host-less socket form

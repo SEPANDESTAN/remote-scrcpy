@@ -4,7 +4,7 @@
 
 ```bash
 bash -n remote-scrcpy.sh
-bash tests/test-maintenance.sh       # expects: Maintenance checks: 54 passed.
+bash tests/test-maintenance.sh       # expects: Maintenance checks: 59 passed.
 bash tests/test-completion.sh        # expects: Completion checks: 34 passed.
 bash tests/test-cli-ui-review.sh     # expects: CLI/menu review checks: 31 passed, 0 failed.
 bash tests/test-ssh-config.sh        # expects: SSH config discovery checks passed.
@@ -22,7 +22,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 
 | Suite | Runs against | Covers |
 |---|---|---|
-| `test-maintenance.sh` | the bundle | version string, help/prerequisites/completion output, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
+| `test-maintenance.sh` | the bundle | that every module under `src/` is in the bundle, `src/build.sh` usage and option errors, version string, help/prerequisites/completion output, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
 | `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether the explicit color modes color with and without `NO_COLOR` |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
@@ -36,14 +36,14 @@ before testing** a `src/` change, or half the suites test stale code.
 start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
 the fast suites, and neither do the long-option branch of
 `_validate-scrcpy-arguments` (its short-flag branch is covered), the
-device-state filter in `src/ui.sh`, the `auto` color mode on a terminal (the suites have
-none; issue #27), or the module list in `src/build.sh`.
+device-state filter in `src/ui.sh`, or the `auto` color mode on a terminal (the suites
+have none; issue #27).
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the
 transport, and CI runs it. It catches each of the seven mutations listed in
 issue #3 when they are planted one at a time, and each half of the
-socket-form mutation alone. Dropping a module from the build list is caught
-only where a test happens to need that module. Each check the protocol probe
+socket-form mutation alone. A module dropped from the build list is caught
+by the maintenance suite, whichever module it is. Each check the protocol probe
 makes on the content of a reply has a test of its own, including the hex
 check on the version payload: that payload comes from the remote and is
 converted with shell arithmetic, and the check is what keeps anything but

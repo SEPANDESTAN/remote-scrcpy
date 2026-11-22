@@ -135,3 +135,18 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   while approving the review plan: one name per thing, and nothing had ever
   documented them, so removing them breaks no stated interface. If either
   turns out to be in use, it comes back as a documented option.
+- **`--help` is required of scripts a person runs with arguments, not of
+  every script.** The 2026-11-06 standard said every script should answer
+  `--help` and every function carry a doc comment, and issue #5 listed what
+  was missing: the build script, the four fast suites, the three Python
+  files, and seventeen test helpers. The build script takes an output path
+  and misread `--help` as one; it now explains itself. The fast suites read
+  no arguments and state their purpose in their first lines. Of the Python
+  files, `test_launcher_integration.py` is the integration suite, which
+  takes the options of unittest and answers `--help` through it, with its
+  run command in the docstring; `native_adb_fixture.py` is an imported
+  library; and `fake_scrcpy.py` is a stand-in that receives the scrcpy
+  command line from the launcher under test, never from a person. Giving
+  the suites and the stand-in option parsing, and one-line helpers such as
+  `fail` a comment, would add text that tells a reader nothing. The
+  doc-comment rule stays for `src/`.
