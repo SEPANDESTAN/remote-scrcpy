@@ -151,6 +151,15 @@ podman run --rm --security-opt label=disable -v "$PWD":/repo:ro \
         cd /repo && REAL_ADB="$(command -v adb)" python3 -B tests/test_launcher_integration.py -v'
 ```
 
+Run one suite at a time on a machine, or give each run a container of its
+own. `sshd` refuses connections without its directory `/run/sshd`. The
+suite creates that directory when it is missing and removes it again at the
+end, so as to leave the machine as it found it. A second run that starts
+while the first is going finds the directory there and does not count it as
+its own; when the first run finishes and removes it, the second fails most
+of its tests with `Connection reset by peer`. A single run is not affected,
+and CI runs one suite per runner.
+
 ## Static analysis
 
 ```bash
