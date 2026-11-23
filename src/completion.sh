@@ -36,7 +36,9 @@ _remote-scrcpy-query-device-serials() {
     # is offered: what serials are made of (letters, digits, and the marks
     # of an address, an emulator or a device found on the network), and
     # nothing that the shell or the terminal acts on. The characters are
-    # written out because a range follows the locale.
+    # written out because a range follows the locale. (With nocasematch
+    # set in the user's shell, the few letters of other scripts that fold
+    # to an ASCII one pass as well; they are letters and do no harm.)
     local plain=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:@%+,=-
     local -a ssh_command=(ssh -T -o BatchMode=yes -o NumberOfPasswordPrompts=0
         -o ConnectTimeout=3 -o ConnectionAttempts=1
