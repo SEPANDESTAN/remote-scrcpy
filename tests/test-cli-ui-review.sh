@@ -73,18 +73,44 @@ parse_scrcpy_values() (
     printf '<%s>' "${SETTINGS_SCRCPY_EXTRA_ARGUMENTS[@]}"
 )
 
-# Whether status output would be colored for a color mode and a NO_COLOR value
-# (empty for unset). The mode is set directly, or read from the environment
-# when written as env:MODE. Styles are decided with standard error detached,
-# so the result does not depend on where the suite was started; the price is
-# that the terminal half of the auto mode cannot be reached here.
+# Put a terminal on standard error, or take it away, for the styles: the
+# launcher asks one function, and the suite answers for it. The result then
+# does not depend on where the suite was started. Args: `terminal` or
+# anything else; TERM, or `unset` for none (default xterm).
+pretend_stderr() {
+    if [[ $1 == terminal ]]; then _stderr-is-terminal() { return 0; }
+    else _stderr-is-terminal() { return 1; }; fi
+    if [[ ${2:-xterm} == unset ]]; then unset TERM; else TERM=${2:-xterm}; fi
+}
+
+# Whether status output would be colored. Args: the color mode, set directly
+# or read from the environment when written as env:MODE; NO_COLOR ('' for
+# unset, `empty` for set to nothing); then what pretend_stderr takes.
 color_state() (
     if [[ $1 == env:* ]]; then export REMOTE_SCRCPY_COLOR=${1#env:}; fi
     _initialize-configuration
     [[ $1 == env:* ]] || SETTINGS_COLOR_MODE=$1
-    if [[ -n $2 ]]; then export NO_COLOR=$2; else unset NO_COLOR; fi
+    case $2 in
+        '') unset NO_COLOR ;;
+        empty) export NO_COLOR= ;;
+        *) export NO_COLOR=$2 ;;
+    esac
+    pretend_stderr "${3:-}" "${4:-}"
     _initialize-terminal-styles 2>/dev/null
     if [[ -n $DISPLAY_COLOR_RESET ]]; then printf on; else printf off; fi
+)
+
+# The mark in front of a success message. Args: what pretend_stderr takes
+# first, the locale name, and 1 for --ascii. The launcher reads the locale's
+# name only, so the locale need not be installed.
+success_symbol() (
+    _initialize-configuration
+    SETTINGS_ASCII_ONLY=$3
+    pretend_stderr "$1"
+    unset LC_CTYPE LANG
+    { LC_ALL=$2; } 2>/dev/null
+    _initialize-terminal-styles 2>/dev/null
+    printf '%s' "$DISPLAY_SYMBOL_SUCCESS"
 )
 
 parse_presentation() (
@@ -292,6 +318,21 @@ expect_output 'An explicit always overrides NO_COLOR' 'on' color_state always 1
 expect_output 'An explicit never stays uncolored' 'off' color_state never ''
 expect_output 'Always from the environment overrides NO_COLOR too' 'on' color_state env:always 1
 expect_output 'Auto does not color without a terminal' 'off' color_state auto ''
+# The automatic mode on a terminal: it colors, unless NO_COLOR has a value or
+# the terminal cannot show it.
+expect_output 'Auto colors on a terminal' 'on' color_state auto '' terminal
+expect_output 'Auto from the environment colors on a terminal' 'on' color_state env:auto '' terminal
+expect_output 'Auto on a terminal obeys NO_COLOR' 'off' color_state auto 1 terminal
+expect_output 'An empty NO_COLOR counts as not set' 'on' color_state auto empty terminal
+expect_output 'Auto does not color a dumb terminal' 'off' color_state auto '' terminal dumb
+expect_output 'Auto does not color without TERM' 'off' color_state auto '' terminal unset
+expect_output 'Never stays uncolored on a terminal' 'off' color_state never '' terminal
+expect_output 'Always colors a dumb terminal too' 'on' color_state always '' terminal dumb
+# The symbols need a terminal and a UTF-8 locale, and --ascii turns them off.
+expect_output 'A terminal in a UTF-8 locale gets the Unicode marks' '✓' success_symbol terminal C.UTF-8 0
+expect_output 'A locale that is not UTF-8 gets the ASCII marks' '+' success_symbol terminal C 0
+expect_output '--ascii gets the ASCII marks on any terminal' '+' success_symbol terminal C.UTF-8 1
+expect_output 'Without a terminal the marks are ASCII' '+' success_symbol none C.UTF-8 0
 expect_output 'Color option retains host-only continuation' 'never|0|remote-host|' \
     parse_presentation --color never remote-host
 expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \

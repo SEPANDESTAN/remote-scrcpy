@@ -39,6 +39,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   showed: retarget the upper one before deleting the lower branch (#10).
 
 ### Tests
+- Standard output is checked to stay plain: with color forced on, by the
+  option or by the environment, `--help`, `--version`, `--prerequisites`,
+  `--completion bash` and `--list-hosts` write no terminal escape to it,
+  and neither does `--list-devices` in the integration suite. The
+  automatic color mode is tested on a terminal: it colors, obeys a
+  `NO_COLOR` that has a value, ignores an empty one, and leaves a dumb
+  terminal alone; so are the Unicode marks. The test for a terminal is a
+  one-line function in `src/presentation.sh` that the fast suite answers
+  for, and the integration suite runs the real one on a pseudo-terminal
+  (#27).
 - Every check in the fast suites says what failed, and so do the discovery
   and completion calls that run before a check. Eleven checks in
   `tests/test-ssh-config.sh` were bare tests that ended the suite with

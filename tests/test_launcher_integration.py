@@ -430,6 +430,37 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
                 self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed(require_forwards=False)
 
+    def test_device_list_on_stdout_stays_plain_with_color_forced(self):
+        # Standard output is data. With color forced on, the messages on
+        # standard error are colored and the list is not.
+        result = self.run_cli(("fixture",), ("--color", "always", "--list-devices"))
+        self.assert_success(result)
+        self.assertIn("SERIAL_A", result.stdout)
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertIn("\x1b[", result.stderr)
+
+    def test_auto_color_follows_the_terminal_and_no_color(self):
+        # The one place where the launcher's own terminal test runs: the fast
+        # suites answer for it. Quitting the host menu ends the run before any
+        # connection.
+        def menu_output(**environment):
+            self.env = {**self.base_env, "TERM": "xterm", **environment}
+            result = self.run_tty((), b"q\n")
+            self.assertEqual(result.returncode, 130, result.stdout)
+            self.assertIn("Quit", result.stdout)
+            return result.stdout
+        self.assertIn("\x1b[", menu_output())
+        self.assertNotIn("\x1b", menu_output(NO_COLOR="1"))
+        self.assertIn("\x1b[", menu_output(NO_COLOR=""))
+        self.assertNotIn("\x1b", menu_output(TERM="dumb"))
+        # Without a terminal the same mode does not color.
+        self.env = {**self.base_env, "TERM": "xterm"}
+        result = self.run_cli((), ("--non-interactive",))
+        self.assertEqual(result.returncode, 2)
+        self.assertNotIn("\x1b", result.stderr)
+        # No run above got as far as a connection.
+        self.assertFalse(self.events(adb=True))
+
     def test_terminal_eof_is_a_clean_cancellation(self):
         result = self.run_tty(("fixture",), b"\x04")
         self.assertNotEqual(result.returncode, 0)

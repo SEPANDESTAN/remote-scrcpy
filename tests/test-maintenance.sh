@@ -125,6 +125,27 @@ config=$(mktemp)
 trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# Standard output is data: with color forced on, by the option or by the
+# environment, no mode writes an escape byte to it. (--list-devices needs a
+# connection; the integration suite checks it.)
+escape=$'\033'
+for mode in '--help' '--version' '--prerequisites' '--completion bash' "--list-hosts --ssh-config $config"; do
+    read -r -a words <<< "$mode"
+    for forced in option environment; do
+        if [[ $forced == option ]]; then
+            output=$("$script" --color=always "${words[@]}" 2>/dev/null) || fail "--color=always ${words[0]} ended with status $?"
+        else
+            output=$(REMOTE_SCRCPY_COLOR=always "$script" "${words[@]}" 2>/dev/null) || fail "REMOTE_SCRCPY_COLOR=always ${words[0]} ended with status $?"
+        fi
+        [[ -n $output ]] || fail "${words[0]} printed nothing with color forced by the $forced"
+        [[ $output != *"$escape"* ]] || fail "${words[0]} wrote a terminal escape to standard output with color forced by the $forced"
+    done
+    passed=$((passed+1))
+done
+# The same setting does color a message, which goes to standard error, so
+# the checks above looked at runs in which color was on.
+check contains "$("$script" --color=always --non-interactive --list-devices 2>&1 >/dev/null || true)" "$escape"
+check contains "$(REMOTE_SCRCPY_COLOR=always "$script" --non-interactive --list-devices 2>&1 >/dev/null || true)" "$escape"
 # The one-letter options that end the run without connecting print what
 # their long names print, and the help shows every letter beside its long
 # name. That each letter sets what its long name sets, including the ones
