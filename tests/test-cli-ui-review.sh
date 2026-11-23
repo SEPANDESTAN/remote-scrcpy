@@ -153,6 +153,31 @@ reject_huge_host_menu_number() (
     printf '%s' "$SETTINGS_SSH_HOST"
 )
 
+# A menu answer written in the digits of another script, in a locale where the
+# range 0-9 would match them. `wide_locale` and `other_digit` are set below.
+answer_host_menu_in_other_digits() (
+    LC_ALL=$wide_locale
+    _initialize-configuration
+    fixture_ui
+    local -a fixture_answers=("$other_digit" q)
+    _discover-ssh-host-aliases() { printf '%s\n' alpha beta gamma; }
+    _prompt-for-ssh-host 2>/dev/null
+    printf '%s' "$SETTINGS_SSH_HOST"
+)
+
+answer_device_menu_in_other_digits() (
+    LC_ALL=$wide_locale
+    _initialize-configuration
+    fixture_ui
+    local -a fixture_answers=("$other_digit" 2)
+    SETTINGS_SSH_HOST=remote-host
+    DISCOVERED_DEVICE_SERIALS=(PHONE_A PHONE_B PHONE_C)
+    DISCOVERED_DEVICE_STATES=(device device device)
+    DISCOVERED_DEVICE_MODELS=(First Second Third)
+    _prompt-for-device 2>/dev/null
+    printf '%s' "$SETTINGS_DEVICE_SERIAL"
+)
+
 choose_exact_numeric_device_serial() (
     _initialize-configuration
     fixture_ui
@@ -244,6 +269,21 @@ expect_output 'Manual numeric SSH destination is not a menu number' '1' choose_n
 expect_output 'A displayed device number always selects that row' 'PHONE_A' choose_device_by_displayed_number
 expect_output 'Huge host menu numbers cannot become unintended destinations' 'alpha' reject_huge_host_menu_number
 expect_output 'Exact serial entry disambiguates a numeric device serial' '1' choose_exact_numeric_device_serial
+# Only the ten ASCII digits make a menu number. In some locales the range 0-9
+# in a pattern also matches the digits of other scripts, and an answer in
+# those went on into arithmetic and ended the launcher with a Bash error.
+# These checks need such a locale, or they could not fail.
+other_digit=$'\xd9\xa3'   # ARABIC-INDIC DIGIT THREE
+wide_locale=''
+for candidate in en_US.UTF-8 en_GB.UTF-8 de_DE.UTF-8; do
+    if (LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
+done
+if [[ -n $wide_locale ]]; then
+    expect_output 'A host menu answer in other digits is a destination name, not row 3' "$other_digit" answer_host_menu_in_other_digits
+    expect_output 'A device menu answer in other digits is not a row; the menu asks again' 'PHONE_B' answer_device_menu_in_other_digits
+else
+    printf 'note: no installed locale widens the digit range; the menu checks in such a locale were not run.\n' >&2
+fi
 expect_output 'Default presentation uses automatic color and symbols' 'auto|0||' parse_presentation
 expect_output 'An explicit always colors without a terminal' 'on' color_state always ''
 expect_output 'An explicit always overrides NO_COLOR' 'on' color_state always 1

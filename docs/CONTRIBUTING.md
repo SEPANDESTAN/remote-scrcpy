@@ -118,6 +118,11 @@ what each one covers, the check CI adds, and the integration suite.
   show the long form first and the short one after it.
 - Exit statuses follow the table in [`architecture.md`](architecture.md),
   which `--help` repeats for users.
+- A pattern that checks a number names the ten digits, `[0123456789]`. The
+  range `[0-9]` also matches the digits of other scripts in some locales
+  (`en_US.UTF-8` with glibc is one), and such text then fails later, in
+  arithmetic, with a Bash error. The maintenance suite refuses the range in
+  `src/` and `install.sh`.
 
 ## Documentation rules
 

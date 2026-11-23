@@ -36,7 +36,7 @@ _prompt-for-ssh-host() {
                 _print-warning 'Enter a nonempty SSH destination without whitespace.'
                 continue ;;
         esac
-        if [[ $choice =~ ^[0-9]+$ ]]; then
+        if [[ $choice =~ ^[0123456789]+$ ]]; then
             # A huge menu number is invalid, not an implicit numeric hostname.
             if (( ${#choice} <= 6 )); then
                 index=$((10#$choice - 1))
@@ -163,7 +163,7 @@ _prompt-for-device() {
         selected=
         # A displayed menu number always means that row. The explicit serial
         # entry path also supports short numeric serials that overlap menu numbers.
-        if (( ! exact )) && [[ $choice =~ ^[0-9]{1,6}$ ]]; then
+        if (( ! exact )) && [[ $choice =~ ^[0123456789]{1,6}$ ]]; then
             index=$((10#$choice - 1))
             if (( index >= 0 && index < ${#selectable[@]} )); then selected=${selectable[index]}; fi
         fi

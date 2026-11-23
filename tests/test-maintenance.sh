@@ -192,4 +192,30 @@ passed=$((passed+1))
 if grep -Eiq '(^|[^[:alpha:]])gum([^[:alpha:]]|$)|future-ui|base64 --decode|--ui=' "$script"; then fail 'Removed dependency or option is still present in release'; fi
 passed=$((passed+1))
 
+# A check on a number names the ten digits. Inside a bracket expression the
+# range 0-9 also matches the digits of other scripts in some locales, and
+# text that passed such a check used to end in a Bash arithmetic error
+# instead of the launcher's own message.
+if ranges=$(grep -nE '\[[^][]*[0-9]-[0-9]' "$project"/src/*.sh "$project/install.sh"); then
+    fail "a digit range in a bracket expression; write the digits out: $ranges"
+fi
+passed=$((passed+1))
+# The same seen from outside, where a locale that widens the range is
+# installed: a port written in such digits is a usage error like any other
+# text that is not a port. No host is named; the command stops at validation.
+other_digit=$'\xd9\xa3'   # ARABIC-INDIC DIGIT THREE
+wide_locale=''
+for candidate in en_US.UTF-8 en_GB.UTF-8 de_DE.UTF-8; do
+    if (LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
+done
+if [[ -n $wide_locale ]]; then
+    result=0
+    output=$(LC_ALL=$wide_locale ADB_PORT=$other_digit$other_digit "$script" --non-interactive --list-devices 2>&1) || result=$?
+    [[ $result == 2 ]] || fail "under $wide_locale a port in other digits ended with status $result instead of 2: $output"
+    passed=$((passed+1))
+    check contains "$output" 'The remote ADB port must be an integer from 1 to 65535'
+else
+    printf 'note: no installed locale widens the digit range; the port check in such a locale was not run.\n' >&2
+fi
+
 printf 'Maintenance checks: %s passed.\n' "$passed"

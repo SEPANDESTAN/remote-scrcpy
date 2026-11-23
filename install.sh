@@ -87,8 +87,8 @@ main() {
     done
     # The version is a tag or a branch of the repository; a bare release
     # number is the tag with a "v" in front.
-    [[ ! $ref =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ref=v$ref
-    if [[ -n $ref ]] && { [[ ! $ref =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ $ref == *..* ]]; }; then
+    [[ ! $ref =~ ^[0123456789]+\.[0123456789]+\.[0123456789]+$ ]] || ref=v$ref
+    if [[ -n $ref ]] && { [[ ! $ref =~ ^[A-Za-z0123456789][A-Za-z0123456789._/-]*$ ]] || [[ $ref == *..* ]]; }; then
         die "not a version, tag or branch name: $ref" 2
     fi
     # The shell expands ~ in "--dir ~/bin" but not in "--dir=~/bin".
