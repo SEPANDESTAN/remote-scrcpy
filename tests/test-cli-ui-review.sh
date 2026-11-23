@@ -357,16 +357,32 @@ for locale in C C.UTF-8; do
     # letters and the emoji hold the same second bytes after another one.
     expect_output "Only the controls are taken ($locale)" $'\xc2\xa0\xc2\xbf À Ā Привет 📱' sanitized_under "$locale" $'\xc2\xa0\xc2\xbf À Ā Привет 📱'
 done
-# In an eight-bit locale the bare bytes are the controls. The check needs
-# such a locale, or it could not fail.
-eight_bit_locale=''
+# The result does not depend on the caller's locale. Two kinds of locale
+# would show it if it did: an eight-bit one, where the bytes 0x80 to 0x9F on
+# their own are control characters, and one such as GBK, where 0xC2 and the
+# byte after it are one letter. Each check needs such a locale to be able to
+# fail; C is set first so that a locale that cannot be set does not pass
+# for one, and the second probe also asks that three bytes which are one
+# letter in UTF-8 are not one here, since a UTF-8 locale reads the pair as
+# one character too.
+sample=$'Phone\xc2\x9d0;TITLE\xc2\x9c né 中 Привет À 📱'
+cleaned=$'Phone?0;TITLE? né 中 Привет À 📱'
+eight_bit_locale='' pair_letter_locale=''
 for candidate in en_US.ISO-8859-1 en_US.ISO-8859-15 de_DE.ISO-8859-1; do
     if (LC_ALL=C; LC_ALL=$candidate; [[ $'\x9b' == [[:cntrl:]] ]]) 2>/dev/null; then eight_bit_locale=$candidate; break; fi
 done
+for candidate in zh_CN.GBK zh_CN.GB18030 zh_SG.GBK; do
+    if (LC_ALL=C; LC_ALL=$candidate; [[ $'\xc2\x9d' == ? && $'\xe4\xb8\xad' != ? ]]) 2>/dev/null; then pair_letter_locale=$candidate; break; fi
+done
 if [[ -n $eight_bit_locale ]]; then
-    expect_output 'In an eight-bit locale the bare control bytes are replaced' 'A?31mB?' sanitized_under "$eight_bit_locale" $'A\x9b31mB\x9c'
+    expect_output 'An eight-bit locale changes nothing in what is replaced' "$cleaned" sanitized_under "$eight_bit_locale" "$sample"
 else
-    printf 'note: no installed eight-bit locale; the check on bare control bytes was not run.\n' >&2
+    printf 'note: no installed eight-bit locale; the sanitizer was not run under one.\n' >&2
+fi
+if [[ -n $pair_letter_locale ]]; then
+    expect_output 'A locale that reads the pair as a letter changes nothing either' "$cleaned" sanitized_under "$pair_letter_locale" "$sample"
+else
+    printf 'note: no installed locale such as GBK, which reads 0xC2 0x9D as one letter; the sanitizer was not run under one.\n' >&2
 fi
 # The sanitizer works in the C locale and must leave no trace of that: no
 # warning from Bash where the caller's locale is not installed, and the

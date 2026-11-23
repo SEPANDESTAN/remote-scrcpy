@@ -148,20 +148,17 @@ _sanitize-display-text() (
     # variable would be put back on return, and Bash prints a warning when
     # the value it puts back names a locale that is not installed.
     #
-    # Three rules. In the caller's locale, whatever that locale calls a
-    # control character: in an eight-bit one that takes in the bytes 0x80
-    # to 0x9F, which a terminal in such a mode obeys. Then byte by byte,
-    # in the C locale, the controls of ASCII, so that these do not depend
-    # on how the caller's locale reads the bytes around them. Last, the
-    # same eight-bit controls written as UTF-8, the byte 0xC2 and one from
-    # 0x80 to 0x9F: U+009B opens a control sequence like ESC [ does, and a
-    # terminal in UTF-8 mode obeys it (VTE does) whatever the caller's
-    # locale says. Only that pair is taken; the same bytes after another
-    # lead byte belong to ordinary letters. The range is a byte range,
-    # which the C locale makes it.
-    local value=${1//[[:cntrl:]]/?}
+    # Two rules, both byte by byte in the C locale, so that the result is
+    # the same whatever the caller's locale is. The controls of ASCII. And
+    # the eight-bit controls, U+0080 to U+009F, as UTF-8 writes them: the
+    # byte 0xC2 and one from 0x80 to 0x9F. U+009B opens a control sequence
+    # like ESC [ does, and a terminal in UTF-8 mode obeys it (VTE does).
+    # Only that pair is taken: after another lead byte the same bytes are
+    # parts of letters, so text in UTF-8 passes whole. The range is a byte
+    # range, which the C locale makes it. What this leaves, and why, is in
+    # docs/decisions.md.
     LC_ALL=C
-    value=${value//[[:cntrl:]]/?}
+    local value=${1//[[:cntrl:]]/?}
     printf '%s' "${value//$'\xc2'[$'\x80'-$'\x9f']/?}"
 )
 
