@@ -61,6 +61,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   directly now (#38).
 
 ### Fixed
+- Text from the phone and the remote is cleaned of the eight-bit control
+  characters (U+0080 to U+009F) as well, before it is shown. They arrive
+  as UTF-8, where the cleaning let them through, and some terminals obey
+  them like their escape forms: in a terminal built on VTE, as GNOME's
+  are, the model name a phone reports could set the window title or start
+  a control sequence. In an eight-bit locale the bare bytes are replaced
+  too. Letters of other scripts are untouched (#53).
 - With `LC_ALL` naming a locale that is not installed, the launcher no
   longer adds a `setlocale` warning of its own to the one Bash prints when
   it starts. The warning came from the function that cleans text before

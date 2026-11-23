@@ -147,8 +147,22 @@ _sanitize-display-text() (
     # The body is a subshell, so the locale set here ends with it. A local
     # variable would be put back on return, and Bash prints a warning when
     # the value it puts back names a locale that is not installed.
+    #
+    # Three rules. In the caller's locale, whatever that locale calls a
+    # control character: in an eight-bit one that takes in the bytes 0x80
+    # to 0x9F, which a terminal in such a mode obeys. Then byte by byte,
+    # in the C locale, the controls of ASCII, so that these do not depend
+    # on how the caller's locale reads the bytes around them. Last, the
+    # same eight-bit controls written as UTF-8, the byte 0xC2 and one from
+    # 0x80 to 0x9F: U+009B opens a control sequence like ESC [ does, and a
+    # terminal in UTF-8 mode obeys it (VTE does) whatever the caller's
+    # locale says. Only that pair is taken; the same bytes after another
+    # lead byte belong to ordinary letters. The range is a byte range,
+    # which the C locale makes it.
+    local value=${1//[[:cntrl:]]/?}
     LC_ALL=C
-    printf '%s' "${1//[[:cntrl:]]/?}"
+    value=${value//[[:cntrl:]]/?}
+    printf '%s' "${value//$'\xc2'[$'\x80'-$'\x9f']/?}"
 )
 
 # Validate one argv-safe SSH destination string.

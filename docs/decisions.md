@@ -215,9 +215,13 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
     rare.
 
   From issue #8:
-  - *UTF-8 C1 control characters pass the display sanitizer.* The strings
-    come from the user's own remote machine and phone. Worth doing if the
-    launcher is ever pointed at machines its user does not control.
+  - *UTF-8 C1 control characters pass the display sanitizer.* Declined
+    here at first, because the strings come from the user's own remote
+    machine and phone, and done later (issue #53). A measurement showed
+    that VTE, the terminal widget of GNOME's terminals, obeys these
+    characters, so that the model name a phone reports could set the
+    window title. The first reason did not hold either: the sanitizer
+    exists because that text is not trusted.
   - *Tab is unbounded without the `timeout` program.* The README says the
     wrapper is used where installed; a bound written in Bash would be a
     second implementation of it.

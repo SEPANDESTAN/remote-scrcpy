@@ -138,6 +138,15 @@ sanitized_under() (
     _sanitize-display-text "$2" 2>&1
 )
 
+# Every eight-bit control character from U+0080 to U+009F, written as UTF-8.
+all_c1_as_utf8() {
+    local byte text=''
+    for byte in 80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f; do
+        text+="\\xc2\\x$byte"
+    done
+    printf '%b' "$text"
+}
+
 # The caller's locale after the sanitizer was called directly, not in a
 # command substitution.
 locale_after_sanitizing() (
@@ -337,6 +346,28 @@ expect_output 'Control characters in display text become question marks' 'a?[31m
 # The sample has letters whose encoding holds a byte from 0x80 to 0x9F (the
 # first of the Cyrillic word, the last letter), which a cruder rule would hit.
 expect_output 'Text in other scripts passes unchanged' 'né 中 س Привет À' sanitized_under C.UTF-8 'né 中 س Привет À'
+# The eight-bit controls arrive as UTF-8 from a phone. U+009B opens a control
+# sequence and U+009D a title string, like ESC [ and ESC ], and a terminal
+# in UTF-8 mode obeys them whatever the caller's locale is.
+for locale in C C.UTF-8; do
+    expect_output "A UTF-8 control sequence introducer is replaced ($locale)" 'A?31mB' sanitized_under "$locale" $'A\xc2\x9b31mB'
+    expect_output "A UTF-8 title string is replaced ($locale)" 'Phone?0;TITLE? A' sanitized_under "$locale" $'Phone\xc2\x9d0;TITLE\xc2\x9c A'
+    expect_output "All 32 eight-bit controls as UTF-8 are replaced ($locale)" '????????????????????????????????' sanitized_under "$locale" "$(all_c1_as_utf8)"
+    # The neighbours stay: U+00A0 and U+00BF share the lead byte, and the
+    # letters and the emoji hold the same second bytes after another one.
+    expect_output "Only the controls are taken ($locale)" $'\xc2\xa0\xc2\xbf À Ā Привет 📱' sanitized_under "$locale" $'\xc2\xa0\xc2\xbf À Ā Привет 📱'
+done
+# In an eight-bit locale the bare bytes are the controls. The check needs
+# such a locale, or it could not fail.
+eight_bit_locale=''
+for candidate in en_US.ISO-8859-1 en_US.ISO-8859-15 de_DE.ISO-8859-1; do
+    if (LC_ALL=C; LC_ALL=$candidate; [[ $'\x9b' == [[:cntrl:]] ]]) 2>/dev/null; then eight_bit_locale=$candidate; break; fi
+done
+if [[ -n $eight_bit_locale ]]; then
+    expect_output 'In an eight-bit locale the bare control bytes are replaced' 'A?31mB?' sanitized_under "$eight_bit_locale" $'A\x9b31mB\x9c'
+else
+    printf 'note: no installed eight-bit locale; the check on bare control bytes was not run.\n' >&2
+fi
 # The sanitizer works in the C locale and must leave no trace of that: no
 # warning from Bash where the caller's locale is not installed, and the
 # caller's locale as it was. The first of the two can fail only where Bash
