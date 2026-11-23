@@ -334,11 +334,18 @@ else
 fi
 # Text from the phone or the remote is cleaned before it is shown.
 expect_output 'Control characters in display text become question marks' 'a?[31mb?c' sanitized_under C $'a\033[31mb\007c'
-expect_output 'Text in other scripts passes unchanged' 'né 中 س' sanitized_under C.UTF-8 'né 中 س'
+# The sample has letters whose encoding holds a byte from 0x80 to 0x9F (the
+# first of the Cyrillic word, the last letter), which a cruder rule would hit.
+expect_output 'Text in other scripts passes unchanged' 'né 中 س Привет À' sanitized_under C.UTF-8 'né 中 س Привет À'
 # The sanitizer works in the C locale and must leave no trace of that: no
 # warning from Bash where the caller's locale is not installed, and the
-# caller's locale as it was.
-expect_output 'A locale that is not installed adds no warning to display text' 'a?b' sanitized_under xx_XX.UTF-8 $'a\033b'
+# caller's locale as it was. The first of the two can fail only where Bash
+# is told that the locale is missing; some C libraries accept any name.
+if [[ -n $( (LC_ALL=xx_XX.UTF-8) 2>&1) ]]; then
+    expect_output 'A locale that is not installed adds no warning to display text' 'a?b' sanitized_under xx_XX.UTF-8 $'a\033b'
+else
+    printf 'note: this C library accepts a locale name that is not installed; the warning check was not run.\n' >&2
+fi
 expect_output 'The sanitizer leaves the caller its locale' 'C.UTF-8' locale_after_sanitizing
 expect_output 'Default presentation uses automatic color and symbols' 'auto|0||' parse_presentation
 expect_output 'An explicit always colors without a terminal' 'on' color_state always ''

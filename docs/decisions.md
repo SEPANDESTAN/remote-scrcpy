@@ -217,12 +217,7 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
   From issue #8:
   - *UTF-8 C1 control characters pass the display sanitizer.* The strings
     come from the user's own remote machine and phone. Worth doing if the
-    launcher is ever pointed at machines its user does not control. Raised
-    again as issue #53 and declined again, for the same reason. The
-    [xterm documentation](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html)
-    says that it "is not possible to use a C1 control obtained from
-    decoding the UTF-8 text"; no statement was found for other terminals,
-    and nothing was measured on one.
+    launcher is ever pointed at machines its user does not control.
   - *Tab is unbounded without the `timeout` program.* The README says the
     wrapper is used where installed; a bound written in Bash would be a
     second implementation of it.

@@ -30,9 +30,9 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 
 | Suite | Runs against | Covers |
 |---|---|---|
-| `test-maintenance.sh` | the bundle | that every module under `src/` is in the bundle, `src/build.sh` usage and option errors, version string, help/prerequisites/completion output, that the help, version, prerequisites, completion and host-listing modes write no terminal escape to standard output with color forced on, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
+| `test-maintenance.sh` | the bundle | that every module under `src/` is in the bundle, `src/build.sh` usage and option errors, version string, help/prerequisites/completion output, that the help, version, prerequisites, completion and host-listing modes write no terminal escape to standard output with color forced on, that the launcher adds no locale warning of its own, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, file names after `--ssh-config=`, `--adb=` and `--remote-adb=`, aliases after `user@`, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
-| `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether each color mode colors and which marks are used, with and without `NO_COLOR`, on a terminal and off one (the suite answers for the launcher's terminal test, `_stderr-is-terminal`) |
+| `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, what the display sanitizer replaces and leaves alone, whether each color mode colors and which marks are used, with and without `NO_COLOR`, on a terminal and off one (the suite answers for the launcher's terminal test, `_stderr-is-terminal`) |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
 | `test-install.sh` | `install.sh` and the bundle | the installer in a scratch `HOME` with a `PATH` of chosen tools and a fake `curl`: usage errors, which stream gets what, install from a checkout without network (by path and by bare name), `--dir` (relative, with a space, with `~` after `=`), `--with-tab-completion` (one line, once, that registers the completion without `PATH`; an existing line for another place is left alone), the download address for `main` and for `--version` (a bare release number, a tag, a branch), the short forms and the older names `--ref` and `--completion`, that a failed, unparsable or foreign download installs nothing and leaves the old launcher in place, and that an installer cut anywhere in its last line installs nothing. The real download is not exercised |
 
@@ -106,7 +106,9 @@ also matches the digits of other scripts (`en_US.UTF-8` with
 one where `[a-z]` does not match `i` (`tr_TR.UTF-8`). Each suite tries a
 short list of locale names with the range itself. Where none is installed
 or none behaves so, it prints a note on standard error, passes without
-those checks, and counts that many fewer. CI generates both locales and
+those checks, and counts that many fewer. Two more checks, on the warning
+Bash prints for a locale that is not installed, are skipped the same way
+where the C library accepts any locale name (musl does). CI generates both locales and
 fails if either does not behave so, which is what makes a green run mean
 that these checks ran. The check that no such range is written in `src/` or
 `install.sh` runs everywhere.
