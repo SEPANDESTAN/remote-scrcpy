@@ -276,7 +276,9 @@ expect_output 'Exact serial entry disambiguates a numeric device serial' '1' cho
 other_digit=$'\xd9\xa3'   # ARABIC-INDIC DIGIT THREE
 wide_locale=''
 for candidate in en_US.UTF-8 en_GB.UTF-8 de_DE.UTF-8; do
-    if (LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
+    # C first: a locale that cannot be set then leaves the probe in C, where
+    # the range is plain, and not in whatever locale the suite was started in.
+    if (LC_ALL=C; LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
 done
 if [[ -n $wide_locale ]]; then
     expect_output 'A host menu answer in other digits is a destination name, not row 3' "$other_digit" answer_host_menu_in_other_digits

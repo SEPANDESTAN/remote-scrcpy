@@ -95,13 +95,15 @@ itself, and the forks that followed exhausted the machine's memory. Give
 child shells a sandbox `HOME` as well, and run a script file with
 `bash --norc` in preference to `bash -c`.
 
-Four checks, two in the maintenance suite and two in the CLI suite, need a
-locale in which the pattern range `[0-9]` also matches the digits of other
-scripts; `en_US.UTF-8` with glibc is one. They look for it among
-`en_US.UTF-8`, `en_GB.UTF-8` and `de_DE.UTF-8`. Where none of them is
-installed or none behaves so, the suite prints a note on standard error,
-passes without those checks, and its count is lower by two. The check that
-no such range is written in `src/` or `install.sh` runs everywhere.
+Some checks in the maintenance, CLI and install suites need a locale in
+which a pattern range misbehaves, or they could not fail: one where `[0-9]`
+also matches the digits of other scripts (`en_US.UTF-8` with
+[glibc](https://www.gnu.org/software/libc/) is one), and for the installer
+one where `[a-z]` does not match `i` (`tr_TR.UTF-8`). Each suite tries a
+short list of locale names with the range itself. Where none is installed
+or none behaves so, it prints a note on standard error, passes without
+those checks, and counts that many fewer. The check that no such range is
+written in `src/` or `install.sh` runs everywhere.
 
 ## The integration suite
 

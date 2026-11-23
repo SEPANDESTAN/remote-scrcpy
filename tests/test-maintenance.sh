@@ -192,12 +192,14 @@ passed=$((passed+1))
 if grep -Eiq '(^|[^[:alpha:]])gum([^[:alpha:]]|$)|future-ui|base64 --decode|--ui=' "$script"; then fail 'Removed dependency or option is still present in release'; fi
 passed=$((passed+1))
 
-# A check on a number names the ten digits. Inside a bracket expression the
-# range 0-9 also matches the digits of other scripts in some locales, and
-# text that passed such a check used to end in a Bash arithmetic error
-# instead of the launcher's own message.
-if ranges=$(grep -nE '\[[^][]*[0-9]-[0-9]' "$project"/src/*.sh "$project/install.sh"); then
-    fail "a digit range in a bracket expression; write the digits out: $ranges"
+# A check on a number or a name writes its characters out. Inside a bracket
+# expression a range follows the locale: 0-9 also matches the digits of
+# other scripts in some, and text that passed such a check used to end in a
+# Bash arithmetic error; a-z leaves out "i" in Turkish, and a correct name
+# was refused. This looks for a digit range and for the two full letter
+# ranges, also behind a class such as [:alpha:] in the same bracket.
+if ranges=$(LC_ALL=C grep -nE '\[(\[:[a-z]+:\]|[^][[:space:]])*([0-9]-[0-9]|A-Z|a-z)' "$project"/src/*.sh "$project/install.sh"); then
+    fail "a character range in a bracket expression; write the characters out: $ranges"
 fi
 passed=$((passed+1))
 # The same seen from outside, where a locale that widens the range is
@@ -206,7 +208,9 @@ passed=$((passed+1))
 other_digit=$'\xd9\xa3'   # ARABIC-INDIC DIGIT THREE
 wide_locale=''
 for candidate in en_US.UTF-8 en_GB.UTF-8 de_DE.UTF-8; do
-    if (LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
+    # C first: a locale that cannot be set then leaves the probe in C, where
+    # the range is plain, and not in whatever locale the suite was started in.
+    if (LC_ALL=C; LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
 done
 if [[ -n $wide_locale ]]; then
     result=0
