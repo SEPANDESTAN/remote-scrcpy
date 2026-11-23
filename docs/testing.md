@@ -111,8 +111,9 @@ those checks, and counts that many fewer. Two more checks, on the warning
 Bash prints for a locale that is not installed, are skipped the same way
 where the C library accepts any locale name
 ([musl](https://musl.libc.org/) does), and so is the check on bare control
-bytes where no eight-bit locale is installed. CI generates both locales and fails
-if either does not behave so, which is what makes a green run mean that
+bytes where no eight-bit locale is installed (it tries `en_US.ISO-8859-1`
+and two more). CI generates the three locales named here and fails if one
+of them does not behave so, which is what makes a green run mean that
 these checks ran. The check that no such range is written in `src/` or
 `install.sh` runs everywhere.
 
