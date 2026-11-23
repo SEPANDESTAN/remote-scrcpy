@@ -168,11 +168,25 @@ complete_words myuser@
 assert_eq 'every alias after a bare user@' '@remote-host @remote-backup @beta' "${COMPREPLY[*]}"
 complete_words myuser@x
 assert_eq 'no alias after user@ offers nothing' '' "${COMPREPLY[*]}"
+# ssh takes everything up to the last '@' as the user.
+complete_words myuser@example@remote-h
+assert_eq 'alias after a user that contains @' '@remote-host' "${COMPREPLY[*]}"
 complete_words --host myuser@remote-h
 assert_eq 'alias after --host user@' '@remote-host' "${COMPREPLY[*]}"
 complete_words --host=myuser@remote-h
 assert_eq 'alias after --host=user@' '@remote-host' "${COMPREPLY[*]}"
 assert_eq 'aliases after user@ stay local' "$count" "$(ssh_calls)"
+# An alias may itself contain an '@'. It completes as a whole, as before,
+# and is not taken for a user in front of another alias.
+printf 'Host ops@gateway other-host\n' > "$sandbox/at-config"
+complete_words --ssh-config "$sandbox/at-config" ops@g
+assert_eq 'an alias that contains @ completes as a whole' '@gateway' "${COMPREPLY[*]}"
+complete_words --ssh-config "$sandbox/at-config" ops@o
+assert_eq 'a user in front of another alias, next to an alias with @' '@other-host' "${COMPREPLY[*]}"
+complete_words --ssh-config "$sandbox/at-config" o
+assert_eq 'aliases with and without @ from the start of the word' 'ops@gateway other-host' "${COMPREPLY[*]}"
+complete_words --ssh-config "$sandbox/at-config" --host=ops@g
+assert_eq 'an alias that contains @ after --host=' '@gateway' "${COMPREPLY[*]}"
 
 # Pieces of one word must not be read as separate arguments: a serial, a port
 # or a user name would otherwise be taken for the host and contacted.

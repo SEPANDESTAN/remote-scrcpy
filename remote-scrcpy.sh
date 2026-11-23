@@ -1385,7 +1385,7 @@ _remote-scrcpy-complete-words() {
     local -a words=("$@")
     local last=$(( $# - 1 ))
     local current=${words[last]} previous='' word index host='' serial='' ssh_config='' remote_adb=''
-    local value prefix='' complete_host=0 complete_serial=0 explicit_host=0
+    local value prefix='' user='' typed complete_host=0 complete_serial=0 explicit_host=0
     local command=${words[0]}
     local -a positions=()
     local options='--help --version --host --serial --list-hosts --list-devices --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion -h -v -l -L -p -q -n -V'
@@ -1471,12 +1471,18 @@ _remote-scrcpy-complete-words() {
         local -a host_command=("$command" --list-hosts)
         [[ -z $ssh_config ]] || host_command+=(--ssh-config "$ssh_config")
         # `myuser@re`: the aliases complete the part after the '@', and the
-        # user typed in front of it stays in front of each candidate.
-        if [[ $current == *@* ]]; then prefix=${current%@*}@; current=${current##*@}; fi
-        (( complete_host != 2 )) || prefix=--host=$prefix
+        # user typed in front of it stays in front of each candidate. An
+        # alias that itself contains an '@' completes only as a whole and is
+        # never put behind a user.
+        typed=$current
+        if [[ $current == *@* ]]; then user=${current%@*}@; current=${current##*@}; fi
+        (( complete_host != 2 )) || prefix=--host=
         while IFS= read -r value; do
-            [[ $value == "$current"* ]] || continue
-            COMPREPLY+=("$prefix$value")
+            if [[ -n $user && $value == *@* ]]; then
+                [[ $value != "$typed"* ]] || COMPREPLY+=("$prefix$value")
+            elif [[ $value == "$current"* ]]; then
+                COMPREPLY+=("$prefix$user$value")
+            fi
         done < <("${host_command[@]}" 2>/dev/null)
         return
     fi
