@@ -135,8 +135,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   alias when it was the only one starting so, and now offers every alias
   behind the user `ops`.
 - `install.sh --version` refuses a release number written in the digits of
-  another script, which it used to pass on into the download address in
-  some locales.
+  another script, and a branch or tag name with a letter outside ASCII.
+  In some locales it used to pass both on into the download address.
+- Text that is not UTF-8 can lose characters where it is shown: in an
+  encoding in which the byte 0xC2 followed by one from 0x80 to 0x9F is a
+  letter, as 32 characters of GBK are, that letter is now shown as `?`.
 
 ## [3.1.0] — 2026-11-22
 
