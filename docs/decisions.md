@@ -215,9 +215,23 @@ Format: **Decision.** Why. Consequences / where it shows in the code.
     rare.
 
   From issue #8:
-  - *UTF-8 C1 control characters pass the display sanitizer.* The strings
-    come from the user's own remote machine and phone. Worth doing if the
-    launcher is ever pointed at machines its user does not control.
+  - *UTF-8 C1 control characters pass the display sanitizer.* Declined
+    here at first, because the strings come from the user's own remote
+    machine and phone, and done later (issue #53). A measurement showed
+    that [VTE](https://gitlab.gnome.org/GNOME/vte), the terminal widget
+    of GNOME's terminals, obeys these characters in UTF-8 text, so that
+    the model name a phone reports could set the window title. The first
+    reason did not hold either: the sanitizer exists because that text is
+    not trusted. Two things are knowingly left. A terminal in an
+    eight-bit mode obeys the bare bytes 0x80 to 0x9F (measured with VTE
+    in ISO-8859-1 mode); they are not replaced, because in UTF-8 they are
+    parts of letters and the launcher cannot know the terminal's mode.
+    Replacing them where the caller's locale is an eight-bit one was
+    tried and dropped: it covered that terminal only under such a
+    locale, and under a locale name without a codeset it took most
+    non-Latin text off a UTF-8 terminal. And text in an encoding where
+    0xC2 with such a byte after it is a letter, as 32 characters of GBK
+    are, is shown with `?` in their place.
   - *Tab is unbounded without the `timeout` program.* The README says the
     wrapper is used where installed; a bound written in Bash would be a
     second implementation of it.

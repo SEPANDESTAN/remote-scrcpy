@@ -64,7 +64,8 @@ reservation, are converted with `printf`, which evaluates nothing, behind
 their checks; a reply crafted to run a command is stopped by either, and a
 test for each fails only when both are gone. The probe's read timeouts are not
 exercised. The suite also covers the device menu offering only devices that
-are ready, and what reaches which stream: with color forced on, the device
+are ready, that control characters in the model name a phone reports are
+replaced in the device list and in the menu, and what reaches which stream: with color forced on, the device
 list and a connecting run put no terminal escape on standard output, the
 host menu puts nothing there at all, and the automatic color mode follows
 a pseudo-terminal on standard error and on no other stream.
@@ -109,9 +110,13 @@ or none behaves so, it prints a note on standard error, passes without
 those checks, and counts that many fewer. Two more checks, on the warning
 Bash prints for a locale that is not installed, are skipped the same way
 where the C library accepts any locale name
-([musl](https://musl.libc.org/) does). CI generates both locales and fails
-if either does not behave so, which is what makes a green run mean that
-these checks ran. The check that no such range is written in `src/` or
+([musl](https://musl.libc.org/) does). And two checks that the display
+sanitizer gives the same result in every locale need the two kinds of
+locale that would show a difference: an eight-bit one (`en_US.ISO-8859-1`
+and two more are tried) and one that reads the bytes 0xC2 0x9D as a single
+letter (`zh_CN.GBK` and one more). CI generates a locale of each kind
+named here and fails if one of them does not behave so, which is what makes a green run mean
+that these checks ran. The check that no such range is written in `src/` or
 `install.sh` runs everywhere.
 
 ## The integration suite

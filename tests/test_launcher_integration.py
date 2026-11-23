@@ -459,6 +459,28 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertIn("SERIAL_A", result.stdout)
         self.assert_closed()
 
+    def test_control_characters_in_a_model_name_do_not_reach_the_terminal(self):
+        # A phone names its own model. ESC ] and its eight-bit form U+009D,
+        # which arrives as UTF-8, both start a string that sets the window
+        # title; neither may get through, in the list or in the menu.
+        # The locale is set here: the terminal obeys the characters whatever
+        # it is, and Python would otherwise hand the launcher a UTF-8 one,
+        # in which the eight-bit controls are caught by another rule.
+        self.server.devices = [("SERIAL_A", "device", "One\x1b]0;T\x07Phone"),
+                               ("SERIAL_B", "device", "Two\u009d0;T\u009cPhone")]
+        for locale in ("C", "C.UTF-8"):
+            with self.subTest(locale=locale):
+                self.env = {**self.base_env, "LC_ALL": locale}
+                result = self.run_cli(("fixture",), ("--list-devices",))
+                self.assert_success(result)
+                self.assertIn("One?]0;T?Phone", result.stdout)
+                self.assertIn("Two?0;T?Phone", result.stdout)
+                result = self.run_tty(("fixture",), b"q\n")
+                self.assertEqual(result.returncode, 130, result.stdout)
+                self.assertIn("Two?0;T?Phone", result.stdout)
+                for forbidden in ("\x1b]", "\x07", "\u009d", "\u009c"):
+                    self.assertNotIn(forbidden, result.stdout)
+
     def test_host_flag_skips_host_menu_and_serial_flag_skips_device_menu(self):
         result = self.run_cli((), ("--host", "fixture", "--serial", "SERIAL_B"))
         self.assert_success(result)
