@@ -28,7 +28,7 @@ jobs:
       # "Environment"). The second step fails if one of the locales is missing,
       # so that a green run means those checks ran.
       - name: Generate the locales the suites probe for
-        run: sudo locale-gen en_US.UTF-8 tr_TR.UTF-8 en_US.ISO-8859-1
+        run: sudo locale-gen en_US.UTF-8 tr_TR.UTF-8 en_US.ISO-8859-15
 
       - name: Check that the locales behave as the suites need
         shell: bash
@@ -37,8 +37,8 @@ jobs:
           [[ $'\xd9\xa3' =~ ^[0-9]$ ]] || { echo "en_US.UTF-8 does not widen the digit range" >&2; exit 1; }
           LC_ALL=C; LC_ALL=tr_TR.UTF-8
           [[ ! i =~ ^[a-z]$ ]] || { echo "tr_TR.UTF-8 keeps i in the range a-z" >&2; exit 1; }
-          LC_ALL=C; LC_ALL=en_US.ISO-8859-1
-          [[ $'\x9b' == [[:cntrl:]] ]] || { echo "en_US.ISO-8859-1 does not call the byte 0x9B a control character" >&2; exit 1; }
+          LC_ALL=C; LC_ALL=en_US.ISO-8859-15
+          [[ $'\x9b' == [[:cntrl:]] ]] || { echo "en_US.ISO-8859-15 does not call the byte 0x9B a control character" >&2; exit 1; }
 
       - name: Maintenance checks
         run: bash tests/test-maintenance.sh
