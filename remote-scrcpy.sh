@@ -1444,8 +1444,11 @@ _remote-scrcpy-complete-words() {
         --completion=*) COMPREPLY=( $(compgen -W '--completion=bash' -- "$current") ); return ;;
         --ssh-config=*|--adb=*|--remote-adb=*)
             prefix=${current%%=*}=
-            while IFS= read -r value; do COMPREPLY+=("$prefix$value"); done \
-                < <(compgen -f -- "${current#*=}")
+            # A name with whitespace in it would go onto the line unquoted
+            # and become two words, so it is not offered.
+            while IFS= read -r value; do
+                [[ $value == *[[:space:]]* ]] || COMPREPLY+=("$prefix$value")
+            done < <(compgen -f -- "${current#*=}")
             return ;;
         --*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
         -*)
@@ -1473,9 +1476,9 @@ _remote-scrcpy-complete-words() {
         # `myuser@re`: the aliases complete the part after the '@', and the
         # user typed in front of it stays in front of each candidate. An
         # alias that itself contains an '@' completes only as a whole and is
-        # never put behind a user.
+        # never put behind a user. Nothing in front of the '@' is no user.
         typed=$current
-        if [[ $current == *@* ]]; then user=${current%@*}@; current=${current##*@}; fi
+        if [[ $current == ?*@* ]]; then user=${current%@*}@; current=${current##*@}; fi
         (( complete_host != 2 )) || prefix=--host=
         while IFS= read -r value; do
             if [[ -n $user && $value == *@* ]]; then
