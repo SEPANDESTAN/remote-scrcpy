@@ -29,7 +29,7 @@
 # Initialize configuration and clear UI selections before processing arguments.
 # Outputs: SETTINGS_*, DISCOVERED_DEVICE_*, INPUT/display variables; no I/O.
 _initialize-configuration() {
-    APPLICATION_VERSION=3.1.0
+    APPLICATION_VERSION=4.0.0
     # Public environment inputs are read once. CLI flags always override them.
     SETTINGS_SSH_HOST=${REMOTE_SCRCPY_HOST:-}
     SETTINGS_DEVICE_SERIAL=${REMOTE_SCRCPY_SERIAL:-}

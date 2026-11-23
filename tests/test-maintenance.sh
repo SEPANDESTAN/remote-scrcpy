@@ -26,7 +26,7 @@ for module in "$project"/src/*.sh; do
     grep -Fqx "# ===== ${module##*/} =====" "$script" || fail "${module##*/} is not in the bundle"
 done
 passed=$((passed+1))
-check contains "$("$script" --version)" '3.1.0'
+check contains "$("$script" --version)" '4.0.0'
 check contains "$(env -u PATH "$script" --help)" 'USAGE'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
@@ -185,7 +185,7 @@ check contains "$("$script" -ql 2>&1 || true)" 'Unknown launcher option: -ql.'
 check status 2 "$script" -ql
 check status 2 "$script" -x
 # None of the local modes needs HOME.
-check contains "$(env -u HOME "$script" --version)" '3.1.0'
+check contains "$(env -u HOME "$script" --version)" '4.0.0'
 check contains "$(env -u HOME "$script" --help)" 'USAGE'
 check contains "$(env -u HOME "$script" --prerequisites)" 'SITE-SPECIFIC SETUP'
 check contains "$(env -u HOME "$script" --completion bash)" '_complete-remote-scrcpy()'

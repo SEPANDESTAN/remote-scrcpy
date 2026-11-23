@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [4.0.0] — 2026-11-22
 
 ### Added
 - `install.sh`: `--version VERSION` (`-v`) chooses what to download and
@@ -126,6 +126,17 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   always an error, also the same one twice. The refusal of scrcpy options
   next to a mode names the option ("--prerequisites does not take scrcpy
   options.") where it said "Listing modes" for all four.
+- Tab completion offers fewer device serials than before: only those made
+  of ASCII letters, digits and `. _ : @ % + , = -` that do not start with a
+  dash. A device connected by an IPv6 address, whose serial is written
+  `[ADDRESS]:PORT`, is the ordinary kind this leaves out; type it by hand.
+- Tab completion of a host after a user name changes one case: where an
+  SSH alias itself contains an `@`, `ops@<Tab>` used to complete to that
+  alias when it was the only one starting so, and now offers every alias
+  behind the user `ops`.
+- `install.sh --version` refuses a release number written in the digits of
+  another script, which it used to pass on into the download address in
+  some locales.
 
 ## [3.1.0] — 2026-11-22
 
