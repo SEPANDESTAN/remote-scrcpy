@@ -125,6 +125,34 @@ config=$(mktemp)
 trap 'rm -f "$config"; rm -rf "$tools"' EXIT
 printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
+# Standard output is data: with color forced on, by the option or by the
+# environment, none of these modes writes an escape byte to it. (The device
+# list, the menus and a connecting run need more than the bundle; the
+# integration suite checks them.) The configuration is named through the
+# environment, so that its path is not split with the mode's words.
+escape=$'\033'
+export REMOTE_SCRCPY_SSH_CONFIG=$config
+for mode in '--help' '--version' '--prerequisites' '--completion bash' '--list-hosts'; do
+    read -r -a words <<< "$mode"
+    for forced in option environment; do
+        if [[ $forced == option ]]; then
+            output=$("$script" --color=always "${words[@]}" 2>/dev/null) || fail "--color=always ${words[0]} ended with status $?"
+        else
+            output=$(REMOTE_SCRCPY_COLOR=always "$script" "${words[@]}" 2>/dev/null) || fail "REMOTE_SCRCPY_COLOR=always ${words[0]} ended with status $?"
+        fi
+        [[ -n $output ]] || fail "${words[0]} printed nothing with color forced by the $forced"
+        [[ $output != *"$escape"* ]] || fail "${words[0]} wrote a terminal escape to standard output with color forced by the $forced"
+    done
+    passed=$((passed+1))
+done
+unset REMOTE_SCRCPY_SSH_CONFIG
+# --help and --version end while the command line is read, before the styles
+# are set, so color is never on in those two runs; the loop still refuses
+# text that carries an escape for any other reason. For the other three the
+# styles are set, and the two checks below show that the same setting does
+# color a message, which goes to standard error.
+check contains "$("$script" --color=always --non-interactive --list-devices 2>&1 >/dev/null || true)" "$escape"
+check contains "$(REMOTE_SCRCPY_COLOR=always "$script" --non-interactive --list-devices 2>&1 >/dev/null || true)" "$escape"
 # The one-letter options that end the run without connecting print what
 # their long names print, and the help shows every letter beside its long
 # name. That each letter sets what its long name sets, including the ones

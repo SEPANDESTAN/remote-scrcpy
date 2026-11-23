@@ -280,6 +280,49 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         finally:
             os.close(master)
 
+    def run_with_terminal_on(self, streams, input_bytes=b"", options=(), timeout=20):
+        """Run without a host, with a pseudo-terminal on the named standard
+        streams ("stdin", "stdout", "stderr") and a pipe on the others, or
+        nothing on standard input. Returns the status and, as text, what
+        reached standard output and standard error, wherever each one went.
+        """
+        master, slave = pty.openpty()
+        process = subprocess.Popen(
+            self.command((), options), env=self.env, start_new_session=True,
+            stdin=slave if "stdin" in streams else subprocess.DEVNULL,
+            stdout=slave if "stdout" in streams else subprocess.PIPE,
+            stderr=slave if "stderr" in streams else subprocess.PIPE)
+        self.processes.append(process)
+        os.close(slave)
+        terminal = bytearray()
+
+        def drain():
+            # Reading ends with an error once the launcher, the last holder
+            # of the other end, has exited.
+            while True:
+                try:
+                    chunk = os.read(master, 65536)
+                except OSError:
+                    return
+                if not chunk:
+                    return
+                terminal.extend(chunk)
+
+        reader = threading.Thread(target=drain, daemon=True)
+        reader.start()
+        try:
+            if input_bytes:
+                os.write(master, input_bytes)
+            piped_out, piped_err = process.communicate(timeout=timeout)
+            reader.join(timeout=5)
+            self.assertFalse(reader.is_alive(), "the pseudo-terminal was still open after the launcher exited")
+        finally:
+            os.close(master)
+        on_terminal = terminal.decode(errors="replace")
+        return (process.returncode,
+                on_terminal if "stdout" in streams else piped_out.decode(errors="replace"),
+                on_terminal if "stderr" in streams else piped_err.decode(errors="replace"))
+
     def events(self, kind=None, adb=False):
         rows = [json.loads(line) for line in (self.adb_events if adb else self.events_path).read_text().splitlines()]
         return [row for row in rows if kind is None or row.get("kind") == kind]
@@ -429,6 +472,68 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse(self.events("scrcpy_started"))
         self.assert_closed(require_forwards=False)
+
+    def test_device_list_on_stdout_stays_plain_with_color_forced(self):
+        # Standard output is data. With color forced on, the messages on
+        # standard error are colored and the list is not.
+        result = self.run_cli(("fixture",), ("--color", "always", "--list-devices"))
+        self.assert_success(result)
+        self.assertIn("SERIAL_A", result.stdout)
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertIn("\x1b[", result.stderr)
+
+    def test_a_connecting_run_keeps_color_off_stdout(self):
+        result = self.run_cli(options=("--color", "always"))
+        self.assert_success(result)
+        self.assertTrue(self.events("scrcpy_started"))
+        self.assertNotIn("\x1b", result.stdout)
+        self.assertIn("\x1b[", result.stderr)
+        self.assert_closed()
+
+    def test_the_host_menu_writes_nothing_to_stdout(self):
+        # The menu and its prompt are for a person: with a terminal to type
+        # on and a pipe on standard output, the pipe stays empty.
+        status, out, err = self.run_with_terminal_on(("stdin", "stderr"), b"q\n", ("--color", "always"))
+        self.assertEqual(status, 130, err)
+        self.assertIn("Quit", err)
+        self.assertEqual(out, "")
+        self.assertFalse(self.events(adb=True))
+
+    def test_auto_color_asks_standard_error_and_no_other_stream(self):
+        # A run without a host and without a menu ends with a message on
+        # standard error. Whether it is colored depends on that stream alone.
+        self.env = {**self.base_env, "TERM": "xterm"}
+        status, _, err = self.run_with_terminal_on(("stderr",), options=("--non-interactive",))
+        self.assertEqual(status, 2, err)
+        self.assertIn("Missing SSH host", err)
+        self.assertIn("\x1b[", err)
+        status, _, err = self.run_with_terminal_on(("stdin", "stdout"), options=("--non-interactive",))
+        self.assertEqual(status, 2, err)
+        self.assertIn("Missing SSH host", err)
+        self.assertNotIn("\x1b", err)
+        self.assertFalse(self.events(adb=True))
+
+    def test_auto_color_follows_the_terminal_and_no_color(self):
+        # The one place where the launcher's own terminal test runs: the fast
+        # suites answer for it. Quitting the host menu ends the run before any
+        # connection.
+        def menu_output(**environment):
+            self.env = {**self.base_env, "TERM": "xterm", **environment}
+            result = self.run_tty((), b"q\n")
+            self.assertEqual(result.returncode, 130, result.stdout)
+            self.assertIn("Quit", result.stdout)
+            return result.stdout
+        self.assertIn("\x1b[", menu_output())
+        self.assertNotIn("\x1b", menu_output(NO_COLOR="1"))
+        self.assertIn("\x1b[", menu_output(NO_COLOR=""))
+        self.assertNotIn("\x1b", menu_output(TERM="dumb"))
+        # Without a terminal the same mode does not color.
+        self.env = {**self.base_env, "TERM": "xterm"}
+        result = self.run_cli((), ("--non-interactive",))
+        self.assertEqual(result.returncode, 2)
+        self.assertNotIn("\x1b", result.stderr)
+        # No run above got as far as a connection.
+        self.assertFalse(self.events(adb=True))
 
     def test_terminal_eof_is_a_clean_cancellation(self):
         result = self.run_tty(("fixture",), b"\x04")

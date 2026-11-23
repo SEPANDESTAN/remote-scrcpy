@@ -6,6 +6,11 @@
 # them off. No cursor movement, raw input mode, external UI program or
 # terminal database is involved.
 
+# Whether the messages for a person go to a terminal: status 0 when standard
+# error is one, 1 when it is not. A function of its own so that a test can
+# answer for it without having a terminal.
+_stderr-is-terminal() { [[ -t 2 ]]; }
+
 # Set safe color and decoration variables for human stderr.
 # Uses terminal, locale, SETTINGS_COLOR_MODE, SETTINGS_ASCII_ONLY and NO_COLOR.
 _initialize-terminal-styles() {
@@ -14,7 +19,7 @@ _initialize-terminal-styles() {
     DISPLAY_COLOR_SUCCESS= DISPLAY_COLOR_WARNING= DISPLAY_COLOR_ERROR= DISPLAY_COLOR_INFO=
     DISPLAY_SYMBOL_SECTION='>' DISPLAY_SYMBOL_PROMPT='>' DISPLAY_SYMBOL_SUCCESS='+'
     DISPLAY_SYMBOL_WARNING='!' DISPLAY_SYMBOL_ERROR='x' DISPLAY_SYMBOL_INFO='*'
-    if [[ -t 2 && -n ${TERM:-} && $TERM != dumb ]]; then terminal=1; fi
+    if _stderr-is-terminal && [[ -n ${TERM:-} && $TERM != dumb ]]; then terminal=1; fi
 
     # NO_COLOR is a default for programs that color on their own; a setting
     # made for this program overrides it (https://no-color.org). So "always",
