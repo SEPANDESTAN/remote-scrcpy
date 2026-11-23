@@ -1375,6 +1375,15 @@ _remote-scrcpy-quote-remote-argument() {
 # a read-only ADB inventory query, not a scrcpy connection/tunnel setup.
 _remote-scrcpy-query-device-serials() {
     local host=$1 config=$2 remote_adb=$3 limit=$4 line serial state
+    # Bash puts a candidate on the command line as it is, unquoted, and the
+    # serials come from the remote. Only a serial made of these characters
+    # is offered: what serials are made of (letters, digits, and the marks
+    # of an address, an emulator or a device found on the network), and
+    # nothing that the shell or the terminal acts on. The characters are
+    # written out because a range follows the locale. (With nocasematch
+    # set in the user's shell, the few letters of other scripts that fold
+    # to an ASCII one pass as well; they are letters and do no harm.)
+    local plain=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._:@%+,=-
     local -a ssh_command=(ssh -T -o BatchMode=yes -o NumberOfPasswordPrompts=0
         -o ConnectTimeout=3 -o ConnectionAttempts=1
         -o ServerAliveInterval=2 -o ServerAliveCountMax=1)
@@ -1389,7 +1398,7 @@ _remote-scrcpy-query-device-serials() {
     while IFS= read -r line; do
         [[ -n $line && $line != 'List of devices attached'* && $line != \** ]] || continue
         read -r serial state _ <<< "$line"
-        [[ $state == device && -n $serial ]] && printf '%s\n' "$serial"
+        [[ $state == device && -n $serial && $serial != -* && $serial != *[!$plain]* ]] && printf '%s\n' "$serial"
     # The lookup must not read the terminal: keys typed while it runs belong
     # to the shell, and ssh would swallow them and send them to the remote.
     done < <("${bounded_command[@]}" 2>/dev/null </dev/null)

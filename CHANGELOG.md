@@ -61,6 +61,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   directly now (#38).
 
 ### Fixed
+- Tab completion offers a device serial only when it is made of letters,
+  digits and `. _ : @ % + , = -`. Serials come from the remote computer,
+  and Bash puts a completed word on the command line unquoted: a remote
+  that reported a serial such as `X$(command)` got that text onto the
+  line, where pressing Enter would have run the command here. A serial
+  with other characters, or one that starts with a dash, can still be
+  typed by hand (#55).
 - Text from the phone and the remote is cleaned of the eight-bit control
   characters (U+0080 to U+009F) as well, before it is shown. They arrive
   as UTF-8, where the cleaning let them through, and some terminals obey
