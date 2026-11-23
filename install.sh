@@ -86,9 +86,12 @@ main() {
         shift
     done
     # The version is a tag or a branch of the repository; a bare release
-    # number is the tag with a "v" in front.
-    [[ ! $ref =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ref=v$ref
-    if [[ -n $ref ]] && { [[ ! $ref =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]] || [[ $ref == *..* ]]; }; then
+    # number is the tag with a "v" in front. The letters and digits are
+    # written out because a range follows the locale: 0-9 takes in the
+    # digits of other scripts in some, and a-z leaves out "i" in Turkish.
+    local digits=0123456789 letters=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+    [[ ! $ref =~ ^[$digits]+\.[$digits]+\.[$digits]+$ ]] || ref=v$ref
+    if [[ -n $ref ]] && { [[ ! $ref =~ ^[$letters$digits][$letters$digits._/-]*$ ]] || [[ $ref == *..* ]]; }; then
         die "not a version, tag or branch name: $ref" 2
     fi
     # The shell expands ~ in "--dir ~/bin" but not in "--dir=~/bin".

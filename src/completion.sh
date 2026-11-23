@@ -166,7 +166,7 @@ _remote-scrcpy-complete-words() {
     fi
     if (( complete_serial )) && [[ ${REMOTE_SCRCPY_COMPLETE_DEVICES:-1} != 0 && -n $host ]]; then
         local limit=${REMOTE_SCRCPY_COMPLETION_TIMEOUT:-6}
-        [[ $limit =~ ^[1-9][0-9]?$ ]] || limit=6
+        [[ $limit =~ ^[123456789][0123456789]?$ ]] || limit=6
         while IFS= read -r value; do
             [[ $value == "$current"* ]] || continue
             if (( complete_serial == 2 )); then COMPREPLY+=("--serial=$value")

@@ -49,6 +49,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   directly now (#38).
 
 ### Fixed
+- A number written in the digits of another script (Arabic-Indic, for one)
+  is treated like any other text that is not a number. In some locales,
+  `en_US.UTF-8` among them, the launcher's checks let such digits through,
+  and the run then ended in a Bash arithmetic error. Now a remote ADB port
+  given that way is a usage error with status 2 (it was the Bash error with
+  status 1), the device menu asks again, and the host menu takes the text
+  as the name of a destination, as it does in other locales. Every number
+  check in the launcher and in `install.sh` names the ten ASCII digits
+  (#50).
+- `install.sh --version main` is no longer refused under a Turkish locale,
+  where the letter range the check used does not contain `i`; a name with
+  `y` met the same under a Latvian one. The check names its letters.
 - A missing `adb` or `scrcpy` is reported with every way to give its path:
   `--adb`, `REMOTE_SCRCPY_ADB` or the fallback `ADB` for adb, and
   `REMOTE_SCRCPY_SCRCPY` or the fallback `SCRCPY` for scrcpy, which has no

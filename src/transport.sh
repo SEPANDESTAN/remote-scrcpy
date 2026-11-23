@@ -175,7 +175,7 @@ _open-remote-connection() {
     SESSION_LOCAL_ADB_TUNNEL_PORT=$SESSION_NEW_FORWARD_PORT
 
     version=$("$SETTINGS_LOCAL_ADB_EXECUTABLE" version) || _exit-with-error 'Could not read the local ADB version.'
-    if [[ $version =~ Android\ Debug\ Bridge\ version\ 1\.0\.([0-9]+) ]]; then
+    if [[ $version =~ Android\ Debug\ Bridge\ version\ 1\.0\.([0123456789]+) ]]; then
         SESSION_LOCAL_ADB_PROTOCOL=$((10#${BASH_REMATCH[1]}))
     else
         _exit-with-error 'Could not determine the local ADB protocol version. Check the configured ADB executable.'
@@ -224,7 +224,7 @@ _reserve-device-forwarding-port() {
     # evaluates nothing, behind its check; leading zeros go first, because
     # printf would read them as octal. Only the result reaches arithmetic.
     number=${port#"${port%%[!0]*}"}
-    if [[ ! $port =~ ^[0-9]{1,5}$ ]] || ! printf -v number '%d' "${number:-0}" 2>/dev/null \
+    if [[ ! $port =~ ^[0123456789]{1,5}$ ]] || ! printf -v number '%d' "${number:-0}" 2>/dev/null \
         || ((number < 1 || number > 65535)); then
         _exit-with-error 'ADB did not return a valid allocated TCP port.'
     fi
@@ -307,7 +307,7 @@ _cleanup-remote-connection() {
         if listing=$(_run-remote-adb-client forward --list 2>/dev/null); then
             while read -r serial endpoint target extra; do
                 if [[ $serial == "$SETTINGS_DEVICE_SERIAL" && $target == "$SESSION_ADB_PORT_RESERVATION" \
-                    && $endpoint =~ ^tcp:[0-9]+$ && -z $extra ]]; then
+                    && $endpoint =~ ^tcp:[0123456789]+$ && -z $extra ]]; then
                     # Only this session's own, still unused reservation
                     # matches. A forward that scrcpy has rebound to its own
                     # socket is deliberately left alone, even if scrcpy died

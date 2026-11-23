@@ -213,7 +213,7 @@ _validate-configuration() {
     if [[ $SETTINGS_DEVICE_SERIAL == *[[:space:][:cntrl:]]* ]]; then
         _exit-with-error 'A device serial cannot contain whitespace or control characters.' 2
     fi
-    if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0-9]{1,5}$ ]]; then
+    if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0123456789]{1,5}$ ]]; then
         _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     SETTINGS_REMOTE_ADB_SERVER_PORT=$((10#$SETTINGS_REMOTE_ADB_SERVER_PORT))
@@ -748,7 +748,7 @@ _prompt-for-ssh-host() {
                 _print-warning 'Enter a nonempty SSH destination without whitespace.'
                 continue ;;
         esac
-        if [[ $choice =~ ^[0-9]+$ ]]; then
+        if [[ $choice =~ ^[0123456789]+$ ]]; then
             # A huge menu number is invalid, not an implicit numeric hostname.
             if (( ${#choice} <= 6 )); then
                 index=$((10#$choice - 1))
@@ -875,7 +875,7 @@ _prompt-for-device() {
         selected=
         # A displayed menu number always means that row. The explicit serial
         # entry path also supports short numeric serials that overlap menu numbers.
-        if (( ! exact )) && [[ $choice =~ ^[0-9]{1,6}$ ]]; then
+        if (( ! exact )) && [[ $choice =~ ^[0123456789]{1,6}$ ]]; then
             index=$((10#$choice - 1))
             if (( index >= 0 && index < ${#selectable[@]} )); then selected=${selectable[index]}; fi
         fi
@@ -1070,7 +1070,7 @@ _open-remote-connection() {
     SESSION_LOCAL_ADB_TUNNEL_PORT=$SESSION_NEW_FORWARD_PORT
 
     version=$("$SETTINGS_LOCAL_ADB_EXECUTABLE" version) || _exit-with-error 'Could not read the local ADB version.'
-    if [[ $version =~ Android\ Debug\ Bridge\ version\ 1\.0\.([0-9]+) ]]; then
+    if [[ $version =~ Android\ Debug\ Bridge\ version\ 1\.0\.([0123456789]+) ]]; then
         SESSION_LOCAL_ADB_PROTOCOL=$((10#${BASH_REMATCH[1]}))
     else
         _exit-with-error 'Could not determine the local ADB protocol version. Check the configured ADB executable.'
@@ -1119,7 +1119,7 @@ _reserve-device-forwarding-port() {
     # evaluates nothing, behind its check; leading zeros go first, because
     # printf would read them as octal. Only the result reaches arithmetic.
     number=${port#"${port%%[!0]*}"}
-    if [[ ! $port =~ ^[0-9]{1,5}$ ]] || ! printf -v number '%d' "${number:-0}" 2>/dev/null \
+    if [[ ! $port =~ ^[0123456789]{1,5}$ ]] || ! printf -v number '%d' "${number:-0}" 2>/dev/null \
         || ((number < 1 || number > 65535)); then
         _exit-with-error 'ADB did not return a valid allocated TCP port.'
     fi
@@ -1202,7 +1202,7 @@ _cleanup-remote-connection() {
         if listing=$(_run-remote-adb-client forward --list 2>/dev/null); then
             while read -r serial endpoint target extra; do
                 if [[ $serial == "$SETTINGS_DEVICE_SERIAL" && $target == "$SESSION_ADB_PORT_RESERVATION" \
-                    && $endpoint =~ ^tcp:[0-9]+$ && -z $extra ]]; then
+                    && $endpoint =~ ^tcp:[0123456789]+$ && -z $extra ]]; then
                     # Only this session's own, still unused reservation
                     # matches. A forward that scrcpy has rebound to its own
                     # socket is deliberately left alone, even if scrcpy died
@@ -1491,7 +1491,7 @@ _remote-scrcpy-complete-words() {
     fi
     if (( complete_serial )) && [[ ${REMOTE_SCRCPY_COMPLETE_DEVICES:-1} != 0 && -n $host ]]; then
         local limit=${REMOTE_SCRCPY_COMPLETION_TIMEOUT:-6}
-        [[ $limit =~ ^[1-9][0-9]?$ ]] || limit=6
+        [[ $limit =~ ^[123456789][0123456789]?$ ]] || limit=6
         while IFS= read -r value; do
             [[ $value == "$current"* ]] || continue
             if (( complete_serial == 2 )); then COMPREPLY+=("--serial=$value")

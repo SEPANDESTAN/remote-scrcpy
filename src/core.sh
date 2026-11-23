@@ -165,7 +165,7 @@ _validate-configuration() {
     if [[ $SETTINGS_DEVICE_SERIAL == *[[:space:][:cntrl:]]* ]]; then
         _exit-with-error 'A device serial cannot contain whitespace or control characters.' 2
     fi
-    if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0-9]{1,5}$ ]]; then
+    if [[ ! $SETTINGS_REMOTE_ADB_SERVER_PORT =~ ^[0123456789]{1,5}$ ]]; then
         _exit-with-error 'The remote ADB port must be an integer from 1 to 65535 (--adb-port, REMOTE_SCRCPY_ADB_PORT, or the fallback ADB_PORT).' 2
     fi
     SETTINGS_REMOTE_ADB_SERVER_PORT=$((10#$SETTINGS_REMOTE_ADB_SERVER_PORT))

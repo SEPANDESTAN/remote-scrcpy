@@ -310,6 +310,42 @@ check equals "$(downloaded_version --ref v3.0.2)" 'v3.0.2'
 check equals "$(downloaded_version --ref=3.0.2)" 'v3.0.2'
 check equals "$(downloaded_version --version main)" 'main'
 check equals "$(downloaded_version --version release/next)" 'release/next'
+# The check on a version writes its letters and digits out, because a range
+# follows the locale. Each of the two checks below needs a locale in which a
+# range misbehaves, or it could not fail; C is set first so that a locale
+# that cannot be set does not pass for one.
+other_digit=$'\xd9\xa3'   # ARABIC-INDIC DIGIT THREE
+wide_locale='' narrow_locale=''
+for candidate in en_US.UTF-8 en_GB.UTF-8 de_DE.UTF-8; do
+    if (LC_ALL=C; LC_ALL=$candidate; [[ $other_digit =~ ^[0-9]$ ]]) 2>/dev/null; then wide_locale=$candidate; break; fi
+done
+for candidate in tr_TR.UTF-8 az_AZ.UTF-8; do
+    if (LC_ALL=C; LC_ALL=$candidate; [[ ! i =~ ^[a-z]$ ]]) 2>/dev/null; then narrow_locale=$candidate; break; fi
+done
+if [[ -n $wide_locale ]]; then
+    # A release number in the digits of another script is not a version.
+    extra_environment=(LC_ALL="$wide_locale")
+    : > "$sandbox/curl.log"
+    run "$bin" "$installer" --dir "$sandbox/piped" --version "$other_digit.$other_digit.$other_digit"
+    extra_environment=()
+    [[ $result == 2 ]] || fail "under $wide_locale a release number in other digits ended with status $result instead of 2"
+    passed=$((passed+1))
+    check contains "$messages" 'not a version, tag or branch name'
+    [[ ! -s $sandbox/curl.log ]] || fail "under $wide_locale a release number in other digits was downloaded: $(< "$sandbox/curl.log")"
+    passed=$((passed+1))
+else
+    printf 'note: no installed locale widens the digit range; the version check in such a locale was not run.\n' >&2
+fi
+if [[ -n $narrow_locale ]]; then
+    # Where the range a-z has no "i", the branch main is still a version.
+    extra_environment=(LC_ALL="$narrow_locale")
+    downloaded=$(downloaded_version --version main)
+    extra_environment=()
+    [[ $downloaded == main ]] || fail "under $narrow_locale, --version main downloaded '$downloaded' and not main"
+    passed=$((passed+1))
+else
+    printf 'note: no installed locale drops a letter from the range a-z; the version check in such a locale was not run.\n' >&2
+fi
 check equals "$(downloaded_version --version 3.0)" '3.0'
 # Only a value that is a release number and nothing more gets the "v".
 check equals "$(downloaded_version --version 3.0.2-rc1)" '3.0.2-rc1'
