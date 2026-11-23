@@ -591,8 +591,8 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assert_closed()
 
     def test_non_hex_length_in_protocol_response_is_rejected_by_the_probe(self):
-        # Without the hex check the length would only fail later, inside shell
-        # arithmetic, with an interpreter error instead of the probe's verdict.
+        # The hex check and the conversion behind it both refuse this length,
+        # with the probe's verdict and not an interpreter error.
         self.assert_probe_rejects(b"OKAY00x40029", "truncated or invalid response length")
 
     def test_probe_rejects_a_reply_that_ends_inside_its_status(self):
@@ -616,18 +616,56 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assert_probe_rejects(b"FAIL00040029", "rejected its version query")
 
     def test_probe_never_evaluates_the_version_payload(self):
-        # The payload is converted with shell arithmetic, and Bash arithmetic runs
-        # a command substitution inside an array subscript. The hex check before
-        # the conversion is all that keeps a reply like this one from running a
-        # command on the viewing computer. The subscripted name has to be a set
-        # variable: under `set -u` an unset one aborts before the substitution.
-        # The payload starts and ends with a hex digit, so a check that lost
-        # either of its anchors lets it through as well.
+        # Bash arithmetic runs a command substitution inside an array subscript,
+        # so a payload like this one would run a command on the viewing computer
+        # if it ever reached `$(( ))`. The probe converts with printf, which
+        # evaluates nothing, behind a hex check; either alone stops this reply,
+        # and this test fails only when both are gone. The subscripted name has
+        # to be a set variable: under `set -u` an unset one aborts before the
+        # substitution. The payload starts and ends with a hex digit, so a check
+        # that lost either of its anchors lets it through as well.
         sentinel = self.work / "PAYLOAD_MUST_NOT_RUN"
         sentinel.unlink(missing_ok=True)
         payload = f"0+BASH_VERSINFO[$(touch {sentinel})]+0".encode()
         reply = b"OKAY" + f"{len(payload):04x}".encode() + payload
         self.assert_probe_rejects(reply, "invalid protocol version", sentinel=sentinel)
+
+    def test_probe_rejects_a_version_longer_than_eight_hex_digits(self):
+        # printf would convert nine digits without complaint; the bound belongs
+        # to the check alone. A protocol version does not need more than 32 bits.
+        self.assert_probe_rejects(b"OKAY0009000000029", "invalid protocol version")
+
+    def assert_reserved_port_refused(self, reported, sentinel=None):
+        """Make the server report `reported` for the allocated port.
+
+        The launcher must stop before scrcpy with its own verdict, release what
+        it held, and not create `sentinel`.
+        """
+        self.server.forward_port_response = reported
+        result = self.run_cli()
+        if sentinel is not None:
+            self.assertFalse(sentinel.exists(),
+                             "the launcher executed text taken from the ADB forward reply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ADB did not return a valid allocated TCP port", result.stderr)
+        self.assertFalse(self.events("scrcpy_started"))
+        self.assertFalse(self.server.forwards, "the reservation was left on the server")
+        self.assert_closed()
+
+    def test_reserved_port_must_be_a_port_number(self):
+        # The last two are what the conversion alone would take for port 80;
+        # only the check in front refuses them.
+        for reported in ("0", "65536", "123456", "12a", "", "-1", "0x50", "+80", " 80"):
+            with self.subTest(reported=reported):
+                self.assert_reserved_port_refused(reported)
+
+    def test_reserved_port_is_never_evaluated(self):
+        # The same hazard as in the version probe: the text that names the
+        # port comes from the remote server, and shell arithmetic would run
+        # the command in it. The check and the printf conversion each stop it.
+        sentinel = self.work / "PORT_MUST_NOT_RUN"
+        sentinel.unlink(missing_ok=True)
+        self.assert_reserved_port_refused(f"1+BASH_VERSINFO[$(touch {sentinel})]+1", sentinel=sentinel)
 
     def test_failed_remote_startup_cleans_transport(self):
         self.fail_start_marker.touch()

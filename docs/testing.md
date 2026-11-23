@@ -49,14 +49,19 @@ device-state filter in `src/ui.sh`, or the `auto` color mode on a terminal (the 
 have none; issue #27).
 The 2026-11-06 review proved it by mutation (table in
 `review-2026-11-06.md`). The integration suite below is what covers the
-transport, and CI runs it. It catches each of the seven mutations listed in
-issue #3 when they are planted one at a time, and each half of the
-socket-form mutation alone. A module dropped from the build list is caught
-by the maintenance suite, whichever module it is. Each check the protocol probe
-makes on the content of a reply has a test of its own, including the hex
-check on the version payload: that payload comes from the remote and is
-converted with shell arithmetic, and the check is what keeps anything but
-hex digits away from the conversion. The probe's read timeouts are not
+transport, and CI runs it. Of the seven mutations listed in issue #3 it
+catches six when they are planted one at a time, and each half of the
+socket-form mutation alone. The seventh, removing the hex check on the
+length of the version reply, is no longer a defect a test can see: the
+conversion behind the check refuses the same input with the same message. A
+module dropped from the build list is caught by the maintenance suite,
+whichever module it is. Each check the protocol probe makes on the content
+of a reply has a test of its own, including the hex check on the version
+payload and its bound of eight digits. Numbers that come from the remote,
+the two hex fields of that reply and the port the server reports for a
+reservation, are converted with `printf`, which evaluates nothing, behind
+their checks; a reply crafted to run a command is stopped by either, and a
+test for each fails only when both are gone. The probe's read timeouts are not
 exercised. The suite also covers the device menu offering only devices that
 are ready.
 
