@@ -29,7 +29,33 @@ OFFLINE offline
 Z99999 device product:other model:Another
 UNAUTH unauthorized
 192.0.2.10:5555 device product:test model:Network_Phone
+adb-R58M12345-AbCdEf._adb-tls-connect._tcp device product:test model:Found_Phone
+HOSTILE$(touch${IFS}RAN) device product:test model:x
+DOLLAR$x device product:test model:x
+PAREN(x) device product:test model:x
+BRACE{x} device product:test model:x
+SEMI;x device product:test model:x
+TICK`x` device product:test model:x
+STAR* device product:test model:x
+QUERY?x device product:test model:x
+QUOTE'x device product:test model:x
+DOUBLE"x device product:test model:x
+AMP&x device product:test model:x
+PIPE|x device product:test model:x
+LESS<x device product:test model:x
+MORE>x device product:test model:x
+BRACKET[a] device product:test model:x
+BACK\slash device product:test model:x
+BANG!x device product:test model:x
+HASH#x device product:test model:x
+TILDE~x device product:test model:x
+-dash device product:test model:x
+Sérial device product:test model:x
 DEVICES
+# Two more that cannot be written in the list above: an escape sequence and
+# an eight-bit control character as UTF-8.
+printf 'ESC\033[31mRED device product:test model:x\n'
+printf 'CSI\302\23331mRED device product:test model:x\n'
 SSH
 chmod +x "$sandbox/bin/ssh"
 # Keep timeout out of PATH intentionally: SSH options should still bound connects.
@@ -96,7 +122,9 @@ assert_eq 'host equals' 'remote-host' "${COMPREPLY[*]}"
 complete_words remote-host --serial=D
 assert_eq 'serial equals' 'DEVICE1234567890' "${COMPREPLY[*]}"
 complete_words remote-host --serial=
-assert_eq 'serial equals, nothing typed' 'DEVICE1234567890 Z99999 192.0.2.10:5555' "${COMPREPLY[*]}"
+# Every serial the fake reports as ready and that is made of plain
+# characters, and none of the others (the checks on those follow below).
+assert_eq 'serial equals, nothing typed' 'DEVICE1234567890 Z99999 192.0.2.10:5555 adb-R58M12345-AbCdEf._adb-tls-connect._tcp' "${COMPREPLY[*]}"
 complete_words --color=a
 assert_eq 'color equals' 'auto always' "${COMPREPLY[*]}"
 complete_words --completion=
@@ -126,6 +154,21 @@ complete_words -l remote-host D
 assert_eq 'a short option does not shift the positions' 'remote-host' "$(queried_host)"
 complete_words remote-host 192.0.2.10:5
 assert_eq 'serial with a colon' '5555' "${COMPREPLY[*]}"
+complete_words remote-host adb-
+assert_eq 'the serial of a device found on the network' 'adb-R58M12345-AbCdEf._adb-tls-connect._tcp' "${COMPREPLY[*]}"
+# Bash puts a candidate on the command line unquoted, and the serials come
+# from the remote. One that holds shell syntax, a control character or
+# anything else outside the plain set is not offered, however it is asked
+# for; the lookup itself still happens. Apart from the first, each serial
+# in the fake's list holds one such character, so that each is refused for
+# that character alone.
+for typed in HOSTILE DOLLAR PAREN BRACE SEMI TICK STAR QUERY QUOTE DOUBLE AMP PIPE LESS MORE BRACKET BACK BANG HASH TILDE ESC CSI S; do
+    complete_words remote-host "$typed"
+    assert_eq "a serial that is not plain is not offered ($typed)" '' "${COMPREPLY[*]}"
+    assert_eq "the lookup for $typed went to the host" 'remote-host' "$(queried_host)"
+done
+complete_words remote-host --serial -
+assert_eq 'a serial that starts with a dash is not offered' '' "${COMPREPLY[*]}"
 # With two break characters in the word, the cut is at the last one.
 complete_words remote-host --serial=192.0.2.10:5
 assert_eq 'serial with a colon after --serial=' '5555' "${COMPREPLY[*]}"
