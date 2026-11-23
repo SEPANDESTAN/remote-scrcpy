@@ -30,7 +30,7 @@ bash src/build.sh /tmp/rebuilt.sh && diff -u /tmp/rebuilt.sh remote-scrcpy.sh
 
 | Suite | Runs against | Covers |
 |---|---|---|
-| `test-maintenance.sh` | the bundle | that every module under `src/` is in the bundle, `src/build.sh` usage and option errors, version string, help/prerequisites/completion output, that no mode writes a terminal escape to standard output with color forced on, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
+| `test-maintenance.sh` | the bundle | that every module under `src/` is in the bundle, `src/build.sh` usage and option errors, version string, help/prerequisites/completion output, that the help, version, prerequisites, completion and host-listing modes write no terminal escape to standard output with color forced on, bundle header text, exit codes for bad options, precedence, host listing, emitted completion function, regression greps (no `gum`, `--ui=`, `base64 --decode`, no `RS_*`) |
 | `test-completion.sh` | the bundle | alias and serial completion with a fake `ssh` on `PATH`, fed words split the way an interactive Bash splits them (at `=`, `@` and `:`); `--host=`/`--serial=` forms, file names after `--ssh-config=`, `--adb=` and `--remote-adb=`, aliases after `user@`, serials with a colon, which host a lookup contacts, that a lookup reads nothing from its input, positions with `REMOTE_SCRCPY_HOST` exported, `REMOTE_SCRCPY_COMPLETE_DEVICES=0` |
 | `test-cli-ui-review.sh` | sources `src/core.sh`, `cli.sh`, `presentation.sh`, `ui.sh` | argument parsing, validation errors, numbered menus and exact-serial entry with stubbed prompts, whether each color mode colors and which marks are used, with and without `NO_COLOR`, on a terminal and off one (the suite answers for the launcher's terminal test, `_stderr-is-terminal`) |
 | `test-ssh-config.sh` | sources `src/ssh-config.sh` | `Host`/`Include` discovery fixtures, quoting, negation, wildcards, recursion |
@@ -44,13 +44,13 @@ rebuild before testing** a `src/` change, or the former test stale code.
 `src/transport.sh` (SSH master, port leases, ADB protocol probe, remote
 start-server, scrcpy launch, signal escalation, cleanup) has no coverage in
 the fast suites, and neither do the long-option branch of
-`_validate-scrcpy-arguments` (its short-flag branch is covered), or the
-device-state filter in `src/ui.sh`. The launcher's own test for a terminal
-on standard error is one line that the CLI suite replaces; the integration
-suite runs it for real, on a pseudo-terminal.
+`_validate-scrcpy-arguments` (its short-flag branch is covered) or the
+device-state filter in `src/ui.sh`.
 The 2026-11-06 review proved it by mutation (table in
-`review-2026-11-06.md`). The integration suite below is what covers the
-transport, and CI runs it. Of the seven mutations listed in issue #3 it
+`review-2026-11-06.md`). The launcher's own test for a terminal on standard
+error is one line that the CLI suite replaces; the integration suite runs
+it for real, on a pseudo-terminal. The integration suite below is what
+covers the transport, and CI runs it. Of the seven mutations listed in issue #3 it
 catches six when they are planted one at a time, and each half of the
 socket-form mutation alone. The seventh, removing the hex check on the
 length of the version reply, is no longer a defect a test can see: the
@@ -64,8 +64,10 @@ reservation, are converted with `printf`, which evaluates nothing, behind
 their checks; a reply crafted to run a command is stopped by either, and a
 test for each fails only when both are gone. The probe's read timeouts are not
 exercised. The suite also covers the device menu offering only devices that
-are ready, the device list staying plain on standard output with color
-forced on, and the automatic color mode on a pseudo-terminal.
+are ready, and what reaches which stream: with color forced on, the device
+list and a connecting run put no terminal escape on standard output, the
+host menu puts nothing there at all, and the automatic color mode follows
+a pseudo-terminal on standard error and on no other stream.
 
 ### Environment
 

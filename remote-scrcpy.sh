@@ -638,8 +638,9 @@ _discover-ssh-host-aliases() (
 # them off. No cursor movement, raw input mode, external UI program or
 # terminal database is involved.
 
-# Whether the messages for a person go to a terminal. A function of its own
-# so that a test can answer for it without having a terminal.
+# Whether the messages for a person go to a terminal: status 0 when standard
+# error is one, 1 when it is not. A function of its own so that a test can
+# answer for it without having a terminal.
 _stderr-is-terminal() { [[ -t 2 ]]; }
 
 # Set safe color and decoration variables for human stderr.

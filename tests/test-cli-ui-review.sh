@@ -101,14 +101,19 @@ color_state() (
 )
 
 # The mark in front of a success message. Args: what pretend_stderr takes
-# first, the locale name, and 1 for --ascii. The launcher reads the locale's
-# name only, so the locale need not be installed.
+# first, 1 for --ascii, then the locale as NAME=value words for LC_ALL,
+# LC_CTYPE and LANG; a variable not given is unset. The launcher reads the
+# locale's name only, so the locale need not be installed.
 success_symbol() (
+    local assignment
     _initialize-configuration
-    SETTINGS_ASCII_ONLY=$3
+    SETTINGS_ASCII_ONLY=$2
     pretend_stderr "$1"
-    unset LC_CTYPE LANG
-    { LC_ALL=$2; } 2>/dev/null
+    shift 2
+    {
+        unset LC_ALL LC_CTYPE LANG
+        for assignment in "$@"; do export "${assignment?}"; done
+    } 2>/dev/null
     _initialize-terminal-styles 2>/dev/null
     printf '%s' "$DISPLAY_SYMBOL_SUCCESS"
 )
@@ -329,10 +334,17 @@ expect_output 'Auto does not color without TERM' 'off' color_state auto '' termi
 expect_output 'Never stays uncolored on a terminal' 'off' color_state never '' terminal
 expect_output 'Always colors a dumb terminal too' 'on' color_state always '' terminal dumb
 # The symbols need a terminal and a UTF-8 locale, and --ascii turns them off.
-expect_output 'A terminal in a UTF-8 locale gets the Unicode marks' '✓' success_symbol terminal C.UTF-8 0
-expect_output 'A locale that is not UTF-8 gets the ASCII marks' '+' success_symbol terminal C 0
-expect_output '--ascii gets the ASCII marks on any terminal' '+' success_symbol terminal C.UTF-8 1
-expect_output 'Without a terminal the marks are ASCII' '+' success_symbol none C.UTF-8 0
+expect_output 'A terminal in a UTF-8 locale gets the Unicode marks' '✓' success_symbol terminal 0 LC_ALL=C.UTF-8
+expect_output 'A locale that is not UTF-8 gets the ASCII marks' '+' success_symbol terminal 0 LC_ALL=C
+expect_output 'No locale at all gets the ASCII marks' '+' success_symbol terminal 0
+expect_output '--ascii gets the ASCII marks on any terminal' '+' success_symbol terminal 1 LC_ALL=C.UTF-8
+expect_output 'Without a terminal the marks are ASCII' '+' success_symbol none 0 LC_ALL=C.UTF-8
+# The locale is read as the C library reads it: LC_ALL, then LC_CTYPE, then LANG.
+expect_output 'LC_CTYPE alone names the locale' '✓' success_symbol terminal 0 LC_CTYPE=C.UTF-8
+expect_output 'LANG alone names the locale' '✓' success_symbol terminal 0 LANG=C.UTF-8
+expect_output 'LC_ALL comes before LC_CTYPE and LANG' '+' success_symbol terminal 0 LC_ALL=C LC_CTYPE=C.UTF-8 LANG=C.UTF-8
+expect_output 'LC_CTYPE comes before LANG' '+' success_symbol terminal 0 LC_CTYPE=C LANG=C.UTF-8
+expect_output 'LC_CTYPE comes before LANG, the other way round' '✓' success_symbol terminal 0 LC_CTYPE=C.UTF-8 LANG=C
 expect_output 'Color option retains host-only continuation' 'never|0|remote-host|' \
     parse_presentation --color never remote-host
 expect_output 'Equals color and ASCII options retain explicit device' 'always|1|remote-host|PHONE_A' \
