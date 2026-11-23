@@ -41,7 +41,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Tests
 - `docs/testing.md` says that two runs of the integration suite must not
   share a machine at the same time, and why: the one that finishes first
-  removes the `/run/sshd` directory the other still needs (#18).
+  removes the `/run/sshd` directory, which the other still needs where
+  `sshd` is built as on Debian and Ubuntu (#18).
 - Standard output is checked to stay plain: with color forced on, by the
   option or by the environment, `--help`, `--version`, `--prerequisites`,
   `--completion bash` and `--list-hosts` write no terminal escape to it.
