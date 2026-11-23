@@ -371,7 +371,9 @@ eight_bit_locale='' pair_letter_locale=''
 for candidate in en_US.ISO-8859-1 en_US.ISO-8859-15 de_DE.ISO-8859-1; do
     if (LC_ALL=C; LC_ALL=$candidate; [[ $'\x9b' == [[:cntrl:]] ]]) 2>/dev/null; then eight_bit_locale=$candidate; break; fi
 done
-for candidate in zh_CN.GBK zh_CN.GB18030 zh_SG.GBK; do
+# (GB18030 would pass the probe, but nothing in the sample is read
+# differently under it, so the check could not fail there.)
+for candidate in zh_CN.GBK zh_SG.GBK; do
     if (LC_ALL=C; LC_ALL=$candidate; [[ $'\xc2\x9d' == ? && $'\xe4\xb8\xad' != ? ]]) 2>/dev/null; then pair_letter_locale=$candidate; break; fi
 done
 if [[ -n $eight_bit_locale ]]; then
