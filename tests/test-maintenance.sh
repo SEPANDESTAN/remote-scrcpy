@@ -32,6 +32,20 @@ check contains "$(env PATH=/nonexistent "$BASH" "$script" --prerequisites)" 'SIT
 check contains "$(env PATH=/nonexistent "$BASH" "$script" --completion bash)" '_complete-remote-scrcpy()'
 check contains "$("$script" --help)" 'REMOTE_SCRCPY_HOST'
 check contains "$("$script" --help)" 'EXIT STATUS'
+# Where the caller's locale is not installed, Bash says so once when it
+# starts. The launcher adds no warning of its own: one that names a line of
+# the script comes from inside it. No host is named, and the port is one
+# that validation refuses, so the run ends there with a message.
+# The check can fail only where Bash is told that the locale is missing;
+# some C libraries accept any name.
+if [[ -n $( (LC_ALL=xx_XX.UTF-8) 2>&1) ]]; then
+    output=$(LC_ALL=xx_XX.UTF-8 ADB_PORT=70000 "$script" --non-interactive --list-devices 2>&1 || true)
+    check contains "$output" 'The remote ADB port must be an integer'
+    [[ ! $output =~ line\ [0123456789]+:\ warning:\ setlocale ]] || fail "the launcher printed a locale warning of its own: $output"
+    passed=$((passed+1))
+else
+    printf 'note: this C library accepts a locale name that is not installed; the warning check was not run.\n' >&2
+fi
 # Errors name every place a rejected value can come from, not an internal
 # name and not the option alone. No command here names a host: all stop at
 # validation.
@@ -127,7 +141,7 @@ printf 'Host alpha beta\nHost gamma\n' > "$config"
 check contains "$(REMOTE_SCRCPY_SSH_CONFIG=$config "$script" --list-hosts)" 'gamma'
 # Standard output is data: with color forced on, by the option or by the
 # environment, none of these modes writes an escape byte to it. (The device
-# list, the menus and a connecting run need more than the bundle; the
+# list, the host menu and a connecting run need more than the bundle; the
 # integration suite checks them.) The configuration is named through the
 # environment, so that its path is not split with the mode's words.
 escape=$'\033'

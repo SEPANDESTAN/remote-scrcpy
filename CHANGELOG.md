@@ -61,6 +61,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   directly now (#38).
 
 ### Fixed
+- With `LC_ALL` naming a locale that is not installed, the launcher no
+  longer adds a `setlocale` warning of its own to the one Bash prints when
+  it starts. The warning came from the function that cleans text before
+  it is shown, each time it put the caller's locale back.
 - A number written in the digits of another script (Arabic-Indic, for one)
   is treated like any other text that is not a number. In some locales,
   `en_US.UTF-8` among them, the launcher's checks let such digits through,

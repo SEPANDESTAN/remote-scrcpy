@@ -94,11 +94,14 @@ _log-debug() {
 
 # Strip control characters from untrusted displayed metadata.
 # Args: one string; prints sanitized representation to stdout.
-_sanitize-display-text() {
+_sanitize-display-text() (
     # Device descriptions and config aliases must not inject terminal controls.
-    local LC_ALL=C value=$1
-    printf '%s' "${value//[[:cntrl:]]/?}"
-}
+    # The body is a subshell, so the locale set here ends with it. A local
+    # variable would be put back on return, and Bash prints a warning when
+    # the value it puts back names a locale that is not installed.
+    LC_ALL=C
+    printf '%s' "${1//[[:cntrl:]]/?}"
+)
 
 # Validate one argv-safe SSH destination string.
 # Args: destination; status 0=valid, 1=invalid. SSH does actual resolution.
