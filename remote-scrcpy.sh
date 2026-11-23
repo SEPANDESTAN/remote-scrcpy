@@ -1385,7 +1385,7 @@ _remote-scrcpy-complete-words() {
     local -a words=("$@")
     local last=$(( $# - 1 ))
     local current=${words[last]} previous='' word index host='' serial='' ssh_config='' remote_adb=''
-    local value complete_host=0 complete_serial=0 explicit_host=0
+    local value prefix='' user='' typed complete_host=0 complete_serial=0 explicit_host=0
     local command=${words[0]}
     local -a positions=()
     local options='--help --version --host --serial --list-hosts --list-devices --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion -h -v -l -L -p -q -n -V'
@@ -1430,8 +1430,9 @@ _remote-scrcpy-complete-words() {
         --adb-port) return ;;
     esac
 
-    # `--host=...`, `--serial=...`, `--color=...` and `--completion=...`:
-    # complete the value and keep the option in front of each candidate.
+    # `--host=...`, `--serial=...`, `--color=...`, `--completion=...` and the
+    # three options that take a file: complete the value and keep the option
+    # in front of each candidate.
     case $current in
         --host=*) current=${current#*=}; complete_host=2 ;;
         --serial=*) current=${current#*=}; complete_serial=2 ;;
@@ -1441,6 +1442,14 @@ _remote-scrcpy-complete-words() {
                 < <(compgen -W 'auto always never' -- "$current")
             return ;;
         --completion=*) COMPREPLY=( $(compgen -W '--completion=bash' -- "$current") ); return ;;
+        --ssh-config=*|--adb=*|--remote-adb=*)
+            prefix=${current%%=*}=
+            # A name with whitespace in it would go onto the line unquoted
+            # and become two words, so it is not offered.
+            while IFS= read -r value; do
+                [[ $value == *[[:space:]]* ]] || COMPREPLY+=("$prefix$value")
+            done < <(compgen -f -- "${current#*=}")
+            return ;;
         --*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
         -*)
             # A single dash starts an option word, unless the word is the
@@ -1464,10 +1473,19 @@ _remote-scrcpy-complete-words() {
     if (( complete_host )); then
         local -a host_command=("$command" --list-hosts)
         [[ -z $ssh_config ]] || host_command+=(--ssh-config "$ssh_config")
+        # `myuser@re`: the aliases complete the part after the '@', and the
+        # user typed in front of it stays in front of each candidate. An
+        # alias that itself contains an '@' completes only as a whole and is
+        # never put behind a user. Nothing in front of the '@' is no user.
+        typed=$current
+        if [[ $current == ?*@* ]]; then user=${current%@*}@; current=${current##*@}; fi
+        (( complete_host != 2 )) || prefix=--host=
         while IFS= read -r value; do
-            [[ $value == "$current"* ]] || continue
-            if (( complete_host == 2 )); then COMPREPLY+=("--host=$value")
-            else COMPREPLY+=("$value"); fi
+            if [[ -n $user && $value == *@* ]]; then
+                [[ $value != "$typed"* ]] || COMPREPLY+=("$prefix$value")
+            elif [[ $value == "$current"* ]]; then
+                COMPREPLY+=("$prefix$user$value")
+            fi
         done < <("${host_command[@]}" 2>/dev/null)
         return
     fi
