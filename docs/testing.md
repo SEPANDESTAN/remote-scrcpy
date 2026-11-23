@@ -108,9 +108,10 @@ short list of locale names with the range itself. Where none is installed
 or none behaves so, it prints a note on standard error, passes without
 those checks, and counts that many fewer. Two more checks, on the warning
 Bash prints for a locale that is not installed, are skipped the same way
-where the C library accepts any locale name (musl does). CI generates both locales and
-fails if either does not behave so, which is what makes a green run mean
-that these checks ran. The check that no such range is written in `src/` or
+where the C library accepts any locale name
+([musl](https://musl.libc.org/) does). CI generates both locales and fails
+if either does not behave so, which is what makes a green run mean that
+these checks ran. The check that no such range is written in `src/` or
 `install.sh` runs everywhere.
 
 ## The integration suite
