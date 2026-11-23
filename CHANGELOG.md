@@ -18,6 +18,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   lists each beside its long name, and Tab on a word that starts with a
   dash offers the options, short and long. Before, `remote-host -<Tab>`
   fell through to a device lookup on the host.
+- Tab completes in three more places: file names after `--ssh-config=`,
+  `--adb=` and `--remote-adb=` (only the forms with a space did), and host
+  aliases after a user name, as in `remote-scrcpy myuser@r<Tab>` (#23).
 
 ### Changed
 - Numbers that come from the remote ADB server are converted with `printf`

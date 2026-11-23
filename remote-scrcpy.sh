@@ -1385,7 +1385,7 @@ _remote-scrcpy-complete-words() {
     local -a words=("$@")
     local last=$(( $# - 1 ))
     local current=${words[last]} previous='' word index host='' serial='' ssh_config='' remote_adb=''
-    local value complete_host=0 complete_serial=0 explicit_host=0
+    local value prefix='' complete_host=0 complete_serial=0 explicit_host=0
     local command=${words[0]}
     local -a positions=()
     local options='--help --version --host --serial --list-hosts --list-devices --ssh-config --adb --remote-adb --adb-port --color --ascii --non-interactive --quiet --verbose --prerequisites --completion -h -v -l -L -p -q -n -V'
@@ -1430,8 +1430,9 @@ _remote-scrcpy-complete-words() {
         --adb-port) return ;;
     esac
 
-    # `--host=...`, `--serial=...`, `--color=...` and `--completion=...`:
-    # complete the value and keep the option in front of each candidate.
+    # `--host=...`, `--serial=...`, `--color=...`, `--completion=...` and the
+    # three options that take a file: complete the value and keep the option
+    # in front of each candidate.
     case $current in
         --host=*) current=${current#*=}; complete_host=2 ;;
         --serial=*) current=${current#*=}; complete_serial=2 ;;
@@ -1441,6 +1442,11 @@ _remote-scrcpy-complete-words() {
                 < <(compgen -W 'auto always never' -- "$current")
             return ;;
         --completion=*) COMPREPLY=( $(compgen -W '--completion=bash' -- "$current") ); return ;;
+        --ssh-config=*|--adb=*|--remote-adb=*)
+            prefix=${current%%=*}=
+            while IFS= read -r value; do COMPREPLY+=("$prefix$value"); done \
+                < <(compgen -f -- "${current#*=}")
+            return ;;
         --*) COMPREPLY=( $(compgen -W "$options" -- "$current") ); return ;;
         -*)
             # A single dash starts an option word, unless the word is the
@@ -1464,10 +1470,13 @@ _remote-scrcpy-complete-words() {
     if (( complete_host )); then
         local -a host_command=("$command" --list-hosts)
         [[ -z $ssh_config ]] || host_command+=(--ssh-config "$ssh_config")
+        # `myuser@re`: the aliases complete the part after the '@', and the
+        # user typed in front of it stays in front of each candidate.
+        if [[ $current == *@* ]]; then prefix=${current%@*}@; current=${current##*@}; fi
+        (( complete_host != 2 )) || prefix=--host=$prefix
         while IFS= read -r value; do
             [[ $value == "$current"* ]] || continue
-            if (( complete_host == 2 )); then COMPREPLY+=("--host=$value")
-            else COMPREPLY+=("$value"); fi
+            COMPREPLY+=("$prefix$value")
         done < <("${host_command[@]}" 2>/dev/null)
         return
     fi

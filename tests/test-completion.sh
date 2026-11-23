@@ -134,6 +134,46 @@ mkdir "$sandbox/at@home"; : > "$sandbox/at@home/config-file"
 complete_words --ssh-config "$sandbox/at@home/con"
 assert_eq 'file name behind an @' '@home/config-file' "${COMPREPLY[*]}"
 
+# The three options that take a file complete file names in their `=` form
+# too. Bash replaces the text after the '=', so that is what a candidate is.
+mkdir "$sandbox/files"; : > "$sandbox/files/ssh-config"; : > "$sandbox/files/adb tool"
+for option in --ssh-config --adb --remote-adb; do
+    complete_words "$option=$sandbox/files/ssh"
+    assert_eq "$option= completes a file name" "$sandbox/files/ssh-config" "${COMPREPLY[*]}"
+    assert_eq "$option= starts no lookup" '(no lookup)' "$(queried_host)"
+done
+complete_words "--ssh-config=$sandbox/files/"
+assert_eq 'a file option with = offers every file' "$sandbox/files/adb tool|$sandbox/files/ssh-config" \
+    "$(printf '%s\n' "${COMPREPLY[@]}" | sort | paste -sd'|')"
+complete_words "--adb=$sandbox/files/adb"
+assert_eq 'a file name with a space is one candidate' "1 $sandbox/files/adb tool" "${#COMPREPLY[@]} ${COMPREPLY[*]}"
+complete_words "--ssh-config=$sandbox/at@home/con"
+assert_eq 'file name behind = and @: the cut is at the @' '@home/config-file' "${COMPREPLY[*]}"
+complete_words "--ssh-config=$sandbox/files/no-such"
+assert_eq 'a file option with = and no match offers nothing' '' "${COMPREPLY[*]}"
+# The configuration named with = is the one the aliases are read from.
+printf 'Host from-equals\n' > "$sandbox/files/ssh-config"
+complete_words "--ssh-config=$sandbox/files/ssh-config" f
+assert_eq 'aliases come from the file given with =' 'from-equals' "${COMPREPLY[*]}"
+: > "$sandbox/files/ssh-config"
+
+# `myuser@re`: the aliases complete the part after the '@'. Bash keeps the
+# '@' in the text it replaces, so each candidate starts with it.
+count=$(ssh_calls)
+complete_words myuser@remote-h
+assert_eq 'alias after user@' '@remote-host' "${COMPREPLY[*]}"
+complete_words myuser@r
+assert_eq 'aliases after user@' '@remote-host @remote-backup' "${COMPREPLY[*]}"
+complete_words myuser@
+assert_eq 'every alias after a bare user@' '@remote-host @remote-backup @beta' "${COMPREPLY[*]}"
+complete_words myuser@x
+assert_eq 'no alias after user@ offers nothing' '' "${COMPREPLY[*]}"
+complete_words --host myuser@remote-h
+assert_eq 'alias after --host user@' '@remote-host' "${COMPREPLY[*]}"
+complete_words --host=myuser@remote-h
+assert_eq 'alias after --host=user@' '@remote-host' "${COMPREPLY[*]}"
+assert_eq 'aliases after user@ stay local' "$count" "$(ssh_calls)"
+
 # Pieces of one word must not be read as separate arguments: a serial, a port
 # or a user name would otherwise be taken for the host and contacted.
 complete_words myuser@remote-host D
@@ -151,6 +191,18 @@ assert_eq 'a serial given with = is never contacted' "$count" "$(ssh_calls)"
 COMP_WORDBREAKS=$' \t\n'; COMP_WORDS=("$script" --host=remote-h); COMP_CWORD=1; COMPREPLY=()
 _complete-remote-scrcpy || { printf 'FAIL the completion function ended with status %s for: --host=remote-h\n' "$?" >&2; exit 1; }
 assert_eq 'host equals when = does not break words' '--host=remote-host' "${COMPREPLY[*]}"
+# The same for the user in front of an alias and for a file option: what
+# was typed before the completed part stays in the candidate.
+whole_word() {
+    COMP_WORDBREAKS=$' \t\n'; COMP_WORDS=("$script" "$1"); COMP_CWORD=1; COMPREPLY=()
+    _complete-remote-scrcpy || { printf 'FAIL the completion function ended with status %s for: %s\n' "$?" "$1" >&2; exit 1; }
+}
+whole_word myuser@remote-h
+assert_eq 'user@alias when @ does not break words' 'myuser@remote-host' "${COMPREPLY[*]}"
+whole_word --host=myuser@remote-h
+assert_eq '--host=user@alias when nothing breaks words' '--host=myuser@remote-host' "${COMPREPLY[*]}"
+whole_word "--adb=$sandbox/files/ssh"
+assert_eq 'a file option with = when = does not break words' "--adb=$sandbox/files/ssh-config" "${COMPREPLY[*]}"
 
 count=$(ssh_calls)
 REMOTE_SCRCPY_COMPLETE_DEVICES=0
