@@ -649,10 +649,13 @@ os.execv({REAL_ADB!r}, [{REAL_ADB!r}, *sys.argv[1:]])
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("ADB did not return a valid allocated TCP port", result.stderr)
         self.assertFalse(self.events("scrcpy_started"))
+        self.assertFalse(self.server.forwards, "the reservation was left on the server")
         self.assert_closed()
 
     def test_reserved_port_must_be_a_port_number(self):
-        for reported in ("0", "65536", "123456", "12a", "", "-1", "0x50"):
+        # The last two are what the conversion alone would take for port 80;
+        # only the check in front refuses them.
+        for reported in ("0", "65536", "123456", "12a", "", "-1", "0x50", "+80", " 80"):
             with self.subTest(reported=reported):
                 self.assert_reserved_port_refused(reported)
 
