@@ -102,8 +102,10 @@ also matches the digits of other scripts (`en_US.UTF-8` with
 one where `[a-z]` does not match `i` (`tr_TR.UTF-8`). Each suite tries a
 short list of locale names with the range itself. Where none is installed
 or none behaves so, it prints a note on standard error, passes without
-those checks, and counts that many fewer. The check that no such range is
-written in `src/` or `install.sh` runs everywhere.
+those checks, and counts that many fewer. CI generates both locales and
+fails if either does not behave so, which is what makes a green run mean
+that these checks ran. The check that no such range is written in `src/` or
+`install.sh` runs everywhere.
 
 ## The integration suite
 
